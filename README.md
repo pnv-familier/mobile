@@ -9,7 +9,7 @@ INSTALLATION
 Clone and run the repository
 
 ```bash
-git clone [https://github.com/HuuHau235/familier.git](https://github.com/HuuHau235/familier.git)
+git clone https://github.com/HuuHau235/familier.git
 cd Frontend-Familier
 npm install
 npm start
