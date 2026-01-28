@@ -1,7 +1,9 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import TabNavigator from './TabNavigator'
 import FeedNavigator from '../features/feed/FeedNavigator'
-const Stack = createNativeStackNavigator()
+import { AppStackParamList } from './types'
+
+const Stack = createNativeStackNavigator<AppStackParamList>()
 
 export default function AppNavigator() {
     return (

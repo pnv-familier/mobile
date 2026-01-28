@@ -1,10 +1,11 @@
-import { Text, View } from "react-native"
+import AppScreen from "../../../components/AppScreen"
+import AppText from "../../../components/AppText"
 
 const CreateFeedScreen = () => {
     return (
-        <View>
-            <Text>Create Feed Screen</Text>
-        </View>
+        <AppScreen>
+            <AppText>Create Feed Screen</AppText>
+        </AppScreen>
     )
 }
 

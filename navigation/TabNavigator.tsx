@@ -1,8 +1,9 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import HomeScreen from '../features/feed/screens/HomeScreen'
+import { TabStackParamList } from './types'
 
-const Tab = createBottomTabNavigator()
+const Tab = createBottomTabNavigator<TabStackParamList>()
 
 export default function TabNavigator() {
     return (
@@ -13,7 +14,6 @@ export default function TabNavigator() {
                     let iconName: any
 
                     if (route.name === 'Home') iconName = 'home'
-                    if (route.name === 'Chat') iconName = 'chatbubble'
 
                     return <Ionicons name={iconName} size={size} color={color} />
                 },

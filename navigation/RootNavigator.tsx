@@ -1,15 +1,30 @@
 import { NavigationContainer } from '@react-navigation/native'
-import AuthNavigator from './AuthNavigator'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import AuthNavigator from '../features/auth/AuthNavigator'
 import AppNavigator from './AppNavigator'
-// import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useAuthStore } from '../features/auth/store/auth.store'
+import { RootStackParamList } from './types'
+
+const Stack = createNativeStackNavigator<RootStackParamList>()
 
 export default function RootNavigator() {
-    // const user = useAuthStore(s => s.user)
-    const user = null;
+    const user = useAuthStore(s => s.data)
 
     return (
         <NavigationContainer>
-            {user ? <AppNavigator /> : <AuthNavigator />}
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                {user ? (
+                    <Stack.Screen
+                        name="App"
+                        component={AppNavigator}
+                    />
+                ) : (
+                    <Stack.Screen
+                        name="Auth"
+                        component={AuthNavigator}
+                    />
+                )}
+            </Stack.Navigator>
         </NavigationContainer>
     )
 }
