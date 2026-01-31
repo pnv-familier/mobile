@@ -1,8 +1,9 @@
 import { apiClient } from "../../../api/api"
-import { RegisterPayload } from "../type"
+import { SuccessResponse } from "../../../types/api"
+import { AuthResponse, RegisterPayload } from "../type"
 import { isAxiosError } from "axios"
 
-export async function register(payload: RegisterPayload) {
+export const register = async (payload: RegisterPayload): Promise<SuccessResponse<AuthResponse>> => {
     try {
         const response = await apiClient.post("/api/v1/auth/register", payload)
         return response.data
@@ -16,4 +17,11 @@ export async function register(payload: RegisterPayload) {
         }
         throw new Error("An unexpected error occurred")
     }
+}
+
+export const loginWithGoogle = async (idToken: string): Promise<SuccessResponse<AuthResponse>> => {
+    const response = await apiClient.post('/api/v1/auth/google', {
+        idToken,
+    });
+    return response.data;
 }

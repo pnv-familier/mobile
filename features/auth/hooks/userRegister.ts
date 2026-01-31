@@ -1,10 +1,12 @@
 import { useState } from "react"
 import { Alert } from "react-native"
-import { RegisterForm, RegisterErrors, UserResponse } from "../type"
+import { RegisterForm, RegisterErrors, AuthResponse } from "../type"
 import { validateRegister } from "../utils/validator"
 import { register } from "../services/auth.service"
 import { useNavigation } from "@react-navigation/native"
 import { checkPasswordStrength, PasswordStrength } from "../utils/password"
+import { saveTokens } from "../utils/token"
+import { useAuthStore } from "../store/auth.store"
 
 const INITIAL_VALUES: RegisterForm = {
     fullName: "",
@@ -19,6 +21,7 @@ export function useRegister() {
     const [loading, setLoading] = useState(false)
     const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>('')
     const navigator = useNavigation<any>();
+    const setAuth = useAuthStore((state) => state.setAuth);
 
     const onChange = (key: keyof RegisterForm, value: string) => {
         setValues(prev => ({ ...prev, [key]: value }))
@@ -40,7 +43,9 @@ export function useRegister() {
             setLoading(true)
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { confirmPassword, ...rest } = values
-            const user: UserResponse = await register(rest)
+            const data: AuthResponse = (await register(rest)).data
+            saveTokens(data)
+            setAuth(data.user)
             navigator.navigate("Reference")
         } catch (err: any) {
             if (err.details) {

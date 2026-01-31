@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "577704443779",
+    "project_id": "familier-486004",
+    "storage_bucket": "familier-486004.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577704443779:android:f9aa72d760f449161680b6",
+        "android_client_info": {
+          "package_name": "com.familier.familier"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "577704443779-odqelbhhqgun23pq45f8mleeusuju6rk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhVOOYJsBlgMjNHI5ECXtlWxk2R1ynxnA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "577704443779-odqelbhhqgun23pq45f8mleeusuju6rk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "577704443779-3hmq6ri8i4tm9g4dgcghqn2j2r9bfed0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.familier.familier"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

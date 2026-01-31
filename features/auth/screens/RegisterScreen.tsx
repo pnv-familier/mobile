@@ -6,9 +6,11 @@ import AppText from "../../../components/AppText"
 import { useRegister } from "../hooks/userRegister"
 import AuthInput from "../components/AuthInput"
 import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator"
+import { useGoogleLogin } from "../hooks/useGoogleLogin"
 
 const RegisterScreen = () => {
     const { values, errors, loading, onChange, submit, passwordStrength } = useRegister()
+    const { login: googleLogin, loading: isGoogleLoading } = useGoogleLogin()
 
     return (
         <AppScreen style={styles.container}>
@@ -66,7 +68,10 @@ const RegisterScreen = () => {
                     <AppText style={styles.registerText}>Register</AppText>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.googleBtn}>
+                <TouchableOpacity 
+                    style={[styles.googleBtn, isGoogleLoading && { opacity: 0.7 }]}
+                    onPress={googleLogin}
+                    disabled={loading || isGoogleLoading}>
                     <Image
                         source={require("../../../assets/google-icon.png")}
                         style={styles.googleIcon}
@@ -168,6 +173,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         fontSize: 13,
         color: "#888",
+        textAlign: 'center'
     },
     loginLink: {
         color: "#E39A5A",
