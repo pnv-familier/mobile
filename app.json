@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Frontend-Familier",
-    "slug": "Frontend-Familier",
+    "slug": "familier",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,6 +28,13 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ac6b5ff8-aef1-4d29-b96c-2149c8ae6627"
+      }
+    },
+    "owner": "lekyba"
   }
 }
