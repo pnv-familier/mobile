@@ -1,8 +1,8 @@
 import {create} from "zustand"
-import { User } from "../type";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiClient } from "../../../api/api";
 import { isAxiosError } from "axios";
+import { User } from "../../user/type";
+import { userService } from "../../user/service/user.service";
 
 type AuthState = {
     data: User | null;
@@ -12,6 +12,7 @@ type AuthState = {
     fetchData: () => Promise<void>;
     setAuth: (user: User) => void;
     reset: () => Promise<void>;
+    updateIsSetUp: (isSetup: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -33,9 +34,8 @@ export const useAuthStore = create<AuthState>((set) => ({
                 return;
             }
 
-            const response = await apiClient.get("/api/users/me");
-
-            const userData = response.data.data || response.data;
+            const response = await userService.getCurrentUser();
+            const userData = response.data;
 
             set({ data: userData, isLoading: false });
         } catch (error) {
@@ -58,4 +58,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         await AsyncStorage.removeItem("refreshToken");
         set({ data: null, error: null, isLoading: false });
     },
+
+    updateIsSetUp: (isSetup: boolean) => {
+        set((state) => ({
+            ...state,
+            data: state.data
+                ? { ...state.data, setup: isSetup }
+                : null
+        }));
+    }
+
 }))

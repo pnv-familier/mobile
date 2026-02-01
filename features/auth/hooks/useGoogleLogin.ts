@@ -5,16 +5,14 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { AuthResponse, User } from '../type';
+import { AuthResponse } from '../type';
 import { loginWithGoogle } from '../services/auth.service';
-import { useNavigation } from '@react-navigation/native';
 import { saveTokens } from '../utils/token';
 import { useAuthStore } from '../store/auth.store';
 
 export function useGoogleLogin() {
     const [loading, setLoading] = useState(false);
     const setAuth = useAuthStore((state) => state.setAuth);
-    const navigation = useNavigation<any>();
 
     useEffect(() => {
         GoogleSignin.configure({
@@ -39,7 +37,6 @@ export function useGoogleLogin() {
             await saveTokens(backendResponse);
 
             setAuth(backendResponse.user);
-            navigation.navigate("Reference")
         } catch (error: any) {
             if (isErrorWithCode(error)) {
                 switch (error.code) {

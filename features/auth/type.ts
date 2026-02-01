@@ -1,3 +1,5 @@
+import { User } from "../user/type"
+
 export type RegisterPayload = {
     fullName: string
     email: string
@@ -20,15 +22,6 @@ export type UserResponse = {
 }
 
 export type RegisterErrors = Partial<Record<keyof RegisterForm, string>>
-
-export interface User {
-    id: string;
-    email: string;
-    fullName: string;
-    avatarUrl?: string;
-    role: 'USER';
-    authProvider: 'LOCAL' | 'GOOGLE';
-}
 
 export interface AuthResponse {
     accessToken: string;
