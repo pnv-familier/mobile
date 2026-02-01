@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Frontend-Familier",
-    "slug": "Frontend-Familier",
+    "slug": "familier",
+    "scheme": "familier",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +14,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.familier.familier"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,13 +23,23 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.familier.familier",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      "@react-native-google-signin/google-signin"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ac6b5ff8-aef1-4d29-b96c-2149c8ae6627"
+      }
+    },
+    "owner": "familier"
   }
 }

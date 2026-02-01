@@ -9,6 +9,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>()
 
 export default function RootNavigator() {
     const user = useAuthStore(s => s.data)
+    console.log('RootNavigator user:', user);
 
     return (
         <NavigationContainer>
