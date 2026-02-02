@@ -7,10 +7,12 @@ import { useRegister } from "../hooks/userRegister"
 import AuthInput from "../components/AuthInput"
 import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator"
 import { useGoogleLogin } from "../hooks/useGoogleLogin"
+import { useNavigation } from "@react-navigation/native"
 
 const RegisterScreen = () => {
     const { values, errors, loading, onChange, submit, passwordStrength } = useRegister()
     const { login: googleLogin, loading: isGoogleLoading } = useGoogleLogin()
+    const navigation = useNavigation<any>();
 
     return (
         <AppScreen style={styles.container}>
@@ -81,7 +83,7 @@ const RegisterScreen = () => {
                     </AppText>
                 </TouchableOpacity>
 
-                <AppText style={styles.loginText}>
+                <AppText style={styles.loginText} onPress={() => navigation.navigate("Login")}>
                     Already have an account?{" "}
                     <AppText style={styles.loginLink}>Login</AppText>
                 </AppText>

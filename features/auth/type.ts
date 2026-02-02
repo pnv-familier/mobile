@@ -28,3 +28,10 @@ export interface AuthResponse {
     refreshToken: string;
     user: User;
 }
+
+export type LoginPayload = {
+    email: string,
+    password: string
+}
+
+export type LoginErrors = Partial<Record<keyof LoginPayload, string>>

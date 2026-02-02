@@ -6,5 +6,5 @@ export interface SuccessResponse<T> {
 export interface ErrorResponse {
   message: string
   path: string
-  details: Record<string, string>
+  details: Record<string, string> | null
 }

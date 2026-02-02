@@ -8,6 +8,7 @@ import {
 } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import AppText from "../../../components/AppText"
+import { capitalizeFirstLetter } from "../../../utils/string"
 
 type Props = {
     icon: React.ComponentProps<typeof Feather>["name"]
@@ -45,7 +46,7 @@ export default function AuthInput({ icon, error, secure, ...props }: Props) {
                     </TouchableOpacity>
                 )}
             </View>
-            {error && <AppText style={styles.error}>{error}</AppText>}
+            {error && <AppText style={styles.error}>{capitalizeFirstLetter(error)}</AppText>}
         </View>
     )
 }
