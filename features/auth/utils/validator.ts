@@ -11,7 +11,7 @@ export function validateRegister(
     errors.fullName = "Name must be 2–50 characters"
   }
 
-  if (!values.email || !EMAIL_REGEX.test(values.email)) {
+  if (!isEmailValid(values.email)) {
     errors.email = "Please enter a valid email address"
   }
 
@@ -24,4 +24,8 @@ export function validateRegister(
   }
 
   return errors
+}
+
+export function isEmailValid(value: string) {
+  return !!(value && EMAIL_REGEX.test(value))
 }
