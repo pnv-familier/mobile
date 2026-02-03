@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
-import HomeScreen from '../features/feed/screens/HomeScreen'
+import FeedScreen from '../features/social/screens/FeedScreen'
 import { TabStackParamList } from './types'
 
 const Tab = createBottomTabNavigator<TabStackParamList>()
@@ -19,7 +19,7 @@ export default function TabNavigator() {
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Home" component={FeedScreen} />
         </Tab.Navigator>
     )
 }
