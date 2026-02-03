@@ -1,29 +1,42 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Share, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  Share,
+  Alert,
+} from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard'; 
+import { useNavigation } from '@react-navigation/native';
 
-export default function InviteMembersScreen({ route, navigation }: any) {
-  const { inviteCode } = route.params || { inviteCode: "FAM-XXXX-0000" };
-
-  const onCopy = async () => {
-    await Clipboard.setStringAsync(inviteCode);
-    Alert.alert("Success", "Code copied!");
-  };
+export default function InviteMembersScreen({ route }: any) {
+  const { inviteCode } = route.params || { inviteCode: 'FAM-XXXX-0000' };
+  const navigation = useNavigation<any>();
 
   const onShare = async () => {
     try {
-      await Share.share({ message: `Join my family on Familier! Use this code: ${inviteCode}` });
+      await Share.share({
+        message: `Join my family on Familier! 👨‍👩‍👧‍👦\n\nInvite code: ${inviteCode}`,
+      });
     } catch (error: any) {
-      console.log(error.message);
+      Alert.alert('Error', error.message);
     }
   };
 
+  const onShowCode = () => {
+    Alert.alert(
+      'Family Invite Code',
+      inviteCode,
+      [{ text: 'OK' }],
+      { cancelable: true }
+    );
+  };
+
   const handleFinish = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Home' }],
-    });
+   navigation.navigate("MainTabs");
   };
 
   return (
@@ -38,20 +51,26 @@ export default function InviteMembersScreen({ route, navigation }: any) {
 
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <Image source={require('../../../assets/familier_logo.png')} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={require('../../../assets/icon.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.mainTitle}>Invite your family to join</Text>
-        <Text style={styles.subtitle}>Share the code or link to invite{"\n"}members</Text>
+        <Text style={styles.subtitle}>
+          Share the code or link to invite{'\n'}members
+        </Text>
 
         <View style={styles.codeCard}>
           <Text style={styles.codeLabel}>Your family code</Text>
           <Text style={styles.codeText}>{inviteCode}</Text>
-          
+
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.copyBtn} onPress={onCopy}>
-              <Feather name="copy" size={18} color="#D48141" />
-              <Text style={styles.copyBtnText}>Copy</Text>
+            <TouchableOpacity style={styles.copyBtn} onPress={onShowCode}>
+              <Feather name="eye" size={18} color="#D48141" />
+              <Text style={styles.copyBtnText}>View</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
@@ -65,9 +84,11 @@ export default function InviteMembersScreen({ route, navigation }: any) {
           <TouchableOpacity style={styles.mainBtn} onPress={handleFinish}>
             <Text style={styles.mainBtnText}>Continue</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.skipBtn} onPress={handleFinish}>
-            <Text style={styles.skipText}>Skip this, we'll continue later</Text>
+            <Text style={styles.skipText}>
+              Skip this, we'll continue later
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -86,17 +107,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     height: 60,
-    paddingLeft: 10,
-    paddingTop: 30, 
-    zIndex: 1,
+    paddingTop: 10,
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#D48141',
-  },
-  headerPlaceholder: {
-    width: 28,
   },
   content: {
     flex: 1,

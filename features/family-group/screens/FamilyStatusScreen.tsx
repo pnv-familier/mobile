@@ -1,10 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  ScrollView 
+} from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../navigation/types'
+import { AppStackParamList } from '../../../navigation/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'FamilyStatus'>;
+type Props = NativeStackScreenProps<AppStackParamList, 'FamilyStatus'>;
 
 export default function FamilyStatusScreen({ navigation }: Props) {
   return (
@@ -16,10 +24,13 @@ export default function FamilyStatusScreen({ navigation }: Props) {
         <Ionicons name="chevron-back" size={28} color="#D48141" />
       </TouchableOpacity>
 
-      <View style={styles.content}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../../../assets/familier_logo.png')} 
+            source={require('../../../assets/icon.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
@@ -36,7 +47,9 @@ export default function FamilyStatusScreen({ navigation }: Props) {
           Let us know so we can connect{"\n"}you with your family!
         </Text>
 
-        <TouchableOpacity
+        <TouchableOpacity 
+          style={styles.card}
+          onPress={() => navigation.navigate('InviteMembers')}
         >
           <View style={styles.iconBox}>
             <Ionicons name="people-outline" size={32} color="#D48141" />
@@ -59,7 +72,7 @@ export default function FamilyStatusScreen({ navigation }: Props) {
             <Text style={styles.cardDesc}>Create a new family group</Text>
           </View>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -70,32 +83,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF5E6',
   },
   backButton: {
-    paddingLeft: 10,
-    paddingTop: 30, 
+    paddingHorizontal: 15,
+    paddingTop: 10,
     zIndex: 1,
   },
-  content: {
+  scrollContent: {
     alignItems: 'center',
     paddingHorizontal: 25,
+    paddingBottom: 30, 
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: -10,
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 150,
+    height: 150,
   },
   illustration: {
     width: '100%',
-    height: 220,
+    height: 200,
     marginBottom: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#D48141',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
@@ -103,10 +116,10 @@ const styles = StyleSheet.create({
     color: '#D48141',
     fontWeight: '600',
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 25,
   },
   card: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     width: '100%',
@@ -114,17 +127,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 15,
     marginBottom: 15,
-    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 3,
   },
   iconBox: {
     width: 50,
     height: 50,
     backgroundColor: '#FFF5E6',
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -142,5 +155,6 @@ const styles = StyleSheet.create({
     color: '#D48141',
     fontStyle: 'italic',
     opacity: 0.7,
+    marginTop: 2,
   },
 });

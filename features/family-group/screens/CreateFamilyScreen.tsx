@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 60,
     paddingLeft: 10,
-    paddingTop: 30, 
+    paddingTop: 10, 
     zIndex: 1,
   },
   headerTitle: {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 10,
     paddingHorizontal: 25,
   },
   avatarContainer: {

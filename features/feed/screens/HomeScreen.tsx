@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback } from 'react-native';
 import { Home, MessageSquare, Calendar, Lightbulb, Bell, User, Menu, ThumbsUp, MessageCircle, Image as ImageIcon, Video, Users, ChevronRight } from 'lucide-react-native';
-import { useLogout } from "../../auth/hooks/useLogout";
+import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
 
-const PRIMARY_COLOR = '#FDF2E3'; 
-const ACCENT_COLOR = '#D4A056'; 
+const PRIMARY_COLOR = '#FDF2E3';
+const ACCENT_COLOR = '#D4A056';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: { navigation: any }) {
   const [showOptions, setShowOptions] = useState(false);
   const { logout } = useLogout();
 
@@ -17,17 +17,15 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoBox}>
-             <Home size={20} color="#8D5B39" />
+            <Home size={20} color="#8D5B39" />
           </View>
           <Text style={styles.headerTitle}>Social Media</Text>
         </View>
         <View style={styles.headerIcons}>
           <Bell size={24} color="#D4A056" style={styles.icon} />
-          
           <TouchableOpacity onPress={() => setShowOptions(true)}>
             <User size={24} color="#D4A056" style={styles.icon} />
           </TouchableOpacity>
-          
           <Menu size={24} color="#D4A056" />
         </View>
       </View>
@@ -35,13 +33,16 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.familyCard}>
           <View style={styles.familyIconBox}>
-             <Home size={28} color="#D4A056" />
+            <Home size={28} color="#D4A056" />
           </View>
           <View style={{ flex: 1, marginLeft: 15 }}>
             <Text style={styles.familyTitle}>My family</Text>
             <Text style={styles.familySub}>5 members</Text>
           </View>
-          <TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('FamilyDetails')}
+          >
             <Text style={styles.xemText}>Xem</Text>
           </TouchableOpacity>
         </View>

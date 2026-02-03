@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { checkFamilyStatus } from '../api/familyStatus.api'
 import { useFamilyStatusStore } from '../store/familyStatus.store'
+import { checkFamilyStatus, createFamilyRequest } from '../service/family.service'
 
 export function useFamilyStatus() {
     const setStatus = useFamilyStatusStore(s => s.setStatus)
@@ -26,8 +26,6 @@ export function useFamilyStatus() {
 
     return { status, loading, error }
 }
-
-import { createFamilyRequest } from '../api/familyStatus.api';
 
 export function useFamilyAction() {
     const [loading, setLoading] = useState(false);

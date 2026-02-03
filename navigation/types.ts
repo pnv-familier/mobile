@@ -5,10 +5,6 @@ import { CompositeNavigationProp } from '@react-navigation/native'
 export type RootStackParamList = {
     Auth: undefined
     App: undefined
-    FamilyStatus: undefined
-    CreateFamily: undefined
-    InviteMembers: undefined
-    Home: undefined
 
 }
 
@@ -20,6 +16,10 @@ export type AppStackParamList = {
     SetupProfile: undefined
     MainTabs: undefined
     Feed: { feedId?: string }
+    FamilyStatus: undefined
+    CreateFamily: undefined
+    InviteMembers: undefined
+    Home: undefined
 }
 
 export type TabStackParamList = {
