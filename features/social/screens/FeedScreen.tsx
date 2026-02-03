@@ -7,7 +7,7 @@ import AppButton from '../../../components/AppButton';
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
-export default function HomeScreen({ navigation }: { navigation: any }) {
+export default function FeedScreen({ navigation }: { navigation: any }) {
   const [showOptions, setShowOptions] = useState(false);
   const { logout } = useLogout();
 
@@ -49,9 +49,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
         <View style={styles.inputContainer}>
           <View style={styles.inputRow}>
-            <Image 
-              source={{ uri: 'https://via.placeholder.com/40' }} 
-              style={styles.avatarSmall} 
+            <Image
+              source={{ uri: 'https://via.placeholder.com/40' }}
+              style={styles.avatarSmall}
             />
             <Text style={styles.placeholderText}>What's on your head?</Text>
           </View>
@@ -70,9 +70,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
         <View style={styles.postCard}>
           <View style={styles.postHeader}>
-            <Image 
-              source={{ uri: 'https://via.placeholder.com/50' }} 
-              style={styles.avatarLarge} 
+            <Image
+              source={{ uri: 'https://via.placeholder.com/50' }}
+              style={styles.avatarLarge}
             />
             <View style={{ marginLeft: 10 }}>
               <Text style={styles.userName}>Big Brother</Text>
@@ -82,9 +82,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           <Text style={styles.postContent}>
             Let's Go On A Picnic This Weekend, Everyone! 🌳🧺 We Plan To Leave Early Sunday Morning.
           </Text>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop' }} 
-            style={styles.postImage} 
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop' }}
+            style={styles.postImage}
           />
           <View style={styles.postFooter}>
             <View style={styles.interaction}>
@@ -100,9 +100,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
         <View style={styles.postCard}>
           <View style={styles.postHeader}>
-            <Image 
-              source={{ uri: 'https://via.placeholder.com/50' }} 
-              style={styles.avatarLarge} 
+            <Image
+              source={{ uri: 'https://via.placeholder.com/50' }}
+              style={styles.avatarLarge}
             />
             <View style={{ marginLeft: 10 }}>
               <Text style={styles.userName}>Big Brother</Text>
@@ -112,9 +112,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           <Text style={styles.postContent}>
             Let's Go On A Picnic This Weekend, Everyone! 🌳🧺 We Plan To Leave Early Sunday Morning.
           </Text>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop' }} 
-            style={styles.postImage} 
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop' }}
+            style={styles.postImage}
           />
           <View style={styles.postFooter}>
             <View style={styles.interaction}>
@@ -130,9 +130,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
         <View style={styles.postCard}>
           <View style={styles.postHeader}>
-            <Image 
-              source={{ uri: 'https://via.placeholder.com/50' }} 
-              style={styles.avatarLarge} 
+            <Image
+              source={{ uri: 'https://via.placeholder.com/50' }}
+              style={styles.avatarLarge}
             />
             <View style={{ marginLeft: 10 }}>
               <Text style={styles.userName}>Big Brother</Text>
@@ -142,9 +142,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           <Text style={styles.postContent}>
             Let's Go On A Picnic This Weekend, Everyone! 🌳🧺 We Plan To Leave Early Sunday Morning.
           </Text>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop' }} 
-            style={styles.postImage} 
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1000&auto=format&fit=crop' }}
+            style={styles.postImage}
           />
           <View style={styles.postFooter}>
             <View style={styles.interaction}>
@@ -171,8 +171,8 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
               <View style={styles.optionSheet}>
                 <View style={styles.sheetHandle} />
                 <Text style={styles.sheetTitle}>Family Options</Text>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.optionItem}
                   onPress={() => {
                     setShowOptions(false);
@@ -186,7 +186,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                 </TouchableOpacity>
                 <AppButton title="Logout" onPress={logout} />
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setShowOptions(false)}
                 >
@@ -197,29 +197,14 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
-      {/* Bottom Tab Bar */}
-      <View style={styles.bottomTab}>
-        <TabItem icon={<Home size={24} color="#D4A056" />} label="Home" active />
-        <TabItem icon={<MessageSquare size={24} color="#D4A056" />} label="Chat" />
-        <TabItem icon={<Calendar size={24} color="#D4A056" />} label="Calendar" />
-        <TabItem icon={<Lightbulb size={24} color="#D4A056" />} label="Suggestion" />
-      </View>
     </SafeAreaView>
   );
 }
 
-const TabItem = ({ icon, label, active }: { icon: React.ReactNode; label: string; active?: boolean }) => (
-  <TouchableOpacity style={styles.tabItem}>
-    {icon}
-    <Text style={[styles.tabLabel, active && styles.activeTabLabel]}>{label}</Text>
-  </TouchableOpacity>
-);
-
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: PRIMARY_COLOR 
+  container: {
+    flex: 1,
+    backgroundColor: PRIMARY_COLOR
   },
   header: {
     flexDirection: 'row',
@@ -231,26 +216,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     zIndex: 1,
   },
-  headerLeft: { 
-    flexDirection: 'row', 
-    alignItems: 'center' 
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
-  logoBox: { 
-    padding: 5, 
-    backgroundColor: '#FDF2E3', 
-    borderRadius: 8 
+  logoBox: {
+    padding: 5,
+    backgroundColor: '#FDF2E3',
+    borderRadius: 8
   },
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: 'bold', 
-    marginLeft: 10, 
-    color: '#333' 
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    color: '#333'
   },
-  headerIcons: { 
-    flexDirection: 'row' 
+  headerIcons: {
+    flexDirection: 'row'
   },
-  icon: { 
-    marginRight: 15 
+  icon: {
+    marginRight: 15
   },
   familyCard: {
     flexDirection: 'row',
@@ -260,23 +245,23 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
   },
-  familyIconBox: { 
-    backgroundColor: '#FDF2E3', 
-    padding: 10, 
-    borderRadius: 10 
+  familyIconBox: {
+    backgroundColor: '#FDF2E3',
+    padding: 10,
+    borderRadius: 10
   },
-  familyTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    color: '#D4A056' 
+  familyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#D4A056'
   },
-  familySub: { 
-    color: '#999', 
-    fontSize: 12 
+  familySub: {
+    color: '#999',
+    fontSize: 12
   },
-  xemText: { 
-    color: '#D4A056', 
-    fontWeight: '500' 
+  xemText: {
+    color: '#D4A056',
+    fontWeight: '500'
   },
   inputContainer: {
     marginHorizontal: 15,
@@ -288,20 +273,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(212, 160, 86, 0.05)',
     marginBottom: 5,
   },
-  inputRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 15 
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15
   },
-  avatarSmall: { 
-    width: 40, 
-    height: 40, 
-    borderRadius: 20 
+  avatarSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 20
   },
-  placeholderText: { 
-    marginLeft: 10, 
-    color: '#666', 
-    fontSize: 16 
+  placeholderText: {
+    marginLeft: 10,
+    color: '#666',
+    fontSize: 16
   },
   mediaButtons: {
     flexDirection: 'row',
@@ -311,67 +296,67 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  mediaBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center' 
+  mediaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
-  mediaBtnText: { 
-    marginLeft: 8, 
-    color: '#8D5B39', 
-    fontWeight: '500' 
+  mediaBtnText: {
+    marginLeft: 8,
+    color: '#8D5B39',
+    fontWeight: '500'
   },
-  divider: { 
-    width: 1, 
-    height: 20, 
-    backgroundColor: '#D4A056' 
+  divider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#D4A056'
   },
-  postCard: { 
-    backgroundColor: '#FFF', 
-    margin: 15, 
-    borderRadius: 15, 
-    padding: 15, 
-    marginBottom: 5 
+  postCard: {
+    backgroundColor: '#FFF',
+    margin: 15,
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 5
   },
-  postHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 10 
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10
   },
-  avatarLarge: { 
-    width: 50, 
-    height: 50, 
-    borderRadius: 25 
+  avatarLarge: {
+    width: 50,
+    height: 50,
+    borderRadius: 25
   },
-  userName: { 
-    fontWeight: 'bold', 
-    fontSize: 16 
+  userName: {
+    fontWeight: 'bold',
+    fontSize: 16
   },
-  postTime: { 
-    color: '#999', 
-    fontSize: 12 
+  postTime: {
+    color: '#999',
+    fontSize: 12
   },
-  postContent: { 
-    color: '#444', 
-    marginBottom: 10, 
-    lineHeight: 20 
+  postContent: {
+    color: '#444',
+    marginBottom: 10,
+    lineHeight: 20
   },
-  postImage: { 
-    width: '100%', 
-    height: 200, 
-    borderRadius: 15, 
-    marginBottom: 10 
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 15,
+    marginBottom: 10
   },
-  postFooter: { 
-    flexDirection: 'row' 
+  postFooter: {
+    flexDirection: 'row'
   },
-  interaction: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginRight: 20 
+  interaction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20
   },
-  interactionText: { 
-    marginLeft: 5, 
-    color: '#666' 
+  interactionText: {
+    marginLeft: 5,
+    color: '#666'
   },
   bottomTab: {
     flexDirection: 'row',
@@ -388,16 +373,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  tabItem: { 
-    alignItems: 'center' 
+  tabItem: {
+    alignItems: 'center'
   },
-  tabLabel: { 
-    fontSize: 12, 
-    color: '#D4A056', 
-    marginTop: 4 
+  tabLabel: {
+    fontSize: 12,
+    color: '#D4A056',
+    marginTop: 4
   },
-  activeTabLabel: { 
-    fontWeight: 'bold' 
+  activeTabLabel: {
+    fontWeight: 'bold'
   },
   modalOverlay: {
     flex: 1,

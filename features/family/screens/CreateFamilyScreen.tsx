@@ -1,31 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
-  SafeAreaView, ScrollView, Alert, ActivityIndicator 
+  SafeAreaView, ScrollView, ActivityIndicator 
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFamilyAction } from '../hooks/useFamilyStatus';
+import { useCreateFamily } from '../hooks/useCreateFamily';
 
 export default function CreateFamilyScreen({ navigation }: any) {
-  const [familyName, setFamilyName] = useState('');
-  const { createFamily, loading } = useFamilyAction();
-  const suggestions = ["My family", "Loving family", "Warm nest", "Sunflower"];
-
-  const handleContinue = async () => {
-    if (!familyName.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập tên gia đình");
-      return;
-    }
-
-    try {
-      const familyData = await createFamily(familyName);
-      navigation.navigate('InviteMembers', { 
-          inviteCode: familyData.inviteCode 
-      });
-    } catch (err: any) {
-      Alert.alert("Thất bại", err.message);
-    }
-  };
+  const {
+    familyName,
+    setFamilyName,
+    loading,
+    suggestions,
+    handleContinue,
+  } = useCreateFamily();
 
   return (
     <SafeAreaView style={styles.container}>

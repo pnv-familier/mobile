@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppStackParamList } from '../../../navigation/types';
+import { FamilyParamsList } from '../types';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'FamilyStatus'>;
+type Props = NativeStackScreenProps<FamilyParamsList, 'FamilyStatus'>;
 
 export default function FamilyStatusScreen({ navigation }: Props) {
   return (

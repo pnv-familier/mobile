@@ -34,7 +34,6 @@ export function useFamilyAction() {
         setLoading(true);
         try {
             const response = await createFamilyRequest(name);
-            // Giả sử API trả về cấu trúc: { data: { inviteCode: "..." }, message: "..." }
             return response.data; 
         } catch (err: any) {
             console.error("Hook Error:", err.message);

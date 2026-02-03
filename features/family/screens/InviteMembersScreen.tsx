@@ -6,43 +6,18 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
-  Share,
-  Alert,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useInviteMembers } from '../hooks/useInviteMembers';
 
 export default function InviteMembersScreen({ route }: any) {
   const { inviteCode } = route.params || { inviteCode: 'FAM-XXXX-0000' };
-  const navigation = useNavigation<any>();
-
-  const onShare = async () => {
-    try {
-      await Share.share({
-        message: `Join my family on Familier! 👨‍👩‍👧‍👦\n\nInvite code: ${inviteCode}`,
-      });
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
-  const onShowCode = () => {
-    Alert.alert(
-      'Family Invite Code',
-      inviteCode,
-      [{ text: 'OK' }],
-      { cancelable: true }
-    );
-  };
-
-  const handleFinish = () => {
-   navigation.navigate("MainTabs");
-  };
+  const { onShare, onShowCode, handleFinish, goBack } = useInviteMembers(inviteCode);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={goBack}>
           <Ionicons name="chevron-back" size={28} color="#D48141" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Invite members</Text>
