@@ -43,9 +43,6 @@ export default function ViewListFamilyScreen({
     fetchMyFamily();
   }, []);
 
-  console.log('Family data:', familyData);
-
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.navHeader}>
@@ -145,8 +142,6 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingBottom: 10,
     backgroundColor: '#FFF',
-
-
   },
 
 
@@ -162,12 +157,10 @@ const styles = StyleSheet.create({
     marginVertical: 30,
   },
 
-
   avatarContainer: {
     position: 'relative',
     marginBottom: 20,
   },
-
 
   mainAvatar: {
     width: 140,
@@ -179,7 +172,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 5,
   },
-
 
   familyAvatar: {
     width: '100%',
