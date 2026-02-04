@@ -8,6 +8,7 @@ export type FamilyParamsList = {
   FamilyStatus: undefined,
   CreateFamily: undefined,
   InviteMembers: undefined,
+  JoinFamily: undefined,
   Root: undefined
 }
 
