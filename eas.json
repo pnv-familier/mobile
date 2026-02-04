@@ -12,11 +12,17 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true
     }
+  },
+  "updates": {
+    "enabled": true,
+    "checkOnLaunch": "ALWAYS",
+    "fallbackToCacheTimeout": 0
   },
   "submit": {
     "production": {}

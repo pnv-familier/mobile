@@ -13,6 +13,9 @@ export default function CreateFamilyScreen({ navigation }: any) {
     loading,
     suggestions,
     handleContinue,
+    validationError,
+    isFormValid,
+    handleInputFocus
   } = useCreateFamily();
 
   return (
@@ -40,7 +43,7 @@ export default function CreateFamilyScreen({ navigation }: any) {
         <Text style={styles.mainTitle}>Name the family</Text>
         <Text style={styles.instructionText}>Choose a special name for your family</Text>
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, validationError ? styles.inputErrorBorder : null]}>
           <MaterialCommunityIcons name="home-outline" size={24} color="#D48141" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
@@ -48,9 +51,13 @@ export default function CreateFamilyScreen({ navigation }: any) {
             placeholderTextColor="#E0C3A5"
             value={familyName}
             onChangeText={setFamilyName}
+            onFocus={handleInputFocus}
           />
         </View>
-
+        {validationError ? (
+          <Text style={{ color: 'red'}}>{validationError}</Text>
+        ) : null}
+  
         <View style={styles.suggestSection}>
           <Text style={styles.suggestLabel}>Suggest:</Text>
           <View style={styles.chipContainer}>
@@ -65,9 +72,9 @@ export default function CreateFamilyScreen({ navigation }: any) {
 
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={[styles.continueButton, loading && { opacity: 0.7 }]} 
+          style={[styles.continueButton, loading && { opacity: 0.7 }, !isFormValid && { opacity: 0.7 }]} 
           onPress={handleContinue}
-          disabled={loading}
+          disabled={loading || !isFormValid}
         >
           {loading ? (
             <ActivityIndicator color="white" />
@@ -162,7 +169,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     height: 55,
     width: '100%',
-    marginBottom: 20,
   },
   inputIcon: {
     marginRight: 10,
@@ -174,6 +180,7 @@ const styles = StyleSheet.create({
   },
   suggestSection: {
     width: '100%',
+    marginTop: 20,
   },
   suggestLabel: {
     color: '#D48141',
@@ -212,5 +219,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  inputErrorBorder: {
+    borderColor: 'red',
+    borderWidth: 1,
   },
 });
