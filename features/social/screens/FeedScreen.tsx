@@ -41,7 +41,7 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           </View>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('FamilyDetails')}
+            onPress={() => navigation.navigate('ViewListFamily')}
           >
             <Text style={styles.xemText}>Xem</Text>
           </TouchableOpacity>

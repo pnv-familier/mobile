@@ -23,6 +23,11 @@ export const joinFamily = async (inviteCode: string, nickname: string): Promise<
 }
 
 export const getMyFamily = async (): Promise<MyFamilyResponse> => {
-  const response = await apiClient.get<MyFamilyResponse>('/api/v1/families/me')
-  return response.data
+  const response = await apiClient.get('/api/v1/families/me')
+  return response.data.data
+}
+
+export const getFamilyMembers = async () => {
+  const response = await apiClient.get('/api/v1/families/members')
+  return response.data.data
 }
