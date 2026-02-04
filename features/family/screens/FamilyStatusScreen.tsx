@@ -49,7 +49,7 @@ export default function FamilyStatusScreen({ navigation }: Props) {
 
         <TouchableOpacity 
           style={styles.card}
-          onPress={() => navigation.navigate('InviteMembers')}
+          onPress={() => navigation.navigate('JoinFamily')}
         >
           <View style={styles.iconBox}>
             <Ionicons name="people-outline" size={32} color="#D48141" />

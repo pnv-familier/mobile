@@ -3,6 +3,7 @@ import { FamilyParamsList } from "./types";
 import FamilyStatusScreen from "./screens/FamilyStatusScreen";
 import CreateFamilyScreen from "./screens/CreateFamilyScreen";
 import InviteMembersScreen from "./screens/InviteMembersScreen";
+import JoinFamilyScreen from "./screens/JoinFamilyScreen";
 
 const Stack = createNativeStackNavigator<FamilyParamsList>()
 
@@ -21,6 +22,10 @@ export default function FamilyNavigator() {
             <Stack.Screen
                 name="InviteMembers"
                 component={InviteMembersScreen}
+            />
+            <Stack.Screen
+                name="JoinFamily"
+                component={JoinFamilyScreen}
             />
         </Stack.Navigator>
     )
