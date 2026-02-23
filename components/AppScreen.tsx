@@ -1,5 +1,11 @@
 import React from 'react'
-import { SafeAreaView, StyleSheet, ViewStyle } from 'react-native'
+import {
+    SafeAreaView,
+    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    ViewStyle,
+} from 'react-native'
 
 type Props = {
     children: React.ReactNode
@@ -7,13 +13,24 @@ type Props = {
 }
 
 export default function AppScreen({ children, style }: Props) {
-    return <SafeAreaView style={[styles.container, style]}>{children}</SafeAreaView>
+    return (
+        <SafeAreaView style={styles.safe}>
+            <KeyboardAvoidingView
+                style={[styles.container, style]}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                {children}
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    )
 }
 
 const styles = StyleSheet.create({
+    safe: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
     container: {
         flex: 1,
-        padding: 16,
-        backgroundColor: '#fff',
     },
 })
