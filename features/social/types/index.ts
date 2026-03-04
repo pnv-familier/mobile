@@ -7,6 +7,7 @@ export interface Post {
   author_name: string;
   author_avatar: string;
   images: PostImage[];
+  videos: string[];
   reaction_count: number;
   comment_count: number;
   has_more?: boolean;

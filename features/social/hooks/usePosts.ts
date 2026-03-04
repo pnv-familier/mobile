@@ -18,10 +18,9 @@ export const usePosts = () => {
       
       const response = await getFeed();
       
-      // Transform API response to match Post interface
       const transformedPosts: Post[] = response.data.posts.map((post, index) => ({
         post_id: post.postId,
-        family_id: 0, // Not provided by API
+        family_id: 0,
         user_id: post.author.userId,
         content: post.content,
         created_at: post.createdAt,
@@ -33,6 +32,7 @@ export const usePosts = () => {
           image_url: url,
           order_index: idx
         })),
+        videos: post.videos || [],
         reaction_count: post.reactionCount,
         comment_count: post.commentCount,
         has_more: post.hasMore

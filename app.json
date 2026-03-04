@@ -32,7 +32,13 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Familier to access your photos"
+        }
+      ]
     ],
     "extra": {
       "router": {},

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator } from 'react-native';
-import { Home, Bell, User, Menu, Users, ChevronRight, Plus, X, Image as ImageIcon, Video } from 'lucide-react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Home, Bell, User, Menu, Users, ChevronRight, Plus, X, Image as ImageIcon, Video as VideoIcon, MoreVertical, Edit2, Trash2 } from 'lucide-react-native';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { useLogout } from '../../auth/hooks/useLogout';
 import { useAuthStore } from '../../auth/store/auth.store';
 import AppButton from '../../../components/AppButton';
@@ -9,6 +11,7 @@ import { useCreatePost } from '../hooks/useCreatePost';
 import { useFamilyMembers } from '../../family/hooks/useFamilyMembers';
 import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
+import { uploadImages, uploadVideo } from '../services/post.service';
 
 
 const PRIMARY_COLOR = '#FDF2E3';
@@ -19,22 +22,159 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
   const [showOptions, setShowOptions] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState('');
+  const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
   const { logout } = useLogout();
   const { data: user } = useAuthStore();
   const { posts, loading, error, refetch } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
 
+  const handleSelectImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow access to photos');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        allowsMultipleSelection: true,
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        const uris = result.assets.map(asset => asset.uri);
+        setSelectedMedia(uris);
+        setMediaType('image');
+        setCreateError(null);
+      }
+    } catch (error) {
+      setCreateError('Failed to pick image');
+    }
+  };
+
+  const handleSelectVideo = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow access to photos');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['videos'],
+        allowsEditing: false,
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedMedia([result.assets[0].uri]);
+        setMediaType('video');
+        setCreateError(null);
+      }
+    } catch (error) {
+      setCreateError('Failed to pick video');
+    }
+  };
+
+  const handleRemoveMedia = (index?: number) => {
+    if (index !== undefined) {
+      setSelectedMedia(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setSelectedMedia([]);
+      setMediaType(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (postContent.trim() || selectedMedia.length > 0) {
+      Alert.alert(
+        'Discard post?',
+        'Are you sure you want to discard this post?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Discard', 
+            style: 'destructive',
+            onPress: () => {
+              setPostContent('');
+              setSelectedMedia([]);
+              setMediaType(null);
+              setCreateError(null);
+              setShowCreatePost(false);
+            }
+          }
+        ]
+      );
+    } else {
+      setShowCreatePost(false);
+    }
+  };
+
   const handleCreatePost = async () => {
-    if (!postContent.trim()) return;
+    if (!postContent.trim() && selectedMedia.length === 0) return;
+    
+    setShowCreatePost(false);
+    setIsPosting(true);
     
     try {
-      await createNewPost(postContent);
+      setCreateError(null);
+      let imageUrls: string[] = [];
+      
+      if (selectedMedia.length > 0) {
+        if (mediaType === 'video') {
+          const videoFile = {
+            uri: selectedMedia[0],
+            type: 'video/mp4',
+            fileName: 'video.mp4',
+          };
+          try {
+            const uploadResult = await uploadVideo(videoFile);
+            imageUrls = [uploadResult.data];
+          } catch (uploadErr) {
+            throw new Error('Failed to upload video. Please try a smaller video.');
+          }
+        } else {
+          const localFiles = selectedMedia.filter(uri => !uri.startsWith('http'));
+          const remoteUrls = selectedMedia.filter(uri => uri.startsWith('http'));
+          
+          if (localFiles.length > 0) {
+            const files = localFiles.map(uri => ({
+              uri,
+              type: 'image/jpeg',
+              fileName: 'image.jpg',
+            }));
+            const uploadResult = await uploadImages(files);
+            imageUrls = [...remoteUrls, ...uploadResult.data];
+          } else {
+            imageUrls = remoteUrls;
+          }
+        }
+      }
+      
+      const finalContent = postContent.trim() || ' ';
+      let videoUrls: string[] = [];
+      if (mediaType === 'video') {
+        videoUrls = imageUrls;
+        imageUrls = [];
+      }
+      await createNewPost(finalContent, imageUrls, videoUrls);
       setPostContent('');
-      setShowCreatePost(false);
+      setSelectedMedia([]);
+      setMediaType(null);
       refetch();
-    } catch (err) {
-      console.error('Failed to create post:', err);
+    } catch (err: any) {
+      const errorMsg = err?.message || err?.response?.data?.message || 'Failed to create post. Please try again.';
+      setIsPosting(false);
+      Alert.alert('Error', errorMsg);
+      return;
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -91,9 +231,10 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           </View>
         )}
 
-        {loading ? (
+        {loading || isPosting ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={ACCENT_COLOR} />
+            {isPosting && <Text style={styles.loadingText}>Posting...</Text>}
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
@@ -123,7 +264,7 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
             </TouchableOpacity>
           </View>
         ) : (
-          posts.map((post) => <PostCard key={post.post_id} post={post} />)
+          posts.map((post) => <PostCard key={post.post_id} post={post} currentUserId={user?.id} onDelete={refetch} onUpdate={refetch} />)
         )}
       </ScrollView>
 
@@ -132,62 +273,96 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
         visible={showCreatePost}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowCreatePost(false)}
+        onRequestClose={handleCloseModal}
       >
-        <TouchableWithoutFeedback onPress={() => setShowCreatePost(false)}>
+        <TouchableWithoutFeedback onPress={handleCloseModal}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.createPostModalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Create a post</Text>
-                  <TouchableOpacity onPress={() => setShowCreatePost(false)}>
-                    <X size={24} color="#333" />
-                  </TouchableOpacity>
-                </View>
-               
-                <View style={styles.modalBody}>
-                  <View style={styles.avatarContainer}>
-                    <Image
-                      source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
-                      style={styles.modalAvatar}
-                      defaultSource={require('../../../assets/icon.png')}
+                <>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>Create a post</Text>
+                      <TouchableOpacity onPress={handleCloseModal}>
+                        <X size={24} color="#333" />
+                      </TouchableOpacity>
+                    </View>
+                   
+                    <View style={styles.modalBody}>
+                      <View style={styles.avatarContainer}>
+                        <Image
+                          source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
+                          style={styles.modalAvatar}
+                          defaultSource={require('../../../assets/icon.png')}
+                        />
+                      </View>
+                      <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
+                    </View>
+
+
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="What's on your mind?"
+                      placeholderTextColor="#999"
+                      multiline
+                      value={postContent}
+                      onChangeText={setPostContent}
                     />
-                  </View>
-                  <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
-                </View>
 
+                    {selectedMedia.length > 0 && (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScrollContainer}>
+                        {selectedMedia.map((uri, index) => (
+                          <View key={index} style={styles.mediaPreviewContainer}>
+                            {mediaType === 'video' ? (
+                              <Image 
+                                source={{ uri }} 
+                                style={styles.mediaPreview}
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <Image 
+                                source={{ uri }} 
+                                style={styles.mediaPreview}
+                                resizeMode="cover"
+                              />
+                            )}
+                            <TouchableOpacity 
+                              style={styles.removeMediaButton} 
+                              onPress={() => handleRemoveMedia(index)}
+                            >
+                              <X size={16} color="white" />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    )}
 
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="What's on your head?"
-                  placeholderTextColor="#999"
-                  multiline
-                  value={postContent}
-                  onChangeText={setPostContent}
-                />
+                    {createError && (
+                      <Text style={styles.errorMessage}>{createError}</Text>
+                    )}
 
-
-                <View style={styles.divider} />
-               
-                <View style={styles.modalFooter}>
-                  <TouchableOpacity style={styles.footerAction}>
-                    <ImageIcon size={22} color={ACCENT_COLOR} />
-                    <Text style={styles.footerActionText}>Photo</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.footerAction}>
-                    <Video size={22} color={ACCENT_COLOR} />
-                    <Text style={styles.footerActionText}>Video</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.postSubmitButton, creating && styles.postSubmitButtonDisabled]}
-                    onPress={handleCreatePost}
-                    disabled={creating || !postContent.trim()}
-                  >
-                    <Text style={styles.postSubmitButtonText}>
-                      {creating ? 'Posting...' : 'Post'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                    <View style={styles.divider} />
+                   
+                    <View style={styles.modalFooter}>
+                      <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
+                        <ImageIcon size={22} color={ACCENT_COLOR} />
+                        <Text style={styles.footerActionText}>Photo</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
+                        <VideoIcon size={22} color={ACCENT_COLOR} />
+                        <Text style={styles.footerActionText}>Video</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[
+                          styles.postSubmitButton, 
+                          (!postContent.trim() && selectedMedia.length === 0) && styles.postSubmitButtonDisabled
+                        ]}
+                        onPress={handleCreatePost}
+                        disabled={!postContent.trim() && selectedMedia.length === 0}
+                      >
+                        <Text style={styles.postSubmitButtonText}>Post</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -254,6 +429,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: ACCENT_COLOR,
+    fontWeight: '600',
   },
   errorContainer: {
     backgroundColor: '#FFF',
@@ -414,10 +595,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center', // Thay đổi để modal nằm giữa
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  // --- STYLES CHO MODAL TẠO BÀI VIẾT MỚI ---
   createPostModalContent: {
     width: '90%',
     backgroundColor: '#FFF',
@@ -451,6 +631,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#F0F0F0',
     overflow: 'hidden',
+    marginRight: 12,
   },
   modalAvatar: {
     width: 40,
@@ -461,7 +642,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalInput: {
-    height: 100,
+    height: 50,
     textAlignVertical: 'top',
     fontSize: 16,
     color: '#333',
@@ -499,7 +680,51 @@ const styles = StyleSheet.create({
     color: ACCENT_COLOR,
     fontWeight: 'bold',
   },
-  // ----------------------------------------
+  mediaScrollContainer: {
+    marginBottom: 15,
+  },
+  mediaPreviewContainer: {
+    position: 'relative',
+    marginRight: 10,
+  },
+  mediaPreview: {
+    width: 150,
+    height: 150,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+  },
+  removeMediaButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorMessage: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  uploadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  uploadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: ACCENT_COLOR,
+    marginTop: 20,
+  },
+  uploadingSubtext: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
+  },
   optionSheet: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 25,
@@ -507,7 +732,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     width: '100%',
-    marginTop: 'auto', // Để nó nằm dưới cùng
+    marginTop: 'auto',
   },
   sheetHandle: {
     width: 40,
