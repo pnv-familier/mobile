@@ -1,19 +1,32 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { Heart, MessageCircle, X } from 'lucide-react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, ScrollView, Dimensions, Alert } from 'react-native';
+import { Heart, MessageCircle, X, MoreVertical, Trash2 } from 'lucide-react-native';
 import { Post } from '../types';
 import { getDefaultAvatar } from '../utils/avatar';
+import { deletePost } from '../services/post.service';
+import { VideoPlayer } from './VideoPlayer';
 
 interface PostCardProps {
   post: Post;
+  currentUserId?: string;
+  onDelete?: () => void;
+  onUpdate?: () => void;
 }
 
 const ACCENT_COLOR = '#D4A056';
 const MAX_PREVIEW_LENGTH = 150;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IMAGE_MARGIN = 30;
+const IMAGE_GAP = 8;
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, currentUserId, onDelete, onUpdate }: PostCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const videoUrl = post.videos && post.videos.length > 0 ? post.videos[0] : null;
+
+  const isOwner = currentUserId === post.user_id;
 
   const needsExpansion = post.content.length > MAX_PREVIEW_LENGTH;
   const displayContent = expanded || !needsExpansion 
@@ -33,6 +46,28 @@ export default function PostCard({ post }: PostCardProps) {
     return `${days}d ago`;
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePost(post.post_id);
+              onDelete?.();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete post');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
@@ -47,6 +82,11 @@ export default function PostCard({ post }: PostCardProps) {
           <Text style={styles.authorName}>{post.author_name}</Text>
           <Text style={styles.timestamp}>{formatTimestamp(post.created_at)}</Text>
         </View>
+        {isOwner && (
+          <TouchableOpacity onPress={() => setShowMenu(true)} style={styles.menuButton}>
+            <MoreVertical size={20} color="#666" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <Text style={styles.postContent}>{displayContent}</Text>
@@ -57,14 +97,55 @@ export default function PostCard({ post }: PostCardProps) {
         </TouchableOpacity>
       )}
 
+      {videoUrl && (
+        <View style={styles.videoContainer}>
+          <VideoPlayer videoUrl={videoUrl} />
+        </View>
+      )}
+
       {post.images && post.images.length > 0 && (
-        <TouchableOpacity onPress={() => setFullScreenImage(post.images[0].image_url)}>
-          <Image 
-            source={{ uri: post.images[0].image_url }} 
-            style={styles.postImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
+        <View style={styles.imagesContainer}>
+          {post.images.length === 1 ? (
+            <TouchableOpacity onPress={() => setFullScreenImage(post.images[0].image_url)}>
+              <Image 
+                source={{ uri: post.images[0].image_url }} 
+                style={styles.singleImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.multiImageLayout}>
+              <TouchableOpacity 
+                style={styles.mainImageContainer} 
+                onPress={() => setFullScreenImage(post.images[0].image_url)}
+              >
+                <Image 
+                  source={{ uri: post.images[0].image_url }} 
+                  style={styles.mainImage}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+              <ScrollView 
+                style={styles.thumbnailScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {post.images.slice(1).map((img, idx) => (
+                  <TouchableOpacity 
+                    key={idx} 
+                    onPress={() => setFullScreenImage(img.image_url)}
+                    style={styles.thumbnailContainer}
+                  >
+                    <Image 
+                      source={{ uri: img.image_url }} 
+                      style={styles.thumbnailImage}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
       )}
 
       <View style={styles.postFooter}>
@@ -79,6 +160,22 @@ export default function PostCard({ post }: PostCardProps) {
           </View>
         </View>
       </View>
+
+      <Modal
+        visible={showMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <TouchableOpacity style={styles.menuOverlay} onPress={() => setShowMenu(false)} activeOpacity={1}>
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); handleDelete(); }}>
+              <Trash2 size={20} color="#FF6B6B" />
+              <Text style={[styles.menuText, { color: '#FF6B6B' }]}>Delete Post</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <Modal
         visible={fullScreenImage !== null}
@@ -134,6 +231,9 @@ const styles = StyleSheet.create({
   authorInfo: {
     flex: 1,
   },
+  menuButton: {
+    padding: 5,
+  },
   authorName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -155,11 +255,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 10,
   },
-  postImage: {
+  videoContainer: {
+    marginTop: 10,
+  },
+  imagesContainer: {
+    marginTop: 10,
+  },
+  singleImage: {
     width: '100%',
     height: 250,
     borderRadius: 10,
-    marginTop: 10,
+  },
+  multiImageLayout: {
+    flexDirection: 'row',
+    height: 250,
+    gap: 8,
+  },
+  mainImageContainer: {
+    flex: 2,
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  thumbnailScroll: {
+    flex: 1,
+  },
+  thumbnailContainer: {
+    marginBottom: 8,
+    height: 80,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
   postFooter: {
     marginTop: 12,
@@ -197,5 +327,27 @@ const styles = StyleSheet.create({
   fullScreenImage: {
     width: '100%',
     height: '100%',
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 8,
+    minWidth: 200,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 12,
+  },
+  menuText: {
+    fontSize: 16,
+    color: '#333',
   },
 });

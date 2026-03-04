@@ -5,12 +5,12 @@ export const useCreatePost = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const create = async (content: string, imageUrls: string[] = []) => {
+  const create = async (content: string, imageUrls: string[] = [], videoUrls: string[] = []) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await createPost(content, imageUrls);
+      const response = await createPost(content, imageUrls, videoUrls);
       return response.data;
     } catch (err: any) {
       console.error('Error creating post:', err);
