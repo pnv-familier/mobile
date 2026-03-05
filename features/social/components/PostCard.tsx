@@ -5,6 +5,7 @@ import { Post } from '../types';
 import { getDefaultAvatar } from '../utils/avatar';
 import { deletePost } from '../services/post.service';
 import { VideoPlayer } from './VideoPlayer';
+import { CommentSection } from './CommentSection';
 
 interface PostCardProps {
   post: Post;
@@ -25,6 +26,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const videoUrl = post.videos && post.videos.length > 0 ? post.videos[0] : null;
 
@@ -164,12 +166,22 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
             />
             <Text style={styles.statText}>{post.reaction_count}</Text>
           </TouchableOpacity>
-          <View style={styles.stat}>
+          <TouchableOpacity 
+            style={styles.stat}
+            onPress={() => setShowComments(!showComments)}
+          >
             <MessageCircle size={18} color={ACCENT_COLOR} />
             <Text style={styles.statText}>{post.comment_count}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
+
+      {showComments && (
+        <CommentSection
+          postId={post.post_id}
+          onCommentAdded={onUpdate}
+        />
+      )}
 
       <Modal
         visible={showMenu}
