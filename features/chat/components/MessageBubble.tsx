@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
 import Markdown from 'react-native-markdown-display';
+import { Flag } from 'lucide-react-native';
 import { ChatMessageDto } from '../types';
 
 interface MessageBubbleProps {
@@ -12,6 +13,13 @@ const ACCENT_COLOR = '#D4A056';
 const MessageBubble = memo(({ message }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
   
+  const handleReport = () => {
+    Alert.alert('Report Message', 'Would you like to report this AI response?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Report', onPress: () => Alert.alert('Thank you', 'Your report has been submitted.') }
+    ]);
+  };
+
   return (
     <View
       style={[
@@ -30,18 +38,25 @@ const MessageBubble = memo(({ message }: MessageBubbleProps) => {
           </Text>
         )}
       </View>
-      <Text style={[
-        styles.timestamp,
-        isAi ? styles.aiTimestamp : styles.userTimestamp
-      ]}>
-        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-      </Text>
+      <View style={styles.footer}>
+        <Text style={[
+          styles.timestamp,
+          isAi ? styles.aiTimestamp : styles.userTimestamp
+        ]}>
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+        {isAi && (
+          <TouchableOpacity onPress={handleReport} style={styles.reportButton}>
+            <Flag size={12} color="rgba(0,0,0,0.3)" />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }, (prevProps, nextProps) => {
-  // Only re-render if the ID or content changes
   return prevProps.message.id === nextProps.message.id && 
-         prevProps.message.content === nextProps.message.content;
+         prevProps.message.content === nextProps.message.content &&
+         prevProps.message.suggestions === nextProps.message.suggestions;
 });
 
 const markdownStyles: any = {
@@ -162,17 +177,27 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#FFF',
   },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
   timestamp: {
     fontSize: 10,
-    marginTop: 6,
   },
   aiTimestamp: {
     color: 'rgba(0,0,0,0.4)',
-    alignSelf: 'flex-start',
   },
   userTimestamp: {
     color: 'rgba(255,255,255,0.7)',
     alignSelf: 'flex-end',
+    width: '100%',
+    textAlign: 'right',
+  },
+  reportButton: {
+    padding: 4,
+    marginLeft: 10,
   },
 });
 

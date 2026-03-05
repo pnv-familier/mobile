@@ -200,9 +200,6 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           <Text style={styles.headerTitle}>Social Media</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
-            <MessageSquare size={24} color="#D4A056" style={styles.icon} />
-          </TouchableOpacity>
           <Bell size={24} color="#D4A056" style={styles.icon} />
           <TouchableOpacity onPress={() => setShowOptions(true)}>
             <User size={24} color="#D4A056" style={styles.icon} />

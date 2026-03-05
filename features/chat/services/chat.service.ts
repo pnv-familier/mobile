@@ -14,16 +14,38 @@ export const chatService = {
 
   getSessionHistory: async (sessionId: string) => {
     const response = await apiClient.get<any[]>(`${API_BASE}/history/${sessionId}`);
-    return response.data.map(msg => ({
-      ...msg,
-      isAi: msg.isAi === true
-    })) as ChatMessageDto[];
+    return response.data.map(msg => {
+      const isAi = msg.isAi === true;
+      let content = msg.content || '';
+      let suggestions: string[] = [];
+
+      if (isAi && content.includes('<suggestions>')) {
+        const match = content.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
+        if (match) {
+          try {
+            suggestions = JSON.parse(match[1]);
+          } catch (e) {
+            console.error("Failed to parse historical suggestions:", e);
+          }
+          // Clean the content for display
+          content = content.replace(/<suggestions>[\s\S]*?<\/suggestions>/g, '').trim();
+        }
+      }
+
+      return {
+        ...msg,
+        content,
+        isAi,
+        suggestions
+      };
+    }) as ChatMessageDto[];
   },
 
   streamChat: async (
     message: string,
     sessionId: string | null,
     onChunk: (chunk: string) => void,
+    onSuggestions: (suggestions: string[]) => void,
     onSessionId: (newSessionId: string) => void,
     onComplete: () => void,
     onError: (error: any) => void
@@ -46,10 +68,25 @@ export const chatService = {
       let lastIndex = 0;
       let buffer = '';
       let isFinished = false;
+      let fullRawText = '';
+      let lastCleanLength = 0;
 
       const finish = () => {
         if (!isFinished) {
           isFinished = true;
+          
+          const suggestionsMatch = fullRawText.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
+          if (suggestionsMatch) {
+            try {
+              const suggestions = JSON.parse(suggestionsMatch[1]);
+              if (Array.isArray(suggestions)) {
+                onSuggestions(suggestions);
+              }
+            } catch (e) {
+              console.error("Failed to parse suggestions:", e);
+            }
+          }
+          
           onComplete();
         }
       };
@@ -78,14 +115,18 @@ export const chatService = {
             }
 
             if (line === 'data:' || line === 'data: ') {
-              onChunk('\n');
-              continue;
+              fullRawText += '\n';
+            } else {
+              const content = line.replace(/^data: ?/, '');
+              fullRawText += content;
             }
 
-            const content = line.replace(/^data: ?/, '');
+            const cleanText = fullRawText.replace(/<suggestions>[\s\S]*/g, '');
+            const newCleanContent = cleanText.substring(lastCleanLength);
             
-            if (content.length > 0) {
-              onChunk(content);
+            if (newCleanContent.length > 0) {
+              onChunk(newCleanContent);
+              lastCleanLength = cleanText.length;
             }
           }
         }
@@ -97,7 +138,14 @@ export const chatService = {
               return;
             }
             const content = buffer.replace(/^data: ?/, '');
-            if (content.length > 0) onChunk(content);
+            fullRawText += content;
+            
+            const cleanText = fullRawText.replace(/<suggestions>[\s\S]*/g, '');
+            const newCleanContent = cleanText.substring(lastCleanLength);
+            if (newCleanContent.length > 0) {
+              onChunk(newCleanContent);
+              lastCleanLength = cleanText.length;
+            }
           }
           finish();
         }

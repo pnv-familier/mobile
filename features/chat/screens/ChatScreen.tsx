@@ -9,8 +9,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Alert
+  Alert,
+  FlatList
 } from 'react-native';
 import { Send, History, ChevronLeft } from 'lucide-react-native';
 import { useChatStore } from '../store/chat.store';
@@ -20,10 +20,33 @@ import MessageBubble from '../components/MessageBubble';
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
+const SuggestionChips = ({ suggestions, onSelect }: { suggestions: string[], onSelect: (s: string) => void }) => {
+  if (!suggestions || suggestions.length === 0) return null;
+  return (
+    <View style={styles.suggestionsWrapper}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        contentContainerStyle={styles.suggestionsContent}
+      >
+        {suggestions.map((suggestion, index) => (
+          <TouchableOpacity 
+            key={index} 
+            style={styles.suggestionChip} 
+            onPress={() => onSelect(suggestion)}
+          >
+            <Text style={styles.suggestionText}>{suggestion}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
 export default function ChatScreen({ navigation }: { navigation: any }) {
   const [inputText, setInputText] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   
   const { 
     messages, 
@@ -32,6 +55,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     isStreaming, 
     error, 
     clearError,
+    clearSuggestions
   } = useChatStore();
 
   useEffect(() => {
@@ -40,6 +64,22 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages, isStreaming]);
+
+  useEffect(() => {
+    if (!isLoadingMessages && messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      }, 300);
+    }
+  }, [isLoadingMessages]);
+
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
     
@@ -47,6 +87,17 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     setInputText('');
     await sendMessage(messageContent);
   };
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    setInputText(suggestion);
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.isAi && lastMessage.suggestions?.length) {
+      clearSuggestions(lastMessage.id);
+    }
+  };
+
+  const lastMessage = messages[messages.length - 1];
+  const showSuggestions = lastMessage && lastMessage.isAi && !isStreaming && lastMessage.suggestions && lastMessage.suggestions.length > 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,33 +111,42 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        ref={scrollViewRef}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <MessageBubble message={item} />}
         style={styles.messageList}
         contentContainerStyle={styles.messageListContent}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-      >
-        {messages.length === 0 && !isLoadingMessages && (
-          <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
-            <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
+        ListHeaderComponent={() => (
+          messages.length === 0 && !isLoadingMessages ? (
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
+              <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
+            </View>
+          ) : null
+        )}
+        ListFooterComponent={() => (
+          <View>
+            {isStreaming && (
+              <View style={styles.streamingIndicator}>
+                <Text style={styles.streamingText}>AI is typing...</Text>
+              </View>
+            )}
+            {showSuggestions && (
+              <SuggestionChips 
+                suggestions={lastMessage.suggestions!} 
+                onSelect={handleSelectSuggestion} 
+              />
+            )}
           </View>
         )}
-
-        {isLoadingMessages ? (
-          <ActivityIndicator size="large" color={ACCENT_COLOR} style={{ marginTop: 20 }} />
-        ) : (
-          messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))
-        )}
-        
-        {isStreaming && (
-            <View style={styles.streamingIndicator}>
-                <Text style={styles.streamingText}>AI is typing...</Text>
-            </View>
-        )}
-      </ScrollView>
+        onLayout={() => {
+          if (messages.length > 0) {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }
+        }}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -153,6 +213,7 @@ const styles = StyleSheet.create({
   messageListContent: {
     padding: 15,
     paddingBottom: 20,
+    flexGrow: 1,
   },
   welcomeContainer: {
     marginTop: 50,
@@ -179,6 +240,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     fontStyle: 'italic',
+  },
+  suggestionsWrapper: {
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  suggestionsContent: {
+    paddingHorizontal: 5,
+    gap: 10,
+    flexDirection: 'row',
+  },
+  suggestionChip: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: ACCENT_COLOR,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    marginRight: 8,
+  },
+  suggestionText: {
+    color: ACCENT_COLOR,
+    fontSize: 14,
+    fontWeight: '500',
   },
   inputContainer: {
     flexDirection: 'row',

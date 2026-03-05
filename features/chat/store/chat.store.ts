@@ -19,6 +19,8 @@ interface ChatState {
     startNewSession: () => void;
     sendMessage: (content: string) => Promise<void>;
     updateMessageContent: (id: string, chunk: string) => void;
+    updateMessageSuggestions: (id: string, suggestions: string[]) => void;
+    clearSuggestions: (messageId: string) => void;
     clearError: () => void;
 }
 
@@ -64,6 +66,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
     },
 
+    updateMessageSuggestions: (id, suggestions) => {
+        set((state) => ({
+            messages: state.messages.map((m) =>
+                m.id === id ? { ...m, suggestions } : m
+            ),
+        }));
+    },
+
+    clearSuggestions: (messageId) => {
+        set((state) => ({
+            messages: state.messages.map((m) =>
+                m.id === messageId ? { ...m, suggestions: [] } : m
+            ),
+        }));
+    },
+
     sendMessage: async (content: string) => {
         const { currentSessionId, messages } = get();
         const timestamp = new Date().toISOString();
@@ -79,7 +97,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
             id: STREAMING_ID,
             content: '',
             timestamp,
-            isAi: true
+            isAi: true,
+            suggestions: []
         };
 
         set({ 
@@ -92,6 +111,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             content,
             currentSessionId,
             (chunk) => get().updateMessageContent(STREAMING_ID, chunk),
+            (suggestions) => get().updateMessageSuggestions(STREAMING_ID, suggestions),
             (newSessionId) => {
                 if (!get().currentSessionId) {
                     set({ currentSessionId: newSessionId });

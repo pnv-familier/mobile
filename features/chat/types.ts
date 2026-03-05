@@ -10,6 +10,7 @@ export interface ChatMessageDto {
   content: string;
   timestamp: string;
   isAi: boolean;
+  suggestions?: string[];
 }
 
 export interface StreamingChatResponse {
