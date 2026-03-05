@@ -2,7 +2,6 @@ import {create} from "zustand"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isAxiosError } from "axios";
 import { User } from "../../user/type";
-import { userService } from "../../user/service/user.service";
 
 type AuthState = {
     data: User | null;
@@ -34,6 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                 return;
             }
 
+            const { userService } = require("../../user/service/user.service");
             const response = await userService.getCurrentUser();
             const userData = response.data;
 
