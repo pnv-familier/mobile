@@ -38,7 +38,17 @@
         {
           "photosPermission": "Allow Familier to access your photos"
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-video"
     ],
     "extra": {
       "router": {},
