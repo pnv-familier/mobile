@@ -13,9 +13,11 @@ interface PostResponse {
   content: string;
   createdAt: string;
   images: string[];
+  videos: string[];
   reactionCount: number;
   commentCount: number;
   hasMore: boolean;
+  userReacted: boolean;
 }
 
 interface FeedResponse {
@@ -87,5 +89,12 @@ export const updatePost = async (postId: number, content: string, imageUrls: str
     imageUrls,
     videoUrls
   });
+  return response.data;
+};
+
+export const toggleReaction = async (postId: number) => {
+  const response = await apiClient.post<SuccessResponse<{ reacted: boolean; reactionCount: number }>>(
+    `/api/v1/posts/${postId}/reactions`
+  );
   return response.data;
 };

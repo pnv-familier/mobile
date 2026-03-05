@@ -26,11 +26,23 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [reactionLoading, setReactionLoading] = useState<number | null>(null);
   const { logout } = useLogout();
   const { data: user } = useAuthStore();
-  const { posts, loading, error, refetch } = usePosts();
+  const { posts, loading, error, refetch, updatePostReaction } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
+
+  const handleReaction = async (postId: number) => {
+    setReactionLoading(postId);
+    try {
+      await updatePostReaction(postId);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to update reaction');
+    } finally {
+      setReactionLoading(null);
+    }
+  };
 
   const handleSelectImage = async () => {
     try {
@@ -264,7 +276,17 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
             </TouchableOpacity>
           </View>
         ) : (
-          posts.map((post) => <PostCard key={post.post_id} post={post} currentUserId={user?.id} onDelete={refetch} onUpdate={refetch} />)
+          posts.map((post) => (
+            <PostCard 
+              key={post.post_id} 
+              post={post} 
+              currentUserId={user?.id} 
+              onDelete={refetch} 
+              onUpdate={refetch}
+              onReaction={handleReaction}
+              reactionLoading={reactionLoading === post.post_id}
+            />
+          ))
         )}
       </ScrollView>
 

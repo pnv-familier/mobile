@@ -11,6 +11,8 @@ interface PostCardProps {
   currentUserId?: string;
   onDelete?: () => void;
   onUpdate?: () => void;
+  onReaction?: (postId: number) => void;
+  reactionLoading?: boolean;
 }
 
 const ACCENT_COLOR = '#D4A056';
@@ -19,7 +21,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_MARGIN = 30;
 const IMAGE_GAP = 8;
 
-export default function PostCard({ post, currentUserId, onDelete, onUpdate }: PostCardProps) {
+export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading }: PostCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -150,10 +152,18 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate }: Po
 
       <View style={styles.postFooter}>
         <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Heart size={18} color={ACCENT_COLOR} fill={ACCENT_COLOR} />
+          <TouchableOpacity 
+            style={styles.stat} 
+            onPress={() => onReaction?.(post.post_id)}
+            disabled={reactionLoading}
+          >
+            <Heart 
+              size={18} 
+              color={post.user_reacted ? ACCENT_COLOR : '#999'} 
+              fill={post.user_reacted ? ACCENT_COLOR : 'none'} 
+            />
             <Text style={styles.statText}>{post.reaction_count}</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.stat}>
             <MessageCircle size={18} color={ACCENT_COLOR} />
             <Text style={styles.statText}>{post.comment_count}</Text>
