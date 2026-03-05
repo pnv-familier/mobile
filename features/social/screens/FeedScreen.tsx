@@ -13,7 +13,6 @@ import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
 
-
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
@@ -29,7 +28,7 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
   const [reactionLoading, setReactionLoading] = useState<number | null>(null);
   const { logout } = useLogout();
   const { data: user } = useAuthStore();
-  const { posts, loading, error, refetch, updatePostReaction } = usePosts();
+  const { posts, loading, error, refetch, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
 
@@ -282,7 +281,7 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
               post={post} 
               currentUserId={user?.id} 
               onDelete={refetch} 
-              onUpdate={refetch}
+              onUpdate={() => incrementCommentCount(post.post_id)}
               onReaction={handleReaction}
               reactionLoading={reactionLoading === post.post_id}
             />

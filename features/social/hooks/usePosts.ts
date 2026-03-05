@@ -86,5 +86,17 @@ export const usePosts = () => {
     }
   };
 
-  return { posts, loading, error, refetch: fetchPosts, updatePostReaction };
+  const incrementCommentCount = (postId: number) => {
+    setPosts(prev => {
+      const idx = prev.findIndex(p => p.post_id === postId);
+      if (idx === -1) return prev;
+      return [
+        ...prev.slice(0, idx),
+        { ...prev[idx], comment_count: prev[idx].comment_count + 1 },
+        ...prev.slice(idx + 1),
+      ];
+    });
+  };
+
+  return { posts, loading, error, refetch: fetchPosts, updatePostReaction, incrementCommentCount };
 };
