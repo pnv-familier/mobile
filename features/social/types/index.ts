@@ -11,6 +11,7 @@ export interface Post {
   reaction_count: number;
   comment_count: number;
   has_more?: boolean;
+  user_reacted?: boolean;
 }
 
 export interface PostImage {
