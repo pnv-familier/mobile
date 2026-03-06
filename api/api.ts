@@ -62,6 +62,7 @@ apiClient.interceptors.response.use(
 
         const { response } = error;
 
+        const isLogoutRequest = originalRequest?.url?.includes("/auth/logout");
         if (response) {
             if (response.status >= 500) {
                 Alert.alert("Server Error", "The system is under maintenance. Please try again later.");
@@ -77,7 +78,9 @@ apiClient.interceptors.response.use(
             return Promise.reject(errorData);
         }
 
-        Alert.alert("Network Error", "No internet connection or server is not responding.");
+        if (!isLogoutRequest) {
+            Alert.alert("Network Error", "No internet connection or server is not responding.");
+        }
         return Promise.reject({ 
             message: "Network connection failed", 
             details: null 
