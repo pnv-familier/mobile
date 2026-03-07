@@ -27,9 +27,6 @@
       "package": "com.familier.familier",
       "googleServicesFile": "./google-services.json"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
       "expo-router",
       "@react-native-google-signin/google-signin",

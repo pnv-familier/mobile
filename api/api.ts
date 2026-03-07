@@ -12,7 +12,7 @@ export const apiClient = axios.create({
     headers: {
         "Content-Type": "application/json"
     },
-    timeout: 30000,
+    timeout: 60000,
 });
 
 apiClient.interceptors.request.use(
@@ -41,7 +41,7 @@ apiClient.interceptors.response.use(
 
                 const response = await axios.post(`${apiUrl}/api/v1/auth/refresh-token`, {}, {
                     headers: { Authorization: `Bearer ${refreshToken}` },
-                    timeout: 10000,
+                    timeout: 60000,
                 });
 
                 const { accessToken, user } = response.data.data;
