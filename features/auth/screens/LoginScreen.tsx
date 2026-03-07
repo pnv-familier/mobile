@@ -1,5 +1,6 @@
 import { useNavigation } from "@react-navigation/native"
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native"
+import Constants from "expo-constants"
 import AppScreen from "../../../components/AppScreen"
 import AppText from "../../../components/AppText"
 import AppButton from "../../../components/AppButton"
@@ -67,6 +68,16 @@ const LoginScreen = () => {
                     onPress={() => navigation.navigate("Register")}
                 >
                     Sign Up
+                </AppText>
+            </AppText>
+
+            <AppText style={styles.versionText}>
+                App Version: v{Constants.expoConfig?.version}{" "}
+                <AppText
+                    style={styles.versionLink}
+                    onPress={() => navigation.navigate("Version")}
+                >
+                    | Check Info
                 </AppText>
             </AppText>
         </AppScreen>
@@ -156,5 +167,17 @@ const styles = StyleSheet.create({
     signupLink: {
         color: "#E39A5A",
         fontWeight: "600",
+    },
+    versionText: {
+        marginTop: 30,
+        fontSize: 11,
+        color: "#888",
+        opacity: 0.7,
+    },
+    versionLink: {
+        color: "#cc701f",
+        fontWeight: "500",
+        fontSize: 12,
+        opacity: 0.2,
     },
 })
