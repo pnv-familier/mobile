@@ -158,6 +158,8 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
             style={styles.stat} 
             onPress={() => onReaction?.(post.post_id)}
             disabled={reactionLoading}
+            accessibilityLabel="btn_ReactionIcon"
+            testID="btn_ReactionIcon"
           >
             <Heart 
               size={18} 
@@ -169,6 +171,8 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
           <TouchableOpacity 
             style={styles.stat}
             onPress={() => setShowComments(!showComments)}
+            accessibilityLabel="btn_CommentIcon"
+            testID="btn_CommentIcon"
           >
             <MessageCircle size={18} color={ACCENT_COLOR} />
             <Text style={styles.statText}>{post.comment_count}</Text>
