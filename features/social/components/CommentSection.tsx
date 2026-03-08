@@ -78,6 +78,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
           maxLength={500}
         />
         <TouchableOpacity
+          accessibilityLabel="send-comment-btn"
+          testID="send-comment-btn"
           style={[
             styles.sendButton,
             (!commentText.trim() || posting) && styles.sendButtonDisabled,

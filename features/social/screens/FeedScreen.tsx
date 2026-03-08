@@ -201,7 +201,10 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
         </View>
         <View style={styles.headerIcons}>
           <Bell size={24} color="#D4A056" style={styles.icon} />
-          <TouchableOpacity onPress={() => setShowOptions(true)}>
+          <TouchableOpacity 
+            accessibilityLabel='profile-options-btn'
+            testID='profile-options-btn' 
+            onPress={() => setShowOptions(true)}>
             <User size={24} color="#D4A056" style={styles.icon} />
           </TouchableOpacity>
           <Menu size={24} color="#D4A056" />
@@ -397,7 +400,8 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
         animationType="slide"
         onRequestClose={() => setShowOptions(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setShowOptions(false)}>
+        <TouchableWithoutFeedback
+          onPress={() => setShowOptions(false)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.optionSheet}>

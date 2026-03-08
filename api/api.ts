@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { ErrorResponse } from "../types/api";
-import { saveTokens } from "../features/auth/utils/token";
+import { removeTokens, saveTokens } from "../features/auth/utils/token";
 import { useAuthStore } from "../features/auth/store/auth.store";
 
 export const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -32,7 +32,11 @@ apiClient.interceptors.response.use(
         const originalRequest = error.config as any;
 
         const isAuthRequest = originalRequest?.url?.includes("/auth");
-        if (error.response?.status === 401 && !originalRequest?._retry && !isAuthRequest) {
+        const EXCLUDED_URLS = ["/auth/login", "/auth/register", "/auth/refresh-token"];
+        const isExcluded = EXCLUDED_URLS.some(url => originalRequest?.url?.includes(url));
+
+        if (error.response?.status === 401 && !originalRequest?._retry && !isExcluded) {
+        // if (error.response?.status === 401 && !originalRequest?._retry && !isAuthRequest) {
             originalRequest._retry = true;
             
             try {
@@ -54,8 +58,8 @@ apiClient.interceptors.response.use(
 
             } catch (refreshError) {
                 await useAuthStore.getState().reset();
-                await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
-                
+                await removeTokens();
+                Alert.alert("Session Expired", "Please login again.");
                 return new Promise(() => {}); 
             }
         }
