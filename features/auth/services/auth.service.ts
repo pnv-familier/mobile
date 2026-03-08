@@ -1,6 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { apiClient } from "../../../api/api"
 import { SuccessResponse } from "../../../types/api"
 import { AuthResponse, LoginPayload, RegisterPayload } from "../type"
+import { removeTokens } from "../utils/token"
 
 export const register = async (payload: RegisterPayload): Promise<SuccessResponse<AuthResponse>> => {
     const response = await apiClient.post("/api/v1/auth/register", payload)
@@ -9,6 +11,7 @@ export const register = async (payload: RegisterPayload): Promise<SuccessRespons
 }
 
 export const loginWithGoogle = async (idToken: string): Promise<SuccessResponse<AuthResponse>> => {
+    await removeTokens();
     const response = await apiClient.post('/api/v1/auth/google', {
         idToken,
     });
@@ -16,6 +19,7 @@ export const loginWithGoogle = async (idToken: string): Promise<SuccessResponse<
 }
 
 export const login = async (payload: LoginPayload): Promise<SuccessResponse<AuthResponse>> => {
+    await removeTokens();
     const response = await apiClient.post("/api/v1/auth/login", payload)
     return response.data
 }
