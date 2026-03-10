@@ -9,6 +9,7 @@ export type FamilyParamsList = {
   CreateFamily: undefined,
   InviteMembers: undefined,
   JoinFamily: undefined,
+  CreateLoveTask: undefined,
   Root: undefined
 }
 
@@ -22,4 +23,11 @@ export interface MyFamilyResponse extends FamilyResponse {
   inviteCode: string
   role: string
   nickname: string
+}
+
+export interface FamilyMember {
+  id: number;
+  name: string;
+  role: string;
+  avatar?: string;
 }
