@@ -22,6 +22,16 @@ export const joinFamily = async (inviteCode: string, nickname: string): Promise<
   return response.data
 }
 
+export const getFamilyPreview = async (joinCode: string) => {
+  const response = await apiClient.get(`/api/v1/families/preview/${joinCode}`)
+  return response.data
+}
+
+export const joinFamilyWithRelationship = async (joinCode: string, relationship: string) => {
+  const response = await apiClient.post('/api/v1/families/join', { joinCode, relationship })
+  return response.data
+}
+
 export const getMyFamily = async (): Promise<MyFamilyResponse> => {
   const response = await apiClient.get('/api/v1/families/me')
   return response.data.data
