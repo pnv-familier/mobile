@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 import { apiClient } from "../../../api/api";
 import { ChatMessageDto, ChatSession } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -64,6 +65,35 @@ export const chatService = {
       xhr.open('GET', url.toString());
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.setRequestHeader('Accept', 'text/event-stream');
+
+      xhr.onload = () => {
+        if (xhr.status >= 400) {
+          console.error("Server Returned Error:", xhr.status, xhr.responseText);
+          Alert.alert(
+            "API Error " + xhr.status,
+            `URL: ${url.pathname}\nResponse: ${xhr.responseText.substring(0, 200)}...`
+          );
+        }
+      };
+
+      xhr.onerror = (e) => {
+        const debugMsg = `
+          Network Error Detail:
+          Status: ${xhr.status}
+          ReadyState: ${xhr.readyState}
+          Response: ${xhr.responseText || 'Empty'}
+        `;
+        console.error(debugMsg);
+
+        Alert.alert("Connection Failed", debugMsg);
+
+        onError(new Error("Network connection failed."));
+      };
+
+      xhr.ontimeout = () => {
+        Alert.alert("Timeout", "Request took too long (>60s)");
+        onError(new Error("Request timeout"));
+      };
 
       let lastIndex = 0;
       let buffer = '';
