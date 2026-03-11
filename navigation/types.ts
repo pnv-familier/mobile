@@ -19,6 +19,8 @@ export type AppStackParamList = {
 export type TabStackParamList = {
     Home: undefined
     Chat: undefined
+    Schedule: undefined
+    LoveTasks: undefined
 }
 
 export type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>
