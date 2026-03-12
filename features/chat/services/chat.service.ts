@@ -68,31 +68,22 @@ export const chatService = {
 
       xhr.onload = () => {
         if (xhr.status >= 400) {
-          console.error("Server Returned Error:", xhr.status, xhr.responseText);
-          Alert.alert(
-            "API Error " + xhr.status,
-            `URL: ${url.pathname}\nResponse: ${xhr.responseText.substring(0, 200)}...`
-          );
+          const errorDetail = `Status: ${xhr.status}, Response: ${xhr.responseText.substring(0, 100)}`;
+          console.error("Server Error:", errorDetail);
+          onError(new Error(errorDetail));
         }
       };
 
-      xhr.onerror = (e) => {
-        const debugMsg = `
-          Network Error Detail:
-          Status: ${xhr.status}
-          ReadyState: ${xhr.readyState}
-          Response: ${xhr.responseText || 'Empty'}
-        `;
-        console.error(debugMsg);
-
-        Alert.alert("Connection Failed", debugMsg);
-
-        onError(new Error("Network connection failed."));
+      xhr.onerror = () => {
+        const errorDetail = `Status: ${xhr.status}, ReadyState: ${xhr.readyState}, Response: ${xhr.responseText.substring(0, 50)}`;
+        console.error("Network Error:", errorDetail);
+        onError(new Error(errorDetail));
       };
 
       xhr.ontimeout = () => {
-        Alert.alert("Timeout", "Request took too long (>60s)");
-        onError(new Error("Request timeout"));
+        const errorDetail = "Request timeout (>60s)";
+        console.error(errorDetail);
+        onError(new Error(errorDetail));
       };
 
       let lastIndex = 0;
@@ -100,6 +91,9 @@ export const chatService = {
       let isFinished = false;
       let fullRawText = '';
       let lastCleanLength = 0;
+      let chunkCount = 0;
+      let totalChunkSize = 0;
+      const chunkLog: Array<{ size: number; preview: string }> = [];
 
       const finish = () => {
         if (!isFinished) {
@@ -116,6 +110,15 @@ export const chatService = {
               console.error("Failed to parse suggestions:", e);
             }
           }
+          
+          console.log('[STREAM_LOG]', {
+            totalChunks: chunkCount,
+            totalSize: totalChunkSize,
+            avgChunkSize: chunkCount > 0 ? Math.round(totalChunkSize / chunkCount) : 0,
+            isGradual: chunkCount > 1,
+            deliveryPattern: chunkCount === 1 ? 'BLOCK' : 'GRADUAL',
+            chunks: chunkLog
+          });
           
           onComplete();
         }
@@ -155,6 +158,12 @@ export const chatService = {
             const newCleanContent = cleanText.substring(lastCleanLength);
             
             if (newCleanContent.length > 0) {
+              chunkCount++;
+              totalChunkSize += newCleanContent.length;
+              chunkLog.push({ 
+                size: newCleanContent.length, 
+                preview: newCleanContent.substring(0, 50) 
+              });
               onChunk(newCleanContent);
               lastCleanLength = cleanText.length;
             }
@@ -173,6 +182,12 @@ export const chatService = {
             const cleanText = fullRawText.replace(/<suggestions>[\s\S]*/g, '');
             const newCleanContent = cleanText.substring(lastCleanLength);
             if (newCleanContent.length > 0) {
+              chunkCount++;
+              totalChunkSize += newCleanContent.length;
+              chunkLog.push({ 
+                size: newCleanContent.length, 
+                preview: newCleanContent.substring(0, 50) 
+              });
               onChunk(newCleanContent);
               lastCleanLength = cleanText.length;
             }
@@ -181,8 +196,9 @@ export const chatService = {
         }
       };
 
-      xhr.onerror = () => onError(new Error("Network connection failed."));
       xhr.send();
+      
+      return { abort: () => xhr.abort() };
     } catch (error) {
       onError(error);
     }

@@ -80,6 +80,14 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [isLoadingMessages]);
 
+  useEffect(() => {
+    return () => {
+      if (isStreaming) {
+        useChatStore.setState({ isStreaming: false });
+      }
+    };
+  }, []);
+
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
     

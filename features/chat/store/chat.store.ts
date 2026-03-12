@@ -115,7 +115,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             (newSessionId) => {
                 if (!get().currentSessionId) {
                     set({ currentSessionId: newSessionId });
-                    get().fetchSessions();
                 }
             },
             () => {
@@ -125,6 +124,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                         m.id === STREAMING_ID ? { ...m, id: `ai-${Date.now()}` } : m
                     )
                 }));
+                get().fetchSessions();
             },
             (error) => {
                 set((state) => ({
