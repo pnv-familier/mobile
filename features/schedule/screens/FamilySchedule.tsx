@@ -28,6 +28,7 @@ import { useEvents } from '../hooks/useEvents';
 import { FamilyEvent } from '../types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
+import { useFocusEffect } from '@react-navigation/native';
 
 const BACKGROUND_COLOR = '#FDF0D5';
 const ACCENT_COLOR = '#D4A056';
@@ -46,8 +47,16 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedDate, setSelectedDate] = useState(currentDate.getDate());
   const [selectedWeekStart, setSelectedWeekStart] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<FamilyEvent | null>(null);
+  const [showEventDetail, setShowEventDetail] = useState(false);
 
-  const { events, loading, error } = useEvents(selectedYear, selectedMonth);
+  const { events, loading, error, refetch } = useEvents(selectedYear, selectedMonth);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [selectedYear, selectedMonth])
+  );
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -94,7 +103,8 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
   };
 
   const handleEventPress = (event: FamilyEvent) => {
-    navigation.navigate('EventDetail', { event });
+    setSelectedEvent(event);
+    setShowEventDetail(true);
   };
 
   const getWeekDates = (startDate: Date) => {
@@ -425,6 +435,98 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <Modal
+        visible={showEventDetail}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEventDetail(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowEventDetail(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.eventDetailModal}>
+                <View style={styles.eventDetailHeader}>
+                  <Text style={styles.eventDetailTitle}>{selectedEvent?.title}</Text>
+                  <TouchableOpacity onPress={() => setShowEventDetail(false)}>
+                    <X size={24} color="#666" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.eventDetailContent}>
+                  <View style={styles.eventDetailRow}>
+                    <Calendar size={20} color={ACCENT_COLOR} />
+                    <View style={styles.eventDetailInfo}>
+                      <Text style={styles.eventDetailLabel}>Date</Text>
+                      <Text style={styles.eventDetailValue}>
+                        {selectedEvent && new Date(selectedEvent.startTime).toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.eventDetailRow}>
+                    <Calendar size={20} color={ACCENT_COLOR} />
+                    <View style={styles.eventDetailInfo}>
+                      <Text style={styles.eventDetailLabel}>Time</Text>
+                      <Text style={styles.eventDetailValue}>
+                        {selectedEvent && new Date(selectedEvent.startTime).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })} - {selectedEvent && new Date(selectedEvent.endTime).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {selectedEvent?.description && (
+                    <View style={styles.eventDetailRow}>
+                      <Menu size={20} color={ACCENT_COLOR} />
+                      <View style={styles.eventDetailInfo}>
+                        <Text style={styles.eventDetailLabel}>Note</Text>
+                        <Text style={styles.eventDetailValue}>{selectedEvent.description}</Text>
+                      </View>
+                    </View>
+                  )}
+
+                  <View style={styles.eventDetailRow}>
+                    <Users size={20} color={ACCENT_COLOR} />
+                    <View style={styles.eventDetailInfo}>
+                      <Text style={styles.eventDetailLabel}>Created by</Text>
+                      <View style={styles.creatorInfo}>
+                        {selectedEvent?.creator.avatarUrl ? (
+                          <Image 
+                            source={{ uri: selectedEvent.creator.avatarUrl }} 
+                            style={styles.creatorAvatar} 
+                          />
+                        ) : (
+                          <View style={styles.creatorAvatar}>
+                            <User size={16} color="#999" />
+                          </View>
+                        )}
+                        <Text style={styles.creatorName}>{selectedEvent?.creator.fullName}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.closeEventButton}
+                  onPress={() => setShowEventDetail(false)}
+                >
+                  <Text style={styles.closeEventButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -694,7 +796,83 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: '#999',
     fontWeight: '600',
-  }
+  },
+  eventDetailModal: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  eventDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  eventDetailTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: ACCENT_COLOR,
+    flex: 1,
+    marginRight: 10,
+  },
+  eventDetailContent: {
+    gap: 20,
+  },
+  eventDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  eventDetailInfo: {
+    flex: 1,
+  },
+  eventDetailLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
+  eventDetailValue: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 22,
+  },
+  creatorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  creatorAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  creatorName: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  closeEventButton: {
+    marginTop: 24,
+    backgroundColor: ACCENT_COLOR,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  closeEventButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
 });
 
 export default FamilySchedule;
