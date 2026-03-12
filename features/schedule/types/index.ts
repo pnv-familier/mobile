@@ -4,7 +4,6 @@ export interface FamilyEvent {
   description: string;
   startTime: string;
   endTime: string;
-  location: string;
   creator: {
     userId: string;
     fullName: string;
@@ -18,5 +17,5 @@ export interface CreateEventRequest {
   description: string;
   startTime: string;
   endTime: string;
-  location: string;
+  participantIds?: string[];
 }
