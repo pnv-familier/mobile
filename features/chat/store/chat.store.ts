@@ -17,7 +17,7 @@ interface ChatState {
     fetchSessions: () => Promise<void>;
     selectSession: (sessionId: string) => Promise<void>;
     startNewSession: () => void;
-    sendMessage: (content: string) => Promise<void>;
+    sendMessage: (content: string, taggedUserEmail?: string) => Promise<void>;
     updateMessageContent: (id: string, chunk: string) => void;
     updateMessageSuggestions: (id: string, suggestions: string[]) => void;
     clearSuggestions: (messageId: string) => void;
@@ -82,7 +82,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
     },
 
-    sendMessage: async (content: string) => {
+    sendMessage: async (content: string, taggedUserEmail?: string) => {
         const { currentSessionId, messages } = get();
         const timestamp = new Date().toISOString();
         
@@ -132,7 +132,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     error: error.message || 'An error occurred while streaming',
                     isStreaming: false 
                 }));
-            }
+            },
+            taggedUserEmail
         );
     },
 

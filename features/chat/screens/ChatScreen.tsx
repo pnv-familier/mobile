@@ -16,6 +16,8 @@ import { Send, History, ChevronLeft } from 'lucide-react-native';
 import { useChatStore } from '../store/chat.store';
 import ChatSidebar from '../components/ChatSidebar';
 import MessageBubble from '../components/MessageBubble';
+import MentionDropdown from '../components/MentionDropdown';
+import { FamilyMember } from '../types';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
@@ -46,6 +48,9 @@ const SuggestionChips = ({ suggestions, onSelect }: { suggestions: string[], onS
 export default function ChatScreen({ navigation }: { navigation: any }) {
   const [inputText, setInputText] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionedUser, setMentionedUser] = useState<FamilyMember | null>(null);
+  const [mentionSearchText, setMentionSearchText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   
   const { 
@@ -88,12 +93,35 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     };
   }, []);
 
+  // Detect @ mention trigger - only allow one mention per message
+  useEffect(() => {
+    const lastChar = inputText[inputText.length - 1];
+    const lastAtIndex = inputText.lastIndexOf('@');
+    const atCount = (inputText.match(/@/g) || []).length;
+    
+    if (lastChar === '@' && lastAtIndex !== -1 && atCount === 1 && !mentionedUser) {
+      setShowMentionDropdown(true);
+      setMentionSearchText('');
+    } else if (lastAtIndex !== -1 && showMentionDropdown && !mentionedUser) {
+      const textAfterAt = inputText.substring(lastAtIndex + 1);
+      if (textAfterAt.includes(' ')) {
+        setShowMentionDropdown(false);
+      } else {
+        setMentionSearchText(textAfterAt);
+      }
+    } else if (atCount > 1 || (mentionedUser && atCount > 1)) {
+      setShowMentionDropdown(false);
+    }
+  }, [inputText, mentionedUser]);
+
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
     
     const messageContent = inputText.trim();
     setInputText('');
-    await sendMessage(messageContent);
+    await sendMessage(messageContent, mentionedUser?.email);
+    setMentionedUser(null);
+    setMentionSearchText('');
   };
 
   const handleSelectSuggestion = (suggestion: string) => {
@@ -101,6 +129,18 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage && lastMessage.isAi && lastMessage.suggestions?.length) {
       clearSuggestions(lastMessage.id);
+    }
+  };
+
+  const handleMentionSelect = (member: FamilyMember) => {
+    const lastAtIndex = inputText.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const beforeMention = inputText.substring(0, lastAtIndex);
+      const afterMention = inputText.substring(inputText.length);
+      setInputText(beforeMention + `@${member.fullName} ` + afterMention);
+      setMentionedUser(member);
+      setShowMentionDropdown(false);
+      setMentionSearchText('');
     }
   };
 
@@ -161,9 +201,15 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.inputContainer}>
+          <TouchableOpacity
+            style={styles.voiceButton}
+            disabled={isStreaming}
+          >
+            <History size={20} color={isStreaming ? '#CCC' : '#D4A056'} />
+          </TouchableOpacity>
           <TextInput
             style={styles.input}
-            placeholder="Ask anything..."
+            placeholder="Ask anything... (@ to mention)"
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -182,6 +228,15 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {showMentionDropdown && (
+        <MentionDropdown
+          visible={showMentionDropdown}
+          onSelect={handleMentionSelect}
+          onClose={() => setShowMentionDropdown(false)}
+          searchText={mentionSearchText}
+        />
+      )}
 
       <ChatSidebar 
         isVisible={isSidebarVisible} 
@@ -284,6 +339,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+    gap: 10,
+  },
+  voiceButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 22,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
@@ -293,12 +357,12 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     maxHeight: 100,
-    fontSize: 16,
-    marginRight: 10,
+    fontSize: 14,
+    color: '#333',
   },
   sendButton: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
     borderRadius: 22,
     backgroundColor: ACCENT_COLOR,
     justifyContent: 'center',

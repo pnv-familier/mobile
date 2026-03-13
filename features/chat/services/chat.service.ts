@@ -1,11 +1,22 @@
 import { Alert } from "react-native";
 import { apiClient } from "../../../api/api";
-import { ChatMessageDto, ChatSession } from "../types";
+import { ChatMessageDto, ChatSession, FamilyMember } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE = "/ai";
 
 export const chatService = {
+  getFamilyMembersForMention: async (): Promise<FamilyMember[]> => {
+    try {
+      const response = await apiClient.get<{ data: { members: FamilyMember[] } }>(
+        "/api/v1/families/members-for-mention"
+      );
+      return response.data.data.members;
+    } catch (error) {
+      console.error("Failed to fetch family members for mention:", error);
+      throw error;
+    }
+  },
   getSessions: async (page = 0, size = 10) => {
     const response = await apiClient.get<ChatSession[]>(`${API_BASE}/sessions`, {
       params: { page, size },
@@ -49,7 +60,8 @@ export const chatService = {
     onSuggestions: (suggestions: string[]) => void,
     onSessionId: (newSessionId: string) => void,
     onComplete: () => void,
-    onError: (error: any) => void
+    onError: (error: any) => void,
+    taggedUserEmail?: string
   ) => {
     try {
       const baseUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -57,6 +69,9 @@ export const chatService = {
       url.searchParams.append("message", message);
       if (sessionId) {
         url.searchParams.append("sessionId", sessionId);
+      }
+      if (taggedUserEmail) {
+        url.searchParams.append("taggedUserEmail", taggedUserEmail);
       }
 
       const token = await AsyncStorage.getItem("accessToken");
