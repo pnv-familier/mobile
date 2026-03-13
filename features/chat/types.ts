@@ -17,3 +17,8 @@ export interface StreamingChatResponse {
   sessionId: string;
   chunk: string;
 }
+
+export interface FamilyMember {
+  email: string;
+  fullName: string;
+}
