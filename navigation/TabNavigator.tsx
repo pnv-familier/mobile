@@ -4,7 +4,7 @@ import SocialNavigator from '../features/social/SocialNavigator'
 import { TabStackParamList } from './types'
 import ChatNavigator from '../features/chat/ChatNavigator'
 import ScheduleNavigator from '../features/schedule/ScheduleNavigator'
-import LoveTasksScreen from '../features/family/screens/LoveTasksScreen'
+import LoveTaskNavigator from '../features/lovetask/LoveTaskNavigator'
 
 const Tab = createBottomTabNavigator<TabStackParamList>()
 
@@ -28,7 +28,7 @@ export default function TabNavigator() {
             <Tab.Screen name="Home" component={SocialNavigator} />
             <Tab.Screen name="Chat" component={ChatNavigator} />
             <Tab.Screen name="Schedule" component={ScheduleNavigator} />
-            <Tab.Screen name="LoveTasks" component={LoveTasksScreen} />
+            <Tab.Screen name="LoveTasks" component={LoveTaskNavigator} />
         </Tab.Navigator>
     )
 }
