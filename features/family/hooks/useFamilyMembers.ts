@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getFamilyMembers } from '../service/family.service';
+import { FamilyMember } from '../types';
 
 export const useFamilyMembers = () => {
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState<FamilyMember[]>([]);
   const [familyCreatedAt, setFamilyCreatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

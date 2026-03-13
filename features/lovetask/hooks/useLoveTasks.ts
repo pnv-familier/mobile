@@ -18,14 +18,21 @@ export const useLoveTasks = (tabType: 'received' | 'created') => {
         ? await loveTaskService.getReceivedTasks()
         : await loveTaskService.getCreatedTasks();
       
-      setTasks(response.data.tasks);
-      setReceivedCount(response.data.receivedCount);
-      setCreatedCount(response.data.createdCount);
+      const tasksArray = response.data || [];
+      setTasks(tasksArray);
+      
+      // Count tasks by type
+      const allReceivedResponse = await loveTaskService.getReceivedTasks();
+      const allCreatedResponse = await loveTaskService.getCreatedTasks();
+      
+      setReceivedCount(allReceivedResponse.data?.length || 0);
+      setCreatedCount(allCreatedResponse.data?.length || 0);
     } catch (err: any) {
-      console.error('Love Task Error:', err);
-      console.error('Error response:', err?.response?.data);
       const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load tasks';
       setError(errorMessage);
+      setTasks([]);
+      setReceivedCount(0);
+      setCreatedCount(0);
     } finally {
       setLoading(false);
     }

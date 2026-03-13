@@ -23,8 +23,9 @@ const ACCENT_COLOR = '#D4A056';
 interface CreatePostModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (content: string, imageUrls: string[]) => void;
   user: any;
+  prefilledContent?: string;
 }
 
 export const CreatePostModal: React.FC<CreatePostModalProps> = ({
@@ -32,16 +33,23 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onClose,
   onSuccess,
   user,
+  prefilledContent,
 }) => {
-  const [postContent, setPostContent] = useState('');
+  const [postContent, setPostContent] = useState(prefilledContent || '');
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [createError, setCreateError] = useState('');
 
+  React.useEffect(() => {
+    if (visible && prefilledContent) {
+      setPostContent(prefilledContent);
+    }
+  }, [visible, prefilledContent]);
+
   const handleClose = () => {
     if (!isPosting) {
-      setPostContent('');
+      setPostContent(prefilledContent || '');
       setSelectedMedia([]);
       setMediaType(null);
       setCreateError('');
@@ -109,7 +117,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       setPostContent('');
       setSelectedMedia([]);
       setMediaType(null);
-      onSuccess();
+      onSuccess(finalContent, imageUrls);
       onClose();
     } catch (err: any) {
       const errorMsg = err?.response?.data?.message || 'Failed to create post. Please try again.';

@@ -13,6 +13,7 @@ export type Profile = {
 
 export interface User {
     id: string;
+    userId: string;
     email: string;
     fullName: string;
     avatarUrl?: string;

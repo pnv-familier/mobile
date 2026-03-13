@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,10 +8,15 @@ import {
   SafeAreaView,
   Image,
   ActivityIndicator,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { ChevronLeft, Bell, User, Menu, Plus, CheckCircle2, Heart } from 'lucide-react-native';
+import { ChevronLeft, Bell, User, Menu, Plus, CheckCircle2, Heart, Users, ChevronRight } from 'lucide-react-native';
 import { useLoveTasks } from '../hooks/useLoveTasks';
 import { LoveTask } from '../types';
+import { useFocusEffect } from '@react-navigation/native';
+import { useLogout } from '../../auth/hooks/useLogout';
+import AppButton from '../../../components/AppButton';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';
@@ -22,7 +27,15 @@ interface LoveTasksScreenProps {
 
 const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState<'received' | 'created'>('received');
+  const [showOptions, setShowOptions] = useState(false);
   const { tasks, receivedCount, createdCount, loading, error, refetch } = useLoveTasks(activeTab);
+  const { logout } = useLogout();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [activeTab])
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -48,17 +61,25 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronLeft color="#000" size={28} />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-          <Text style={styles.headerTitle}>Love Tasks</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <ChevronLeft size={28} color="#333" />
+          </TouchableOpacity>
+          <View style={styles.logoContainer}>
+            <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
+            <Text style={styles.headerTitle}>Love Tasks</Text>
+          </View>
         </View>
-        <View style={styles.headerIcons}>
-          <Bell color={ACCENT_COLOR} size={24} style={styles.iconGap} />
-          <User color={ACCENT_COLOR} size={24} style={styles.iconGap} />
-          <Menu color={ACCENT_COLOR} size={24} />
+        <View style={styles.headerRight}>
+          <TouchableOpacity>
+            <Bell size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowOptions(true)}>
+            <User size={24} color={ACCENT_COLOR} style={styles.headerIconGap} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Menu size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -117,7 +138,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
                     <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}> 
                       {task.status === 'COMPLETED' && (
-                        <CheckCircle2 size={14} color={statusColors.text} style={{ marginRight: 4 }} />
+                        <CheckCircle2 size={14} color={statusColors.text} style={styles.statusIcon} />
                       )}
                       <Text style={[styles.statusText, { color: statusColors.text }]}>
                         {task.status.charAt(0) + task.status.slice(1).toLowerCase()}
@@ -126,8 +147,8 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
                   </View>
 
                   <View style={styles.taskBody}>
-                    {task.fromAvatar ? (
-                      <Image source={{ uri: task.fromAvatar }} style={styles.avatar} />
+                    {task.sender.avatarUrl ? (
+                      <Image source={{ uri: task.sender.avatarUrl }} style={styles.avatar} />
                     ) : (
                       <View style={styles.avatarPlaceholder}>
                         <User size={20} color="#999" />
@@ -135,7 +156,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
                     )}
                     <View style={styles.taskMainContent}>
                       <Text style={styles.description} numberOfLines={1}>{task.description}</Text>
-                      <Text style={styles.fromText}>From: {task.fromName}</Text>
+                      <Text style={styles.fromText}>From: {task.sender.fullName}</Text>
                     </View>
                   </View>
 
@@ -167,6 +188,46 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
       <TouchableOpacity style={styles.fab} onPress={handleCreateTask}>
         <Plus color="white" size={32} />
       </TouchableOpacity>
+
+      <Modal
+        visible={showOptions}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowOptions(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowOptions(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.optionSheet}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>Family Options</Text>
+
+                <TouchableOpacity
+                  style={styles.optionItem}
+                  onPress={() => {
+                    setShowOptions(false);
+                    navigation.navigate('ViewListFamily');
+                  }}
+                >
+                  <View style={styles.optionIconContainer}>
+                    <Users size={20} color={ACCENT_COLOR} />
+                  </View>
+                  <Text style={styles.optionText}>View Member List</Text>
+                  <ChevronRight size={20} color="#CCC" />
+                </TouchableOpacity>
+                <AppButton title="Logout" onPress={logout} />
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowOptions(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -175,16 +236,18 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 35,
+    paddingBottom: 15,
   },
-  headerTitleContainer: { flexDirection: 'row', alignItems: 'center' },
-  logoIcon: { width: 40, height: 40, marginRight: 8 },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#4E342E' },
-  headerIcons: { flexDirection: 'row' },
-  iconGap: { marginRight: 12 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 1 },
+  logoIcon: { width: 40, height: 40 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  headerIconGap: { marginHorizontal: 15 },
   container: { padding: 16, paddingBottom: 100 },
   bannerCard: {
     backgroundColor: '#FFF',
@@ -198,7 +261,7 @@ const styles = StyleSheet.create({
   bannerTextContainer: { marginLeft: 12 },
   bannerTitle: { fontSize: 18, color: ACCENT_COLOR, fontWeight: '600' },
   bannerSubTitle: { fontSize: 13, color: ACCENT_COLOR, opacity: 0.8 },
-  tabContainer: { flexDirection: 'row', gap: 10 },
+  tabContainer: { flexDirection: 'row' },
   tabButton: {
     flex: 1,
     paddingVertical: 10,
@@ -206,6 +269,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: ACCENT_COLOR,
     alignItems: 'center',
+    marginHorizontal: 5,
   },
   tabActive: { backgroundColor: ACCENT_COLOR },
   tabText: { color: ACCENT_COLOR, fontWeight: 'bold' },
@@ -246,6 +310,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  statusIcon: { marginRight: 4 },
   statusText: { fontSize: 12, fontWeight: 'bold' },
   taskBody: { flexDirection: 'row', alignItems: 'flex-start' },
   avatar: { width: 45, height: 45, borderRadius: 22.5, marginRight: 12 },
@@ -268,9 +333,8 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 10,
     marginTop: 10,
-    gap: 8
   },
-  loveMessageText: { fontSize: 12, color: ACCENT_COLOR, flex: 1, fontStyle: 'italic' },
+  loveMessageText: { fontSize: 12, color: ACCENT_COLOR, flex: 1, fontStyle: 'italic', marginLeft: 8 },
   emptyContainer: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -321,7 +385,66 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  optionSheet: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    padding: 20,
+    paddingBottom: 40,
+    width: '100%',
+    marginTop: 'auto',
+  },
+  sheetHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#EEE',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 15,
+  },
+  sheetTitle: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '600',
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#FDF2E3',
+    borderRadius: 15,
+    marginBottom: 15,
+  },
+  optionIconContainer: {
+    padding: 8,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  optionText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  cancelButton: {
+    marginTop: 15,
+    padding: 15,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#999',
+    fontWeight: '600',
+  },
 });
 
 export default LoveTasksScreen;
