@@ -47,6 +47,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation }) => 
   const [endTimeText, setEndTimeText] = useState('1:30');
   const [startAmPm, setStartAmPm] = useState('AM');
   const [endAmPm, setEndAmPm] = useState('PM');
+  const [showInvalidCharWarning, setShowInvalidCharWarning] = useState(false);
 
   const [tempDate, setTempDate] = useState({ day: 1, month: 1, year: 2024 });
 
@@ -259,9 +260,20 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation }) => 
           style={styles.input}
           placeholder="Event name*"
           value={eventName}
-          onChangeText={setEventName}
+          onChangeText={(text) => {
+            const hasInvalidChars = /[^a-zA-Z\s]/.test(text);
+            if (hasInvalidChars) {
+              setShowInvalidCharWarning(true);
+              setTimeout(() => setShowInvalidCharWarning(false), 2000);
+            }
+            const filtered = text.replace(/[^a-zA-Z\s]/g, '');
+            setEventName(filtered);
+          }}
           editable={!loading}
         />
+        {showInvalidCharWarning && (
+          <Text style={styles.warningText}>Only letters and spaces are allowed</Text>
+        )}
 
         <Text style={styles.label}>Date</Text>
         <TouchableOpacity 
@@ -778,6 +790,12 @@ const styles = StyleSheet.create({
   },
   pickerButtonTextConfirm: {
     color: '#FFF',
+  },
+  warningText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
 
