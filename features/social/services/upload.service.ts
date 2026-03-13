@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient } from '../../../api/api';
 
 export const uploadImage = async (uri: string): Promise<string | null> => {
   try {

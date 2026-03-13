@@ -14,8 +14,8 @@ import {
 import { X, Image as ImageIcon, Video as VideoIcon } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import * as ImagePicker from 'expo-image-picker';
-import { uploadImage, uploadVideo } from '../../../api/upload';
-import { createNewPost } from '../../../api/post';
+import { uploadImage, uploadVideo } from '../services/upload.service';
+import { createPost } from '../services/post.service';
 import { getDefaultAvatar } from '../../../utils/avatar';
 
 const ACCENT_COLOR = '#D4A056';
@@ -112,7 +112,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       }
 
       const finalContent = postContent.trim() || ' ';
-      await createNewPost(finalContent, imageUrls, videoUrls);
+      await createPost(finalContent, imageUrls, videoUrls);
       
       setPostContent('');
       setSelectedMedia([]);
