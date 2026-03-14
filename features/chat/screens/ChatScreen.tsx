@@ -161,57 +161,60 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ChevronLeft size={24} color={ACCENT_COLOR} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Family Assistant</Text>
-        <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
-          <History size={24} color={ACCENT_COLOR} />
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MessageBubble message={item} />}
-        style={styles.messageList}
-        contentContainerStyle={styles.messageListContent}
-        ListHeaderComponent={() => (
-          messages.length === 0 && !isLoadingMessages ? (
-            <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
-              <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
-            </View>
-          ) : null
-        )}
-        ListFooterComponent={() => (
-          <View>
-            {isStreaming && (
-              <View style={styles.streamingIndicator}>
-                <Text style={styles.streamingText}>AI is typing...</Text>
-              </View>
-            )}
-            {showSuggestions && (
-              <SuggestionChips 
-                suggestions={lastMessage.suggestions!} 
-                onSelect={handleSelectSuggestion} 
-              />
-            )}
-          </View>
-        )}
-        onLayout={() => {
-          if (messages.length > 0) {
-            flatListRef.current?.scrollToEnd({ animated: false });
-          }
-        }}
-      />
-
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={{ flex: 1 }}
       >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ChevronLeft size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>AI Family Assistant</Text>
+          <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
+            <History size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
+        </View>
+
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <MessageBubble message={item} />}
+          style={styles.messageList}
+          contentContainerStyle={styles.messageListContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={() => (
+            messages.length === 0 && !isLoadingMessages ? (
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
+                <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
+              </View>
+            ) : null
+          )}
+          ListFooterComponent={() => (
+            <View>
+              {isStreaming && (
+                <View style={styles.streamingIndicator}>
+                  <Text style={styles.streamingText}>AI is typing...</Text>
+                </View>
+              )}
+              {showSuggestions && (
+                <SuggestionChips 
+                  suggestions={lastMessage.suggestions!} 
+                  onSelect={handleSelectSuggestion} 
+                />
+              )}
+            </View>
+          )}
+          onLayout={() => {
+            if (messages.length > 0) {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }
+          }}
+        />
+
         <View style={styles.inputContainer}>
           <TouchableOpacity
             style={styles.voiceButton}
