@@ -12,7 +12,7 @@ import {
   Alert,
   FlatList
 } from 'react-native';
-import { Send, History, ChevronLeft } from 'lucide-react-native';
+import { Send, History, ChevronLeft, Mic } from 'lucide-react-native';
 import { useChatStore } from '../store/chat.store';
 import ChatSidebar from '../components/ChatSidebar';
 import MessageBubble from '../components/MessageBubble';
@@ -62,6 +62,18 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     clearError,
     clearSuggestions
   } = useChatStore();
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      useChatStore.setState({
+        currentSessionId: null,
+        messages: [],
+        error: null
+      });
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     if (error) {
@@ -205,7 +217,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
             style={styles.voiceButton}
             disabled={isStreaming}
           >
-            <History size={20} color={isStreaming ? '#CCC' : '#D4A056'} />
+            <Mic size={20} color={isStreaming ? '#CCC' : '#D4A056'} />
           </TouchableOpacity>
           <TextInput
             style={styles.input}

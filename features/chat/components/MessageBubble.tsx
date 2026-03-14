@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react
 import Markdown from 'react-native-markdown-display';
 import { Flag } from 'lucide-react-native';
 import { ChatMessageDto } from '../types';
+import { formatMessageTime } from '../../../utils/dateFormatter';
 
 interface MessageBubbleProps {
   message: ChatMessageDto;
@@ -43,7 +44,7 @@ const MessageBubble = memo(({ message }: MessageBubbleProps) => {
           styles.timestamp,
           isAi ? styles.aiTimestamp : styles.userTimestamp
         ]}>
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {formatMessageTime(message.timestamp)}
         </Text>
         {isAi && (
           <TouchableOpacity onPress={handleReport} style={styles.reportButton}>

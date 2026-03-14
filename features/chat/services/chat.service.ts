@@ -1,5 +1,5 @@
 import { Alert } from "react-native";
-import { apiClient } from "../../../api/api";
+import { apiClient, apiUrl } from "../../../api/api";
 import { ChatMessageDto, ChatSession, FamilyMember } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -39,7 +39,6 @@ export const chatService = {
           } catch (e) {
             console.error("Failed to parse historical suggestions:", e);
           }
-          // Clean the content for display
           content = content.replace(/<suggestions>[\s\S]*?<\/suggestions>/g, '').trim();
         }
       }
@@ -48,7 +47,8 @@ export const chatService = {
         ...msg,
         content,
         isAi,
-        suggestions
+        suggestions,
+        timestamp: msg.timestamp // ISO-8601 format from backend
       };
     }) as ChatMessageDto[];
   },
@@ -64,7 +64,7 @@ export const chatService = {
     taggedUserEmail?: string
   ) => {
     try {
-      const baseUrl = process.env.EXPO_PUBLIC_API_URL;
+      const baseUrl = apiUrl;
       const url = new URL(`${baseUrl}${API_BASE}/chat`);
       url.searchParams.append("message", message);
       if (sessionId) {
