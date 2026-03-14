@@ -188,7 +188,14 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation }) => 
     
     const combined = new Date(date);
     combined.setHours(hour24, minutes, 0, 0);
-    return combined.toISOString();
+    
+    // Send as local datetime string to avoid UTC offset issues
+    const yyyy = combined.getFullYear();
+    const MM = String(combined.getMonth() + 1).padStart(2, '0');
+    const dd = String(combined.getDate()).padStart(2, '0');
+    const hh = String(combined.getHours()).padStart(2, '0');
+    const mm = String(combined.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${MM}-${dd}T${hh}:${mm}:00`;
   };
 
   const handleSave = async () => {
@@ -261,18 +268,18 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation }) => 
           placeholder="Event name*"
           value={eventName}
           onChangeText={(text) => {
-            const hasInvalidChars = /[^a-zA-Z\s]/.test(text);
+            const hasInvalidChars = /[0-9@#$%^&*()_+=\[\]{}|<>?/\\"';:,~`!]/.test(text);
             if (hasInvalidChars) {
               setShowInvalidCharWarning(true);
               setTimeout(() => setShowInvalidCharWarning(false), 2000);
             }
-            const filtered = text.replace(/[^a-zA-Z\s]/g, '');
+            const filtered = text.replace(/[0-9@#$%^&*()_+=\[\]{}|<>?/\\"';:,~`!]/g, '');
             setEventName(filtered);
           }}
           editable={!loading}
         />
         {showInvalidCharWarning && (
-          <Text style={styles.warningText}>Only letters and spaces are allowed</Text>
+          <Text style={styles.warningText}>Numbers and special characters are not allowed</Text>
         )}
 
         <Text style={styles.label}>Date</Text>

@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { scheduleService } from '../services/schedule.service';
 import { FamilyEvent } from '../types';
 
+export const parseEventDate = (time: string | number[]): Date => {
+  if (Array.isArray(time)) {
+    const [year, month, day, hour = 0, minute = 0] = time;
+    return new Date(year, month - 1, day, hour, minute);
+  }
+  return new Date(time);
+};
+
 export const useEvents = (year: number, month: number) => {
   const [events, setEvents] = useState<FamilyEvent[]>([]);
   const [loading, setLoading] = useState(true);
