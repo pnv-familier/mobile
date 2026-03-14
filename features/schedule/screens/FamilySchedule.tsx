@@ -24,7 +24,7 @@ import {
   Calendar,
   X,
 } from 'lucide-react-native';
-import { useEvents } from '../hooks/useEvents';
+import { useEvents, parseEventDate } from '../hooks/useEvents';
 import { FamilyEvent } from '../types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
@@ -77,7 +77,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
 
   const getEventsForDate = (date: number) => {
     return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+      const eventDate = parseEventDate(event.startTime);
       return eventDate.getDate() === date &&
              eventDate.getMonth() + 1 === selectedMonth &&
              eventDate.getFullYear() === selectedYear;
@@ -138,7 +138,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
 
   const getEventsForWeekDate = (date: Date) => {
     return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+      const eventDate = parseEventDate(event.startTime);
       return eventDate.toDateString() === date.toDateString();
     });
   };
@@ -155,7 +155,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
   useEffect(() => {
     if (searchQuery.trim() && filteredEvents.length > 0) {
       const firstEvent = filteredEvents[0];
-      const eventDate = new Date(firstEvent.startTime);
+      const eventDate = parseEventDate(firstEvent.startTime);
       
       setSelectedYear(eventDate.getFullYear());
       setSelectedMonth(eventDate.getMonth() + 1);
@@ -169,7 +169,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
   
   const getFilteredEventsForDate = (date: number) => {
     return filteredEvents.filter(event => {
-      const eventDate = new Date(event.startTime);
+      const eventDate = parseEventDate(event.startTime);
       return eventDate.getDate() === date &&
              eventDate.getMonth() + 1 === selectedMonth &&
              eventDate.getFullYear() === selectedYear;
@@ -178,7 +178,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
 
   const getFilteredEventsForWeekDate = (date: Date) => {
     return filteredEvents.filter(event => {
-      const eventDate = new Date(event.startTime);
+      const eventDate = parseEventDate(event.startTime);
       return eventDate.toDateString() === date.toDateString();
     });
   };
@@ -346,7 +346,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                             >
                               <View style={styles.weekEventTime}>
                                 <Text style={styles.weekEventTimeText}>
-                                  {new Date(event.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                  {parseEventDate(event.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </Text>
                               </View>
                               <Text style={styles.weekEventTitle} numberOfLines={1}>{event.title}</Text>
@@ -378,7 +378,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                   >
                     <Text style={styles.eventTitle}>{event.title}</Text>
                     <Text style={styles.eventTime}>
-                      {new Date(event.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      {parseEventDate(event.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -459,7 +459,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                     <View style={styles.eventDetailInfo}>
                       <Text style={styles.eventDetailLabel}>Date</Text>
                       <Text style={styles.eventDetailValue}>
-                        {selectedEvent && new Date(selectedEvent.startTime).toLocaleDateString('en-US', { 
+                        {selectedEvent && parseEventDate(selectedEvent.startTime).toLocaleDateString('en-US', { 
                           weekday: 'long', 
                           year: 'numeric', 
                           month: 'long', 
@@ -474,10 +474,10 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                     <View style={styles.eventDetailInfo}>
                       <Text style={styles.eventDetailLabel}>Time</Text>
                       <Text style={styles.eventDetailValue}>
-                        {selectedEvent && new Date(selectedEvent.startTime).toLocaleTimeString('en-US', { 
+                        {selectedEvent && parseEventDate(selectedEvent.startTime).toLocaleTimeString('en-US', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
-                        })} - {selectedEvent && new Date(selectedEvent.endTime).toLocaleTimeString('en-US', { 
+                        })} - {selectedEvent && parseEventDate(selectedEvent.endTime).toLocaleTimeString('en-US', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}

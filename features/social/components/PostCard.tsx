@@ -38,7 +38,18 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
     : post.content.substring(0, MAX_PREVIEW_LENGTH) + '...';
 
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
+    // Handle array format [year, month, day, hour, minute, second, nano]
+    let date: Date;
+    if (Array.isArray(timestamp)) {
+      const [year, month, day, hour = 0, minute = 0] = timestamp as any;
+      date = new Date(year, month - 1, day, hour, minute);
+    } else {
+      // Remove Z suffix to treat as local time if backend sends without timezone
+      const localTimestamp = (timestamp as string).endsWith('Z')
+        ? (timestamp as string).slice(0, -1)
+        : timestamp as string;
+      date = new Date(localTimestamp);
+    }
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
