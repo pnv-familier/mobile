@@ -26,11 +26,13 @@ const TEXT_COLOR = '#4A3428';
 
 interface CreateLoveTaskScreenProps {
   navigation: any;
+  route: any;
 }
 
-const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation, route }) => {
+  const prefill = route?.params;
+  const [title, setTitle] = useState(prefill?.prefillTitle || '');
+  const [description, setDescription] = useState(prefill?.prefillDescription || '');
   const [loveMessage, setLoveMessage] = useState('');
   const [assignedToUserId, setAssignedToUserId] = useState('');
   const [showUserList, setShowUserList] = useState(false);
