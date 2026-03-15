@@ -17,6 +17,9 @@ import { useChatStore } from '../store/chat.store';
 import ChatSidebar from '../components/ChatSidebar';
 import MessageBubble from '../components/MessageBubble';
 import MentionDropdown from '../components/MentionDropdown';
+import SuggestionCard from '../components/SuggestionCard';
+import TypingIndicator from '../components/TypingIndicator';
+import { suggestionService } from '../../suggestion';
 import { FamilyMember } from '../types';
 
 const PRIMARY_COLOR = '#FDF2E3';
@@ -51,7 +54,9 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionedUser, setMentionedUser] = useState<FamilyMember | null>(null);
   const [mentionSearchText, setMentionSearchText] = useState('');
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { 
     messages, 
@@ -60,7 +65,11 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     isStreaming, 
     error, 
     clearError,
-    clearSuggestions
+    clearSuggestions,
+    pendingSuggestion,
+    setPendingSuggestion,
+    currentSessionId,
+    lastUserMessage
   } = useChatStore();
 
   useEffect(() => {
@@ -82,17 +91,27 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   }, [error]);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
+    if (messages.length > 0 && !isUserScrolling) {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages, isStreaming]);
+    
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [messages, isStreaming, isUserScrolling]);
 
   useEffect(() => {
     if (!isLoadingMessages && messages.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
+        setIsUserScrolling(false);
       }, 300);
     }
   }, [isLoadingMessages]);
@@ -126,11 +145,23 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [inputText, mentionedUser]);
 
+  const handleScroll = (event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 50;
+    
+    if (!isAtBottom && isStreaming) {
+      setIsUserScrolling(true);
+    } else if (isAtBottom) {
+      setIsUserScrolling(false);
+    }
+  };
+
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
     
     const messageContent = inputText.trim();
     setInputText('');
+    setIsUserScrolling(false); // Reset scroll state khi gửi message mới
     await sendMessage(messageContent, mentionedUser?.email);
     setMentionedUser(null);
     setMentionSearchText('');
@@ -141,6 +172,23 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage && lastMessage.isAi && lastMessage.suggestions?.length) {
       clearSuggestions(lastMessage.id);
+    }
+  };
+
+  const handleConfirmSuggestion = async () => {
+    if (!pendingSuggestion || !currentSessionId || !lastUserMessage) return;
+    
+    try {
+      await suggestionService.confirmSuggestion(
+        pendingSuggestion,
+        currentSessionId,
+        lastUserMessage
+      );
+      setPendingSuggestion(null);
+    } catch (err) {
+      console.error('Error confirming suggestion:', err);
+      Alert.alert('Error', 'Failed to confirm suggestion');
+      setPendingSuggestion(null);
     }
   };
 
@@ -180,11 +228,18 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MessageBubble message={item} />}
+          renderItem={({ item }) => (
+            <MessageBubble 
+              message={item} 
+              isStreaming={isStreaming && item.id === 'active-ai-stream'}
+            />
+          )}
           style={styles.messageList}
           contentContainerStyle={styles.messageListContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          scrollEventThrottle={400}
           ListHeaderComponent={() => (
             messages.length === 0 && !isLoadingMessages ? (
               <View style={styles.welcomeContainer}>
@@ -195,11 +250,6 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           )}
           ListFooterComponent={() => (
             <View>
-              {isStreaming && (
-                <View style={styles.streamingIndicator}>
-                  <Text style={styles.streamingText}>AI is typing...</Text>
-                </View>
-              )}
               {showSuggestions && (
                 <SuggestionChips 
                   suggestions={lastMessage.suggestions!} 
@@ -214,6 +264,12 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
             }
           }}
         />
+
+        {isStreaming && (
+          <View style={styles.typingIndicatorContainer}>
+            <TypingIndicator />
+          </View>
+        )}
 
         <View style={styles.inputContainer}>
           <TouchableOpacity
@@ -252,6 +308,13 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           searchText={mentionSearchText}
         />
       )}
+
+      <SuggestionCard
+        visible={!!pendingSuggestion}
+        metadata={pendingSuggestion}
+        onConfirm={handleConfirmSuggestion}
+        onIgnore={() => setPendingSuggestion(null)}
+      />
 
       <ChatSidebar 
         isVisible={isSidebarVisible} 
@@ -310,14 +373,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#8D5B39',
   },
-  streamingIndicator: {
-    padding: 10,
-    alignItems: 'center',
-  },
-  streamingText: {
-    fontSize: 12,
-    color: '#999',
-    fontStyle: 'italic',
+  typingIndicatorContainer: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingHorizontal: 15,
+    paddingBottom: 10,
   },
   suggestionsWrapper: {
     marginTop: 5,

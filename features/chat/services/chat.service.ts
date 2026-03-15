@@ -1,4 +1,3 @@
-import { Alert } from "react-native";
 import { apiClient, apiUrl } from "../../../api/api";
 import { ChatMessageDto, ChatSession, FamilyMember } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,27 +27,15 @@ export const chatService = {
     const response = await apiClient.get<any[]>(`${API_BASE}/history/${sessionId}`);
     return response.data.map(msg => {
       const isAi = msg.isAi === true;
-      let content = msg.content || '';
-      let suggestions: string[] = [];
-
-      if (isAi && content.includes('<suggestions>')) {
-        const match = content.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
-        if (match) {
-          try {
-            suggestions = JSON.parse(match[1]);
-          } catch (e) {
-            console.error("Failed to parse historical suggestions:", e);
-          }
-          content = content.replace(/<suggestions>[\s\S]*?<\/suggestions>/g, '').trim();
-        }
-      }
+      const content = msg.content || '';
+      const suggestions = msg.suggestions || [];
 
       return {
         ...msg,
         content,
         isAi,
         suggestions,
-        timestamp: msg.timestamp // ISO-8601 format from backend
+        timestamp: msg.timestamp
       };
     }) as ChatMessageDto[];
   },
@@ -58,6 +45,7 @@ export const chatService = {
     sessionId: string | null,
     onChunk: (chunk: string) => void,
     onSuggestions: (suggestions: string[]) => void,
+    onMetadata: (metadata: any) => void,
     onSessionId: (newSessionId: string) => void,
     onComplete: () => void,
     onError: (error: any) => void,
@@ -104,37 +92,13 @@ export const chatService = {
       let lastIndex = 0;
       let buffer = '';
       let isFinished = false;
-      let fullRawText = '';
-      let lastCleanLength = 0;
-      let chunkCount = 0;
-      let totalChunkSize = 0;
-      const chunkLog: Array<{ size: number; preview: string }> = [];
+      let currentEvent = '';
+      let currentData = '';
 
       const finish = () => {
         if (!isFinished) {
           isFinished = true;
-          
-          const suggestionsMatch = fullRawText.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
-          if (suggestionsMatch) {
-            try {
-              const suggestions = JSON.parse(suggestionsMatch[1]);
-              if (Array.isArray(suggestions)) {
-                onSuggestions(suggestions);
-              }
-            } catch (e) {
-              console.error("Failed to parse suggestions:", e);
-            }
-          }
-          
-          console.log('[STREAM_LOG]', {
-            totalChunks: chunkCount,
-            totalSize: totalChunkSize,
-            avgChunkSize: chunkCount > 0 ? Math.round(totalChunkSize / chunkCount) : 0,
-            isGradual: chunkCount > 1,
-            deliveryPattern: chunkCount === 1 ? 'BLOCK' : 'GRADUAL',
-            chunks: chunkLog
-          });
-          
+          console.log('[STREAM_COMPLETE]');
           onComplete();
         }
       };
@@ -142,7 +106,10 @@ export const chatService = {
       xhr.onreadystatechange = () => {
         if (xhr.readyState === 2) {
           const xSessionId = xhr.getResponseHeader("X-Session-Id");
-          if (xSessionId) onSessionId(xSessionId);
+          if (xSessionId) {
+            console.log('[SESSION_ID]', xSessionId);
+            onSessionId(xSessionId);
+          }
         }
 
         if (xhr.readyState === 3 || xhr.readyState === 4) {
@@ -155,56 +122,94 @@ export const chatService = {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (!line.startsWith('data:')) continue;
-
-            if (line === 'data:[DONE.]' || line === 'data: [DONE.]') {
-              finish();
-              return;
+            if (line === '') {
+              // Empty line signals end of event - process the event
+              if (currentEvent && currentData) {
+                console.log('[SSE_EVENT]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
+                
+                if (currentEvent === 'message') {
+                  // Send plain text chunk directly to UI
+                  onChunk(currentData);
+                } else if (currentEvent === 'suggestions') {
+                  // Parse suggestions JSON array
+                  try {
+                    const suggestions = JSON.parse(currentData);
+                    if (Array.isArray(suggestions)) {
+                      console.log('[SUGGESTIONS_PARSED]', suggestions);
+                      onSuggestions(suggestions);
+                    }
+                  } catch (e) {
+                    console.error('[SUGGESTIONS_PARSE_ERROR]', e, currentData);
+                  }
+                } else if (currentEvent === 'metadata') {
+                  // Parse metadata JSON object
+                  try {
+                    const metadata = JSON.parse(currentData);
+                    console.log('[METADATA_PARSED]', metadata);
+                    onMetadata(metadata);
+                  } catch (e) {
+                    console.error('[METADATA_PARSE_ERROR]', e, currentData);
+                  }
+                } else if (currentEvent === 'done') {
+                  console.log('[STREAM_DONE]');
+                  finish();
+                  return;
+                } else if (currentEvent === 'error') {
+                  try {
+                    const error = JSON.parse(currentData);
+                    console.error('[SSE_ERROR]', error);
+                    onError(new Error(error.message || 'Unknown error'));
+                  } catch (e) {
+                    onError(new Error(currentData));
+                  }
+                  return;
+                }
+              }
+              
+              currentEvent = '';
+              currentData = '';
+              continue;
             }
 
-            if (line === 'data:' || line === 'data: ') {
-              fullRawText += '\n';
-            } else {
-              const content = line.replace(/^data: ?/, '');
-              fullRawText += content;
-            }
-
-            const cleanText = fullRawText.replace(/<suggestions>[\s\S]*/g, '');
-            const newCleanContent = cleanText.substring(lastCleanLength);
-            
-            if (newCleanContent.length > 0) {
-              chunkCount++;
-              totalChunkSize += newCleanContent.length;
-              chunkLog.push({ 
-                size: newCleanContent.length, 
-                preview: newCleanContent.substring(0, 50) 
-              });
-              onChunk(newCleanContent);
-              lastCleanLength = cleanText.length;
+            if (line.startsWith('event:')) {
+              currentEvent = line.replace(/^event:\s*/, '').trim();
+            } else if (line.startsWith('data:')) {
+              // SSE spec: multiple data lines should be concatenated with \n
+              const dataLine = line.replace(/^data:\s*/, '');
+              if (currentData) {
+                currentData += '\n' + dataLine;
+              } else {
+                currentData = dataLine;
+              }
             }
           }
         }
 
         if (xhr.readyState === 4) {
-          if (buffer.startsWith('data:')) {
-            if (buffer.includes('[DONE.]')) {
-              finish();
-              return;
-            }
-            const content = buffer.replace(/^data: ?/, '');
-            fullRawText += content;
+          // Process any remaining event
+          if (currentEvent && currentData) {
+            console.log('[SSE_EVENT_FINAL]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
             
-            const cleanText = fullRawText.replace(/<suggestions>[\s\S]*/g, '');
-            const newCleanContent = cleanText.substring(lastCleanLength);
-            if (newCleanContent.length > 0) {
-              chunkCount++;
-              totalChunkSize += newCleanContent.length;
-              chunkLog.push({ 
-                size: newCleanContent.length, 
-                preview: newCleanContent.substring(0, 50) 
-              });
-              onChunk(newCleanContent);
-              lastCleanLength = cleanText.length;
+            if (currentEvent === 'message') {
+              onChunk(currentData);
+            } else if (currentEvent === 'suggestions') {
+              try {
+                const suggestions = JSON.parse(currentData);
+                if (Array.isArray(suggestions)) {
+                  console.log('[SUGGESTIONS_PARSED_FINAL]', suggestions);
+                  onSuggestions(suggestions);
+                }
+              } catch (e) {
+                console.error('[SUGGESTIONS_PARSE_ERROR_FINAL]', e, currentData);
+              }
+            } else if (currentEvent === 'metadata') {
+              try {
+                const metadata = JSON.parse(currentData);
+                console.log('[METADATA_PARSED_FINAL]', metadata);
+                onMetadata(metadata);
+              } catch (e) {
+                console.error('[METADATA_PARSE_ERROR_FINAL]', e, currentData);
+              }
             }
           }
           finish();
