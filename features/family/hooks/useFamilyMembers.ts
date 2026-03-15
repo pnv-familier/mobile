@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getFamilyMembers } from '../service/family.service';
 import { FamilyMember } from '../types';
+import { useAuthStore } from '../../auth/store/auth.store';
 
 export const useFamilyMembers = () => {
+  const currentUser = useAuthStore((state) => state.data);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [familyCreatedAt, setFamilyCreatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,10 @@ export const useFamilyMembers = () => {
     try {
       setLoading(true);
       const response = await getFamilyMembers();
-      setMembers(response.members || []);
+      const filtered = (response.members || []).filter(
+        (m: FamilyMember) => m.userId !== currentUser?.id
+      );
+      setMembers(filtered);
       setFamilyCreatedAt(response.familyCreatedAt || null);
     } catch (err: any) {
       setError(err.message);

@@ -5,6 +5,7 @@ import { TabStackParamList } from './types'
 import ChatNavigator from '../features/chat/ChatNavigator'
 import ScheduleNavigator from '../features/schedule/ScheduleNavigator'
 import LoveTaskNavigator from '../features/lovetask/LoveTaskNavigator'
+import SuggestionNavigator from '../features/suggestion/SuggestionNavigator'
 
 const Tab = createBottomTabNavigator<TabStackParamList>()
 
@@ -20,6 +21,7 @@ export default function TabNavigator() {
                     else if (route.name === 'Chat') iconName = 'chatbubbles'
                     else if (route.name === 'Schedule') iconName = 'calendar'
                     else if (route.name === 'LoveTasks') iconName = 'heart'
+                    else if (route.name === 'Suggestions') iconName = 'bulb'
 
                     return <Ionicons name={iconName} size={size} color={color} />
                 },
@@ -29,6 +31,7 @@ export default function TabNavigator() {
             <Tab.Screen name="Chat" component={ChatNavigator} />
             <Tab.Screen name="Schedule" component={ScheduleNavigator} />
             <Tab.Screen name="LoveTasks" component={LoveTaskNavigator} />
+            <Tab.Screen name="Suggestions" component={SuggestionNavigator} />
         </Tab.Navigator>
     )
 }

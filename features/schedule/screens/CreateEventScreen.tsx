@@ -32,19 +32,20 @@ interface CreateEventScreenProps {
   navigation: any;
 }
 
-const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation }) => {
+const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route }) => {
+  const prefill = route?.params;
   const currentUser = useAuthStore((state) => state.data);
-  const [eventName, setEventName] = useState('');
+  const [eventName, setEventName] = useState(prefill?.prefillTitle || '');
   const [note, setNote] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(prefill?.prefillDate ? new Date(prefill.prefillDate) : new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showParticipantPicker, setShowParticipantPicker] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<FamilyMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [startTimeText, setStartTimeText] = useState('10:30');
-  const [endTimeText, setEndTimeText] = useState('1:30');
+  const [startTimeText, setStartTimeText] = useState(prefill?.prefillStartTime || '10:30');
+  const [endTimeText, setEndTimeText] = useState(prefill?.prefillEndTime || '1:30');
   const [startAmPm, setStartAmPm] = useState('AM');
   const [endAmPm, setEndAmPm] = useState('PM');
   const [showInvalidCharWarning, setShowInvalidCharWarning] = useState(false);
