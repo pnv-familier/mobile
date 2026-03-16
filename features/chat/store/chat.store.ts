@@ -13,6 +13,8 @@ interface ChatState {
     isLoadingMessages: boolean;
     isStreaming: boolean;
     error: string | null;
+    pendingSuggestion: any | null;
+    lastUserMessage: string | null;
 
     fetchSessions: () => Promise<void>;
     selectSession: (sessionId: string) => Promise<void>;
@@ -20,6 +22,7 @@ interface ChatState {
     sendMessage: (content: string, taggedUserEmail?: string) => Promise<void>;
     updateMessageContent: (id: string, chunk: string) => void;
     updateMessageSuggestions: (id: string, suggestions: string[]) => void;
+    setPendingSuggestion: (metadata: any) => void;
     clearSuggestions: (messageId: string) => void;
     clearError: () => void;
 }
@@ -33,6 +36,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isLoadingMessages: false,
     isStreaming: false,
     error: null,
+    pendingSuggestion: null,
+    lastUserMessage: null,
 
     fetchSessions: async () => {
         set({ isSessionsLoading: true, error: null });
@@ -59,11 +64,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     updateMessageContent: (id, chunk) => {
-        set((state) => ({
-            messages: state.messages.map((m) =>
-                m.id === id ? { ...m, content: m.content + chunk } : m
-            ),
-        }));
+        set((state) => {
+            const messageIndex = state.messages.findIndex(m => m.id === id);
+            if (messageIndex === -1) return state;
+            
+            const newMessages = [...state.messages];
+            newMessages[messageIndex] = {
+                ...newMessages[messageIndex],
+                content: newMessages[messageIndex].content + chunk
+            };
+            
+            return { messages: newMessages };
+        });
     },
 
     updateMessageSuggestions: (id, suggestions) => {
@@ -72,6 +84,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 m.id === id ? { ...m, suggestions } : m
             ),
         }));
+    },
+
+    setPendingSuggestion: (metadata) => {
+        set({ pendingSuggestion: metadata });
     },
 
     clearSuggestions: (messageId) => {
@@ -104,7 +120,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ 
             messages: [...messages, userMessage, initialAiMessage],
             isStreaming: true,
-            error: null 
+            error: null,
+            lastUserMessage: content
         });
 
         await chatService.streamChat(
@@ -112,6 +129,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             currentSessionId,
             (chunk) => get().updateMessageContent(STREAMING_ID, chunk),
             (suggestions) => get().updateMessageSuggestions(STREAMING_ID, suggestions),
+            (metadata) => get().setPendingSuggestion(metadata),
             (newSessionId) => {
                 if (!get().currentSessionId) {
                     set({ currentSessionId: newSessionId });

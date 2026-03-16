@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
 import { MessageSquare, Plus, ChevronRight, X } from 'lucide-react-native';
 import { useChatStore } from '../store/chat.store';
+import { formatSessionDate } from '../../../utils/dateFormatter';
 
 interface ChatSidebarProps {
   isVisible: boolean;
@@ -66,7 +67,9 @@ export default function ChatSidebar({ isVisible, onClose }: ChatSidebarProps) {
                         styles.sessionItem,
                         currentSessionId === session.id && styles.activeSessionItem
                       ]}
-                      onPress={() => handleSelectSession(session.id)}
+                      onPress={() => {
+                        handleSelectSession(session.id);
+                      }}
                     >
                       <View style={styles.sessionIconBox}>
                         <MessageSquare size={18} color={ACCENT_COLOR} />
@@ -76,10 +79,10 @@ export default function ChatSidebar({ isVisible, onClose }: ChatSidebarProps) {
                           style={styles.sessionTitle}
                           numberOfLines={1}
                         >
-                          {session.target_context || 'New Chat'}
+                          {session.targetContext || 'New Chat'}
                         </Text>
                         <Text style={styles.sessionDate}>
-                          {new Date(session.createdAt).toLocaleDateString()}
+                          {formatSessionDate(session.createdAt)}
                         </Text>
                       </View>
                       <ChevronRight size={18} color="#CCC" />

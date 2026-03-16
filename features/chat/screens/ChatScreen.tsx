@@ -12,11 +12,14 @@ import {
   Alert,
   FlatList
 } from 'react-native';
-import { Send, History, ChevronLeft } from 'lucide-react-native';
+import { Send, History, ChevronLeft, Mic } from 'lucide-react-native';
 import { useChatStore } from '../store/chat.store';
 import ChatSidebar from '../components/ChatSidebar';
 import MessageBubble from '../components/MessageBubble';
 import MentionDropdown from '../components/MentionDropdown';
+import SuggestionCard from '../components/SuggestionCard';
+import TypingIndicator from '../components/TypingIndicator';
+import { suggestionService } from '../../suggestion';
 import { FamilyMember } from '../types';
 
 const PRIMARY_COLOR = '#FDF2E3';
@@ -51,7 +54,9 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionedUser, setMentionedUser] = useState<FamilyMember | null>(null);
   const [mentionSearchText, setMentionSearchText] = useState('');
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { 
     messages, 
@@ -60,8 +65,24 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     isStreaming, 
     error, 
     clearError,
-    clearSuggestions
+    clearSuggestions,
+    pendingSuggestion,
+    setPendingSuggestion,
+    currentSessionId,
+    lastUserMessage
   } = useChatStore();
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      useChatStore.setState({
+        currentSessionId: null,
+        messages: [],
+        error: null
+      });
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     if (error) {
@@ -70,17 +91,27 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   }, [error]);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
+    if (messages.length > 0 && !isUserScrolling && isStreaming) {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      }, 50);
     }
-  }, [messages, isStreaming]);
+    
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [messages, isStreaming, isUserScrolling]);
 
   useEffect(() => {
     if (!isLoadingMessages && messages.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
+        setIsUserScrolling(false);
       }, 300);
     }
   }, [isLoadingMessages]);
@@ -114,11 +145,23 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [inputText, mentionedUser]);
 
+  const handleScroll = (event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 20;
+    
+    if (!isAtBottom) {
+      setIsUserScrolling(true);
+    } else {
+      setIsUserScrolling(false);
+    }
+  };
+
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
     
     const messageContent = inputText.trim();
     setInputText('');
+    setIsUserScrolling(false); // Reset scroll state khi gửi message mới
     await sendMessage(messageContent, mentionedUser?.email);
     setMentionedUser(null);
     setMentionSearchText('');
@@ -129,6 +172,36 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage && lastMessage.isAi && lastMessage.suggestions?.length) {
       clearSuggestions(lastMessage.id);
+    }
+  };
+
+  const handleConfirmSuggestion = async () => {
+    if (!pendingSuggestion || !currentSessionId || !lastUserMessage) return;
+    
+    try {
+      const response = await suggestionService.confirmSuggestion(
+        pendingSuggestion,
+        currentSessionId,
+        lastUserMessage
+      );
+      
+      // Close modal first
+      setPendingSuggestion(null);
+      
+      // Navigate to suggestion detail if success
+      if (response.success && response.suggestionId) {
+        navigation.navigate('Suggestions', {
+          screen: 'SuggestionDetail',
+          params: { id: response.suggestionId }
+        });
+      } else {
+        // Show error if backend returns success: false
+        Alert.alert('Error', response.message || 'Failed to confirm suggestion');
+      }
+    } catch (err: any) {
+      console.error('Error confirming suggestion:', err);
+      Alert.alert('Error', err?.message || 'Failed to confirm suggestion');
+      setPendingSuggestion(null);
     }
   };
 
@@ -149,63 +222,74 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <ChevronLeft size={24} color={ACCENT_COLOR} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Family Assistant</Text>
-        <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
-          <History size={24} color={ACCENT_COLOR} />
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ChevronLeft size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>AI Family Assistant</Text>
+          <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
+            <History size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
+        </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MessageBubble message={item} />}
-        style={styles.messageList}
-        contentContainerStyle={styles.messageListContent}
-        ListHeaderComponent={() => (
-          messages.length === 0 && !isLoadingMessages ? (
-            <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
-              <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
-            </View>
-          ) : null
-        )}
-        ListFooterComponent={() => (
-          <View>
-            {isStreaming && (
-              <View style={styles.streamingIndicator}>
-                <Text style={styles.streamingText}>AI is typing...</Text>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <MessageBubble 
+              message={item} 
+              isStreaming={isStreaming && item.id === 'active-ai-stream'}
+            />
+          )}
+          style={styles.messageList}
+          contentContainerStyle={styles.messageListContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          scrollEventThrottle={400}
+          ListHeaderComponent={() => (
+            messages.length === 0 && !isLoadingMessages ? (
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
+                <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
               </View>
-            )}
-            {showSuggestions && (
-              <SuggestionChips 
-                suggestions={lastMessage.suggestions!} 
-                onSelect={handleSelectSuggestion} 
-              />
-            )}
+            ) : null
+          )}
+          ListFooterComponent={() => (
+            <View>
+              {showSuggestions && (
+                <SuggestionChips 
+                  suggestions={lastMessage.suggestions!} 
+                  onSelect={handleSelectSuggestion} 
+                />
+              )}
+            </View>
+          )}
+          onLayout={() => {
+            if (messages.length > 0) {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }
+          }}
+        />
+
+        {isStreaming && (
+          <View style={styles.typingIndicatorContainer}>
+            <TypingIndicator />
           </View>
         )}
-        onLayout={() => {
-          if (messages.length > 0) {
-            flatListRef.current?.scrollToEnd({ animated: false });
-          }
-        }}
-      />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
         <View style={styles.inputContainer}>
           <TouchableOpacity
             style={styles.voiceButton}
             disabled={isStreaming}
           >
-            <History size={20} color={isStreaming ? '#CCC' : '#D4A056'} />
+            <Mic size={20} color={isStreaming ? '#CCC' : '#D4A056'} />
           </TouchableOpacity>
           <TextInput
             style={styles.input}
@@ -237,6 +321,13 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           searchText={mentionSearchText}
         />
       )}
+
+      <SuggestionCard
+        visible={!!pendingSuggestion}
+        metadata={pendingSuggestion}
+        onConfirm={handleConfirmSuggestion}
+        onIgnore={() => setPendingSuggestion(null)}
+      />
 
       <ChatSidebar 
         isVisible={isSidebarVisible} 
@@ -295,14 +386,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#8D5B39',
   },
-  streamingIndicator: {
-    padding: 10,
-    alignItems: 'center',
-  },
-  streamingText: {
-    fontSize: 12,
-    color: '#999',
-    fontStyle: 'italic',
+  typingIndicatorContainer: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingHorizontal: 15,
+    paddingBottom: 10,
   },
   suggestionsWrapper: {
     marginTop: 5,
