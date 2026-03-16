@@ -9,16 +9,19 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {
   ChevronLeft,
   Camera,
   Home,
   MoreVertical,
+  Copy,
 } from 'lucide-react-native';
 import type { RootNavigationProp } from '../../../navigation/types';
 import { useFamilyMembers } from '../hooks/useFamilyMembers';
 import { useFamilyStore } from '../store/family.store';
+import * as Clipboard from 'expo-clipboard';
 
 
 const PRIMARY_COLOR = '#FDF2E3';
@@ -76,6 +79,18 @@ export default function ViewListFamilyScreen({
 
 
           <Text style={styles.familyName}>{familyData?.name || 'Family'}</Text>
+          {familyData?.inviteCode && (
+            <TouchableOpacity
+              style={styles.inviteCodeRow}
+              onPress={async () => {
+                await Clipboard.setStringAsync(familyData.inviteCode);
+                Alert.alert('Copied!', 'Invite code copied to clipboard.');
+              }}
+            >
+              <Text style={styles.inviteCodeText}>{familyData.inviteCode}</Text>
+              <Copy size={14} color={ACCENT_COLOR} style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          )}
           <Text style={styles.familyMeta}>
             {members?.length || 0} members • Created {familyCreatedAt ? new Date(familyCreatedAt).toLocaleDateString() : 'N/A'}
           </Text>
@@ -198,6 +213,23 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  inviteCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F5D6B5',
+  },
+  inviteCodeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: ACCENT_COLOR,
+    letterSpacing: 1,
   },
 
 
