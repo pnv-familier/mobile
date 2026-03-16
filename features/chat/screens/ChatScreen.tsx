@@ -179,15 +179,28 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     if (!pendingSuggestion || !currentSessionId || !lastUserMessage) return;
     
     try {
-      await suggestionService.confirmSuggestion(
+      const response = await suggestionService.confirmSuggestion(
         pendingSuggestion,
         currentSessionId,
         lastUserMessage
       );
+      
+      // Close modal first
       setPendingSuggestion(null);
-    } catch (err) {
+      
+      // Navigate to suggestion detail if success
+      if (response.success && response.suggestionId) {
+        navigation.navigate('Suggestions', {
+          screen: 'SuggestionDetail',
+          params: { id: response.suggestionId }
+        });
+      } else {
+        // Show error if backend returns success: false
+        Alert.alert('Error', response.message || 'Failed to confirm suggestion');
+      }
+    } catch (err: any) {
       console.error('Error confirming suggestion:', err);
-      Alert.alert('Error', 'Failed to confirm suggestion');
+      Alert.alert('Error', err?.message || 'Failed to confirm suggestion');
       setPendingSuggestion(null);
     }
   };

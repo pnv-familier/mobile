@@ -1,6 +1,12 @@
 import { apiClient } from '../../../api/api';
 import { SuggestionListItem, SuggestionDetail, SuggestionStatus } from '../types';
 
+interface ConfirmSuggestionResponse {
+  success: boolean;
+  suggestionId: string;
+  message: string;
+}
+
 export const suggestionService = {
   getSuggestions: async (status?: SuggestionStatus): Promise<SuggestionListItem[]> => {
     const params = status ? { status } : {};
@@ -22,7 +28,7 @@ export const suggestionService = {
     metadata: any,
     sessionId: string,
     triggerContext: string
-  ) => {
+  ): Promise<ConfirmSuggestionResponse> => {
     try {
       const type = detectType(metadata);
 
@@ -36,7 +42,7 @@ export const suggestionService = {
         triggerContext,
       };
 
-      const response = await apiClient.post(
+      const response = await apiClient.post<ConfirmSuggestionResponse>(
         '/ai/suggestions/confirm',
         requestBody
       );
