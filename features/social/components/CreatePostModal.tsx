@@ -26,6 +26,7 @@ interface CreatePostModalProps {
   onSuccess: (content: string, imageUrls: string[]) => void;
   user: any;
   prefilledContent?: string;
+  skipCreatePost?: boolean;
 }
 
 export const CreatePostModal: React.FC<CreatePostModalProps> = ({
@@ -34,6 +35,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onSuccess,
   user,
   prefilledContent,
+  skipCreatePost = false,
 }) => {
   const [postContent, setPostContent] = useState(prefilledContent || '');
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
@@ -112,7 +114,9 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       }
 
       const finalContent = postContent.trim() || ' ';
-      await createPost(finalContent, imageUrls, videoUrls);
+      if (!skipCreatePost) {
+        await createPost(finalContent, imageUrls, videoUrls);
+      }
       
       setPostContent('');
       setSelectedMedia([]);

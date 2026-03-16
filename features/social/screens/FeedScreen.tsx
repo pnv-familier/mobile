@@ -12,6 +12,7 @@ import { useFamilyMembers } from '../../family/hooks/useFamilyMembers';
 import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
+import { useFocusEffect } from '@react-navigation/native';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
@@ -31,6 +32,12 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
   const { posts, loading, error, refetch, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [])
+  );
 
   const handleReaction = async (postId: number) => {
     setReactionLoading(postId);

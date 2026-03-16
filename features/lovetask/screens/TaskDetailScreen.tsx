@@ -267,6 +267,7 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
           onSuccess={handlePostSuccess}
           user={user}
           prefilledContent={prefilledContent}
+          skipCreatePost={true}
         />
       )}
 
