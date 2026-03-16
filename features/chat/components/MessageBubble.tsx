@@ -11,7 +11,7 @@ interface MessageBubbleProps {
 }
 
 const ACCENT_COLOR = '#D4A056';
-const TYPEWRITER_SPEED = 30; // ms per character
+const TYPEWRITER_SPEED = 15;
 
 const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
@@ -21,19 +21,21 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
   const animationRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
-    // Only apply typewriter effect for AI message that is currently streaming
     if (!isAi || !isStreaming) {
       setDisplayContent(message.content);
       fullContentRef.current = message.content;
       displayIndexRef.current = message.content.length;
+      
+      if (animationRef.current) {
+        clearTimeout(animationRef.current);
+        animationRef.current = null;
+      }
       return;
     }
 
-    // Update full content reference
     fullContentRef.current = message.content;
 
-    // If no animation is running, start it
-    if (!animationRef.current && displayIndexRef.current < fullContentRef.current.length) {
+    if (!animationRef.current) {
       const animate = () => {
         if (displayIndexRef.current < fullContentRef.current.length) {
           displayIndexRef.current++;
@@ -55,10 +57,8 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
     };
   }, [message.content, isAi, isStreaming]);
   
-  // Cleanup when streaming ends
   useEffect(() => {
     if (!isStreaming && isAi) {
-      // When stream ends, display full content immediately
       if (animationRef.current) {
         clearTimeout(animationRef.current);
         animationRef.current = null;

@@ -91,13 +91,13 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   }, [error]);
 
   useEffect(() => {
-    if (messages.length > 0 && !isUserScrolling) {
+    if (messages.length > 0 && !isUserScrolling && isStreaming) {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
       scrollTimeoutRef.current = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      }, 50);
     }
     
     return () => {
@@ -147,11 +147,11 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
   const handleScroll = (event: any) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 50;
+    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 20;
     
-    if (!isAtBottom && isStreaming) {
+    if (!isAtBottom) {
       setIsUserScrolling(true);
-    } else if (isAtBottom) {
+    } else {
       setIsUserScrolling(false);
     }
   };
