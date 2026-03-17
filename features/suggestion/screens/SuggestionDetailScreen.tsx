@@ -59,35 +59,36 @@ const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigat
   const IconComponent = config.icon;
   const isDone = suggestion.status === 'ACCEPTED';
 
-  const handleCreateLoveTask = async () => {
-    try {
-      await acceptSuggestion();
-      const payload = suggestion.payload as TaskPayload;
-      navigation.navigate('LoveTasks', {
-        screen: 'CreateLoveTask',
-        params: { prefillTitle: payload.title, prefillDescription: payload.description },
-      });
-    } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to accept suggestion');
-    }
+  const handleCreateLoveTask = () => {
+    const payload = suggestion.payload as TaskPayload;
+    navigation.navigate('SuggestionCreateLoveTask', {
+      prefillTitle: payload.title,
+      prefillDescription: payload.description,
+      onSuccess: async () => {
+        try {
+          await acceptSuggestion();
+        } catch (err: any) {
+          Alert.alert('Error', err?.message || 'Failed to update suggestion status');
+        }
+      },
+    });
   };
 
-  const handleAddToSchedule = async () => {
-    try {
-      await acceptSuggestion();
-      const payload = suggestion.payload as EventPayload;
-      navigation.navigate('Schedule', {
-        screen: 'CreateEvent',
-        params: {
-          prefillTitle: payload.title,
-          prefillStartTime: payload.startTime,
-          prefillEndTime: payload.endTime,
-          prefillDate: new Date(payload.year, payload.month - 1, payload.date),
-        },
-      });
-    } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to accept suggestion');
-    }
+  const handleAddToSchedule = () => {
+    const payload = suggestion.payload as EventPayload;
+    navigation.navigate('SuggestionCreateEvent', {
+      prefillTitle: payload.title,
+      prefillStartTime: payload.startTime,
+      prefillEndTime: payload.endTime,
+      prefillDate: new Date(payload.year, payload.month - 1, payload.date),
+      onSuccess: async () => {
+        try {
+          await acceptSuggestion();
+        } catch (err: any) {
+          Alert.alert('Error', err?.message || 'Failed to update suggestion status');
+        }
+      },
+    });
   };
 
   return (

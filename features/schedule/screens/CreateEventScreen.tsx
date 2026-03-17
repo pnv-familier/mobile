@@ -216,12 +216,14 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       };
 
       await scheduleService.createEvent(eventData);
+
+      // Call onSuccess callback if provided (from Suggestion)
+      if (prefill?.onSuccess) {
+        await prefill.onSuccess();
+      }
       
       Alert.alert('Success', 'Event created successfully', [
-        { 
-          text: 'OK', 
-          onPress: () => navigation.goBack()
-        }
+        { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error: any) {
       Alert.alert('Error', error?.message || 'Failed to create event');

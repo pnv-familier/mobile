@@ -12,6 +12,7 @@ const Tab = createBottomTabNavigator<TabStackParamList>()
 export default function TabNavigator() {
     return (
         <Tab.Navigator
+            initialRouteName="Home"
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarActiveTintColor: '#D4A017',
@@ -29,11 +30,15 @@ export default function TabNavigator() {
                 },
             })}
         >
-            <Tab.Screen name="Home" component={SocialNavigator} />
-            <Tab.Screen name="Chat" component={ChatNavigator} />
-            <Tab.Screen name="Schedule" component={ScheduleNavigator} />
-            <Tab.Screen name="LoveTasks" component={LoveTaskNavigator} />
             <Tab.Screen name="Suggestions" component={SuggestionNavigator} />
+            <Tab.Screen name="Chat" component={ChatNavigator} />
+            <Tab.Screen name="Home" component={SocialNavigator} />
+            <Tab.Screen name="Schedule" component={ScheduleNavigator} listeners={({ navigation }) => ({
+                tabPress: () => navigation.reset({ index: 0, routes: [{ name: 'Schedule' }] })
+            })} />
+            <Tab.Screen name="LoveTasks" component={LoveTaskNavigator} listeners={({ navigation }) => ({
+                tabPress: () => navigation.reset({ index: 0, routes: [{ name: 'LoveTasks' }] })
+            })} />
         </Tab.Navigator>
     )
 }

@@ -422,7 +422,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                   <Text style={styles.optionText}>View Member List</Text>
                   <ChevronRight size={20} color="#CCC" />
                 </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} />
+                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
 
                 <TouchableOpacity
                   style={styles.cancelButton}

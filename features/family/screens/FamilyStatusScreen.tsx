@@ -12,14 +12,17 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FamilyParamsList } from '../types';
 
+import { useLogout } from '../../auth/hooks/useLogout';
+
 type Props = NativeStackScreenProps<FamilyParamsList, 'FamilyStatus'>;
 
 export default function FamilyStatusScreen({ navigation }: Props) {
+  const { logout } = useLogout();
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity 
         style={styles.backButton}
-        onPress={() => navigation.goBack()}
+        onPress={logout}
       >
         <Ionicons name="chevron-back" size={28} color="#D48141" />
       </TouchableOpacity>
@@ -84,7 +87,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingHorizontal: 15,
-    paddingTop: 10,
+    paddingTop: 30,
     zIndex: 1,
   },
   scrollContent: {

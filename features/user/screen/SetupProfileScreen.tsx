@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 24,
-        paddingBottom: 40,
+        paddingBottom: 80,
     },
     stepContainer: {
         flex: 1,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
     saveButton: {
-        marginTop: 24,
+        marginTop: 8,
         backgroundColor: "#E39A5A",
         borderRadius: 16,
         shadowColor: "#E39A5A",

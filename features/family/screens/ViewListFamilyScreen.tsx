@@ -92,7 +92,15 @@ export default function ViewListFamilyScreen({
             </TouchableOpacity>
           )}
           <Text style={styles.familyMeta}>
-            {members?.length || 0} members • Created {familyCreatedAt ? new Date(familyCreatedAt).toLocaleDateString() : 'N/A'}
+            {members?.length || 0} members • Created {familyCreatedAt 
+              ? (() => {
+                  if (Array.isArray(familyCreatedAt)) {
+                    const [y, m, d] = familyCreatedAt as any;
+                    return new Date(y, m - 1, d).toLocaleDateString();
+                  }
+                  return new Date(familyCreatedAt).toLocaleDateString();
+                })()
+              : 'N/A'}
           </Text>
         </View>
 
@@ -103,10 +111,15 @@ export default function ViewListFamilyScreen({
           ) : (
             members?.map((item: any) => (
               <View key={item.userId} style={styles.memberItem}>
-                <Image 
-                  source={{ uri: item.avatar || 'https://placekitten.com/100/100' }} 
-                  style={styles.memberAvatar} 
-                />
+                {item.avatar ? (
+                  <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
+                ) : (
+                  <View style={[styles.memberAvatar, styles.memberAvatarPlaceholder]}>
+                    <Text style={styles.memberAvatarText}>
+                      {item.displayName?.charAt(0)?.toUpperCase() || '?'}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.memberInfo}>
                   <Text style={styles.memberName}>{item.displayName}</Text>
                   <Text style={styles.memberRole}>{item.role}</Text>
@@ -260,6 +273,16 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 27.5,
+  },
+  memberAvatarPlaceholder: {
+    backgroundColor: '#F5D6B5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberAvatarText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: ACCENT_COLOR,
   },
 
 
