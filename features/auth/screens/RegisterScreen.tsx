@@ -1,5 +1,5 @@
 import React from "react"
-import { Image, ScrollView, StyleSheet, TouchableOpacity } from "react-native"
+import { Image, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native"
 
 import AppScreen from "../../../components/AppScreen"
 import AppText from "../../../components/AppText"
@@ -16,10 +16,16 @@ const RegisterScreen = () => {
 
     return (
         <AppScreen style={styles.container}>
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+                style={{ flex: 1 }}
             >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                 <Image
                     source={require("../../../assets/icon.png")}
                     style={styles.logo}
@@ -87,7 +93,8 @@ const RegisterScreen = () => {
                     Already have an account?{" "}
                     <AppText style={styles.loginLink}>Login</AppText>
                 </AppText>
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </AppScreen>
     )
 }

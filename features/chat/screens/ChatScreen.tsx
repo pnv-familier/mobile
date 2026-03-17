@@ -54,9 +54,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionedUser, setMentionedUser] = useState<FamilyMember | null>(null);
   const [mentionSearchText, setMentionSearchText] = useState('');
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { 
     messages, 
@@ -91,27 +89,15 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   }, [error]);
 
   useEffect(() => {
-    if (messages.length > 0 && !isUserScrolling && isStreaming) {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 50);
+    if (isStreaming && messages.length > 0) {
+      flatListRef.current?.scrollToEnd({ animated: true });
     }
-    
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, [messages, isStreaming, isUserScrolling]);
+  }, [messages, isStreaming]);
 
   useEffect(() => {
     if (!isLoadingMessages && messages.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
-        setIsUserScrolling(false);
       }, 300);
     }
   }, [isLoadingMessages]);
@@ -145,23 +131,13 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [inputText, mentionedUser]);
 
-  const handleScroll = (event: any) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const isAtBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 20;
-    
-    if (!isAtBottom) {
-      setIsUserScrolling(true);
-    } else {
-      setIsUserScrolling(false);
-    }
-  };
+
 
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
     
     const messageContent = inputText.trim();
     setInputText('');
-    setIsUserScrolling(false); // Reset scroll state khi gửi message mới
     await sendMessage(messageContent, mentionedUser?.email);
     setMentionedUser(null);
     setMentionSearchText('');
@@ -251,8 +227,6 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           contentContainerStyle={styles.messageListContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
-          onScroll={handleScroll}
-          scrollEventThrottle={400}
           ListHeaderComponent={() => (
             messages.length === 0 && !isLoadingMessages ? (
               <View style={styles.welcomeContainer}>
@@ -271,11 +245,6 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
               )}
             </View>
           )}
-          onLayout={() => {
-            if (messages.length > 0) {
-              flatListRef.current?.scrollToEnd({ animated: false });
-            }
-          }}
         />
 
         {isStreaming && (

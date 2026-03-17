@@ -11,7 +11,7 @@ interface MessageBubbleProps {
 }
 
 const ACCENT_COLOR = '#D4A056';
-const TYPEWRITER_SPEED = 15;
+const TYPEWRITER_SPEED = 5;
 
 const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
