@@ -29,6 +29,7 @@ import { FamilyEvent } from '../types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
 import { useFocusEffect } from '@react-navigation/native';
+import { NotificationPopup } from '../../notification/components/NotificationPopup';
 
 const BACKGROUND_COLOR = '#FDF0D5';
 const ACCENT_COLOR = '#D4A056';
@@ -39,6 +40,7 @@ interface FamilyScheduleProps {
 
 const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
   const [showOptions, setShowOptions] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const { logout } = useLogout();
@@ -200,7 +202,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowNotifications(true)}>
               <Bell size={24} color={ACCENT_COLOR} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowOptions(true)}>
@@ -527,6 +529,12 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <NotificationPopup
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        navigation={navigation}
+      />
     </SafeAreaView>
   );
 };

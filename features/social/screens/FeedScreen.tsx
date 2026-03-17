@@ -13,6 +13,7 @@ import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
 import { useFocusEffect } from '@react-navigation/native';
+import { NotificationPopup } from '../../notification/components/NotificationPopup';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
@@ -20,6 +21,7 @@ const ACCENT_COLOR = '#D4A056';
 
 export default function FeedScreen({ navigation }: { navigation: any }) {
   const [showOptions, setShowOptions] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
@@ -207,7 +209,9 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           <Text style={styles.headerTitle}>Social Media</Text>
         </View>
         <View style={styles.headerIcons}>
-          <Bell size={24} color="#D4A056" style={styles.icon} />
+          <TouchableOpacity onPress={() => setShowNotifications(true)}>
+            <Bell size={24} color="#D4A056" style={styles.icon} />
+          </TouchableOpacity>
           <TouchableOpacity 
             accessibilityLabel='profile-options-btn'
             testID='profile-options-btn' 
@@ -442,6 +446,12 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <NotificationPopup
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        navigation={navigation}
+      />
     </SafeAreaView>
   );
 }
