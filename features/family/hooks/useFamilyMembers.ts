@@ -14,10 +14,7 @@ export const useFamilyMembers = () => {
     try {
       setLoading(true);
       const response = await getFamilyMembers();
-      const filtered = (response.members || []).filter(
-        (m: FamilyMember) => m.userId !== currentUser?.id
-      );
-      setMembers(filtered);
+      setMembers(response.members || []);
       setFamilyCreatedAt(response.familyCreatedAt || null);
     } catch (err: any) {
       setError(err.message);

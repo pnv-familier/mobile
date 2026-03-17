@@ -19,6 +19,7 @@ import { useFamilyMembers } from '../../family/hooks/useFamilyMembers';
 import { FamilyMember } from '../../family/types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
+import { useAuthStore } from '../../auth/store/auth.store';
 
 const BACKGROUND_COLOR = '#FFF4E6';
 const ACCENT_COLOR = '#EAB676';
@@ -38,7 +39,9 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
   const [showUserList, setShowUserList] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const { createTask, loading } = useCreateLoveTask();
-  const { members, loading: loadingMembers } = useFamilyMembers();
+  const { members: allMembers, loading: loadingMembers } = useFamilyMembers();
+  const user = useAuthStore((state) => state.data);
+  const members = allMembers.filter((m: FamilyMember) => m.userId !== user?.id);
   const { logout } = useLogout();
 
   const selectedMember = members.find((m: FamilyMember) => m.userId === assignedToUserId);
@@ -59,6 +62,12 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
 
     try {
       await createTask(title.trim(), description.trim(), assignedToUserId.trim(), loveMessage.trim() || undefined);
+
+      // Call onSuccess callback if provided (from Suggestion)
+      if (prefill?.onSuccess) {
+        await prefill.onSuccess();
+      }
+
       Alert.alert('Success', 'Love task sent successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -219,7 +228,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
                   <Text style={styles.optionText}>View Member List</Text>
                   <ChevronRight size={20} color="#CCC" />
                 </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} />
+                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
 
                 <TouchableOpacity
                   style={styles.cancelButton}
