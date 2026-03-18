@@ -25,7 +25,7 @@ import { FamilyMember } from '../types';
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
-const SuggestionChips = ({ suggestions, onSelect }: { suggestions: string[], onSelect: (s: string) => void }) => {
+const SuggestionChips = React.memo(({ suggestions, onSelect }: { suggestions: string[], onSelect: (s: string) => void }) => {
   if (!suggestions || suggestions.length === 0) return null;
   return (
     <View style={styles.suggestionsWrapper}>
@@ -46,7 +46,7 @@ const SuggestionChips = ({ suggestions, onSelect }: { suggestions: string[], onS
       </ScrollView>
     </View>
   );
-};
+});
 
 export default function ChatScreen({ navigation }: { navigation: any }) {
   const [inputText, setInputText] = useState('');
@@ -55,6 +55,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   const [mentionedUser, setMentionedUser] = useState<FamilyMember | null>(null);
   const [mentionSearchText, setMentionSearchText] = useState('');
   const flatListRef = useRef<FlatList>(null);
+  const scrollTimeoutRef = useRef<any>(null);
   
   const { 
     messages, 
@@ -90,9 +91,14 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
   useEffect(() => {
     if (isStreaming && messages.length > 0) {
-      flatListRef.current?.scrollToEnd({ animated: true });
+      if (!scrollTimeoutRef.current) {
+        scrollTimeoutRef.current = setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+          scrollTimeoutRef.current = null;
+        }, 100);
+      }
     }
-  }, [messages, isStreaming]);
+  }, [messages]);
 
   useEffect(() => {
     if (!isLoadingMessages && messages.length > 0) {
@@ -227,6 +233,10 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           contentContainerStyle={styles.messageListContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          removeClippedSubviews
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
           ListHeaderComponent={() => (
             messages.length === 0 && !isLoadingMessages ? (
               <View style={styles.welcomeContainer}>

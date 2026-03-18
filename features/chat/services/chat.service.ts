@@ -94,6 +94,15 @@ export const chatService = {
       let isFinished = false;
       let currentEvent = '';
       let currentData = '';
+      let chunkBuffer = '';
+      let flushTimeout: any = null;
+
+      const flush = () => {
+        if (chunkBuffer) {
+          onChunk(chunkBuffer);
+          chunkBuffer = '';
+        }
+      };
 
       const finish = () => {
         if (!isFinished) {
@@ -128,8 +137,14 @@ export const chatService = {
                 console.log('[SSE_EVENT]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
                 
                 if (currentEvent === 'message') {
-                  // Send plain text chunk directly to UI
-                  onChunk(currentData);
+                  // Batch chunks to reduce updates
+                  chunkBuffer += currentData;
+                  if (!flushTimeout) {
+                    flushTimeout = setTimeout(() => {
+                      flush();
+                      flushTimeout = null;
+                    }, 30);
+                  }
                 } else if (currentEvent === 'suggestions') {
                   // Parse suggestions JSON array
                   try {
@@ -191,7 +206,13 @@ export const chatService = {
             console.log('[SSE_EVENT_FINAL]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
             
             if (currentEvent === 'message') {
-              onChunk(currentData);
+              chunkBuffer += currentData;
+              if (!flushTimeout) {
+                flushTimeout = setTimeout(() => {
+                  flush();
+                  flushTimeout = null;
+                }, 30);
+              }
             } else if (currentEvent === 'suggestions') {
               try {
                 const suggestions = JSON.parse(currentData);

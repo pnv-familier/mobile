@@ -11,63 +11,10 @@ interface MessageBubbleProps {
 }
 
 const ACCENT_COLOR = '#D4A056';
-const TYPEWRITER_SPEED = 5;
 
 const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
-  const [displayContent, setDisplayContent] = useState('');
-  const fullContentRef = useRef('');
-  const displayIndexRef = useRef(0);
-  const animationRef = useRef<NodeJS.Timeout | null>(null);
-  
-  useEffect(() => {
-    if (!isAi || !isStreaming) {
-      setDisplayContent(message.content);
-      fullContentRef.current = message.content;
-      displayIndexRef.current = message.content.length;
-      
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-        animationRef.current = null;
-      }
-      return;
-    }
 
-    fullContentRef.current = message.content;
-
-    if (!animationRef.current) {
-      const animate = () => {
-        if (displayIndexRef.current < fullContentRef.current.length) {
-          displayIndexRef.current++;
-          setDisplayContent(fullContentRef.current.substring(0, displayIndexRef.current));
-          animationRef.current = setTimeout(animate, TYPEWRITER_SPEED);
-        } else {
-          animationRef.current = null;
-        }
-      };
-      
-      animate();
-    }
-
-    return () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-        animationRef.current = null;
-      }
-    };
-  }, [message.content, isAi, isStreaming]);
-  
-  useEffect(() => {
-    if (!isStreaming && isAi) {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-        animationRef.current = null;
-      }
-      setDisplayContent(message.content);
-      fullContentRef.current = message.content;
-      displayIndexRef.current = message.content.length;
-    }
-  }, [isStreaming, isAi, message.content]);
   
   const handleReport = () => {
     Alert.alert('Report Message', 'Would you like to report this AI response?', [
@@ -86,7 +33,7 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
       <View style={styles.messageContentWrapper}>
         {isAi ? (
           <Markdown style={markdownStyles}>
-            {displayContent}
+            {message.content}
           </Markdown>
         ) : (
           <Text style={styles.userMessageText}>
@@ -258,4 +205,9 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MessageBubble;
+export default React.memo(MessageBubble, (prev, next) => {
+  return prev.message.id === next.message.id && 
+         prev.message.content === next.message.content &&
+         prev.message.suggestions === next.message.suggestions &&
+         prev.isStreaming === next.isStreaming;
+});
