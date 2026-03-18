@@ -27,12 +27,25 @@
       "package": "com.familier.familier",
       "googleServicesFile": "./google-services.json"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
       "expo-router",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Familier to access your photos"
+        }
+      ],
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-video"
     ],
     "extra": {
       "router": {},
@@ -40,6 +53,12 @@
         "projectId": "ac6b5ff8-aef1-4d29-b96c-2149c8ae6627"
       }
     },
-    "owner": "familier"
+    "owner": "familier",
+    "updates": {
+      "url": "https://u.expo.dev/ac6b5ff8-aef1-4d29-b96c-2149c8ae6627"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

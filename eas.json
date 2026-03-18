@@ -16,13 +16,12 @@
       "channel": "preview"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "production"
     }
-  },
-  "updates": {
-    "enabled": true,
-    "checkOnLaunch": "ALWAYS",
-    "fallbackToCacheTimeout": 0
   },
   "submit": {
     "production": {}

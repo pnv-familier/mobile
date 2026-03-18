@@ -23,3 +23,32 @@ export interface MyFamilyResponse extends FamilyResponse {
   role: string
   nickname: string
 }
+
+export type FamilyPreview = {
+    familyId: string;
+    familyName: string;
+    admin: {
+        fullName: string;
+        avatarUrl: string;
+    };
+    memberCount: number;
+};
+
+export type JoinFamilyRequest = {
+    joinCode: string;
+    relationship: string;
+};
+
+export interface FamilyMember {
+  userId: string;
+  displayName: string;
+  avatar: string | null;
+  role: string;
+  joinedAt: string;
+}
+
+export interface FamilyMembersResponse {
+  members: FamilyMember[];
+  familyCreatedAt: string;
+  shouldShowInvitePrompt: boolean;
+}

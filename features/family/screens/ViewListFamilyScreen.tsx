@@ -9,16 +9,19 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {
   ChevronLeft,
   Camera,
   Home,
   MoreVertical,
+  Copy,
 } from 'lucide-react-native';
 import type { RootNavigationProp } from '../../../navigation/types';
 import { useFamilyMembers } from '../hooks/useFamilyMembers';
 import { useFamilyStore } from '../store/family.store';
+import * as Clipboard from 'expo-clipboard';
 
 
 const PRIMARY_COLOR = '#FDF2E3';
@@ -76,8 +79,28 @@ export default function ViewListFamilyScreen({
 
 
           <Text style={styles.familyName}>{familyData?.name || 'Family'}</Text>
+          {familyData?.inviteCode && (
+            <TouchableOpacity
+              style={styles.inviteCodeRow}
+              onPress={async () => {
+                await Clipboard.setStringAsync(familyData.inviteCode);
+                Alert.alert('Copied!', 'Invite code copied to clipboard.');
+              }}
+            >
+              <Text style={styles.inviteCodeText}>{familyData.inviteCode}</Text>
+              <Copy size={14} color={ACCENT_COLOR} style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          )}
           <Text style={styles.familyMeta}>
-            {members?.length || 0} members • Created {familyCreatedAt ? new Date(familyCreatedAt).toLocaleDateString() : 'N/A'}
+            {members?.length || 0} members • Created {familyCreatedAt 
+              ? (() => {
+                  if (Array.isArray(familyCreatedAt)) {
+                    const [y, m, d] = familyCreatedAt as any;
+                    return new Date(y, m - 1, d).toLocaleDateString();
+                  }
+                  return new Date(familyCreatedAt).toLocaleDateString();
+                })()
+              : 'N/A'}
           </Text>
         </View>
 
@@ -88,10 +111,15 @@ export default function ViewListFamilyScreen({
           ) : (
             members?.map((item: any) => (
               <View key={item.userId} style={styles.memberItem}>
-                <Image 
-                  source={{ uri: item.avatar || 'https://placekitten.com/100/100' }} 
-                  style={styles.memberAvatar} 
-                />
+                {item.avatar ? (
+                  <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
+                ) : (
+                  <View style={[styles.memberAvatar, styles.memberAvatarPlaceholder]}>
+                    <Text style={styles.memberAvatarText}>
+                      {item.displayName?.charAt(0)?.toUpperCase() || '?'}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.memberInfo}>
                   <Text style={styles.memberName}>{item.displayName}</Text>
                   <Text style={styles.memberRole}>{item.role}</Text>
@@ -199,6 +227,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
+  inviteCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F5D6B5',
+  },
+  inviteCodeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: ACCENT_COLOR,
+    letterSpacing: 1,
+  },
 
 
   familyMeta: {
@@ -228,6 +273,16 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 27.5,
+  },
+  memberAvatarPlaceholder: {
+    backgroundColor: '#F5D6B5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberAvatarText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: ACCENT_COLOR,
   },
 
 

@@ -4,10 +4,7 @@ import { Profile, User } from "../type";
 
 export const userService = {
     updateProfile: async (profileData: Partial<Profile>): Promise<SuccessResponse<User>> => {
-        const payload = {
-            profile: profileData
-        };
-        const response = await apiClient.put("/api/v1/users/profile", payload);
+        const response = await apiClient.put("/api/v1/users/profile", profileData);
         return response.data;
     },
     getCurrentUser: async (): Promise<SuccessResponse<User>> => {

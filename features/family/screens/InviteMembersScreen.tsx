@@ -12,7 +12,7 @@ import { useInviteMembers } from '../hooks/useInviteMembers';
 
 export default function InviteMembersScreen({ route }: any) {
   const { inviteCode } = route.params || { inviteCode: 'FAM-XXXX-0000' };
-  const { onShare, onShowCode, handleFinish, goBack } = useInviteMembers(inviteCode);
+  const { onShare, onCopy, handleFinish, goBack } = useInviteMembers(inviteCode);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,9 +43,9 @@ export default function InviteMembersScreen({ route }: any) {
           <Text style={styles.codeText}>{inviteCode}</Text>
 
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.copyBtn} onPress={onShowCode}>
-              <Feather name="eye" size={18} color="#D48141" />
-              <Text style={styles.copyBtnText}>View</Text>
+            <TouchableOpacity style={styles.copyBtn} onPress={onCopy}>
+              <Feather name="copy" size={18} color="#D48141" />
+              <Text style={styles.copyBtnText}>Copy</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
