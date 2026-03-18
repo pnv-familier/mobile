@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { notificationService } from '../services/notification.service';
 import { Notification, NotificationType, NotificationTab } from '../types';
+import { useNotificationStore } from '../store/notification.store';
 
 const TAB_TYPES: Record<NotificationTab, NotificationType[]> = {
   ALL: ['POST_COMMENT', 'POST_REACTION', 'LOVE_TASK', 'SCHEDULE', 'AI'],
@@ -11,21 +12,25 @@ const TAB_TYPES: Record<NotificationTab, NotificationType[]> = {
 };
 
 export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const notifications = useNotificationStore(s => s.notifications);
+  const setNotifications = useNotificationStore(s => s.setNotifications);
+  const setUnreadCount = useNotificationStore(s => s.setUnreadCount);
+  const updateNotificationRead = useNotificationStore(s => s.updateNotificationRead);
 
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await notificationService.getNotifications();
-      // Unread first, then sort by newest
       const sorted = [...data].sort((a, b) => {
         if (a.isRead !== b.isRead) return a.isRead ? 1 : -1;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       setNotifications(sorted);
+      setUnreadCount(sorted.filter(n => !n.isRead).length);
     } catch (err: any) {
       setError(err?.message || 'Failed to load notifications');
     } finally {
@@ -34,18 +39,14 @@ export const useNotifications = () => {
   }, []);
 
   const markAsRead = async (id: string) => {
-    await notificationService.markAsRead(id);
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-    );
+    updateNotificationRead(id);
+    notificationService.markAsRead(id).catch(() => {});
   };
 
   const getFiltered = (tab: NotificationTab): Notification[] => {
     const types = TAB_TYPES[tab];
-    return notifications.filter(n => types.includes(n.type));
+    return (notifications as Notification[]).filter(n => types.includes(n.type));
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  return { notifications, loading, error, fetchNotifications, markAsRead, getFiltered, unreadCount };
+  return { notifications, loading, error, fetchNotifications, markAsRead, getFiltered };
 };

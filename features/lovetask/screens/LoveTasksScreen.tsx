@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
 import { NotificationPopup } from '../../notification/components/NotificationPopup';
+import { NotificationBell } from '../../notification/components/NotificationBell';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';
@@ -73,9 +74,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => setShowNotifications(true)}>
-            <Bell size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
+          <NotificationBell onPress={() => setShowNotifications(true)} />
           <TouchableOpacity onPress={() => setShowOptions(true)}>
             <User size={24} color={ACCENT_COLOR} style={styles.headerIconGap} />
           </TouchableOpacity>
@@ -234,7 +233,6 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
       <NotificationPopup
         visible={showNotifications}
         onClose={() => setShowNotifications(false)}
-        navigation={navigation}
       />
     </SafeAreaView>
   );

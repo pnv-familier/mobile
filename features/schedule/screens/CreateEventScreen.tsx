@@ -16,6 +16,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { scheduleService } from '../services/schedule.service';
 import { getFamilyMembers } from '../../family/service/family.service';
 import { useAuthStore } from '../../auth/store/auth.store';
+import { showBanner } from '../../../utils/banner';
 
 const BACKGROUND_COLOR = '#FDF2E2';
 const ACCENT_COLOR = '#D4A017';
@@ -216,6 +217,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       };
 
       await scheduleService.createEvent(eventData);
+      showBanner('📅 Event Created!', `"${eventName}" has been added to the schedule`);
 
       // Call onSuccess callback if provided (from Suggestion)
       if (prefill?.onSuccess) {

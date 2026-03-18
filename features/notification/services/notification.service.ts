@@ -14,4 +14,8 @@ export const notificationService = {
   markAllAsRead: async (): Promise<void> => {
     await apiClient.patch('/api/v1/notifications/read-all');
   },
+
+  removePushToken: async (token: string): Promise<void> => {
+    await apiClient.delete('/api/v1/notifications/push-token', { data: { token } });
+  },
 };
