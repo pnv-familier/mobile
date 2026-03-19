@@ -47,6 +47,7 @@ export const chatService = {
     onSuggestions: (suggestions: string[]) => void,
     onMetadata: (metadata: any) => void,
     onSessionId: (newSessionId: string) => void,
+    onMessageId: (messageId: string) => void,
     onComplete: () => void,
     onError: (error: any) => void,
     taggedUserEmail?: string
@@ -137,7 +138,6 @@ export const chatService = {
                 console.log('[SSE_EVENT]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
                 
                 if (currentEvent === 'message') {
-                  // Batch chunks to reduce updates
                   chunkBuffer += currentData;
                   if (!flushTimeout) {
                     flushTimeout = setTimeout(() => {
@@ -145,8 +145,10 @@ export const chatService = {
                       flushTimeout = null;
                     }, 30);
                   }
+                } else if (currentEvent === 'messageId') {
+                  console.log('[MESSAGE_ID]', currentData);
+                  onMessageId(currentData);
                 } else if (currentEvent === 'suggestions') {
-                  // Parse suggestions JSON array
                   try {
                     const suggestions = JSON.parse(currentData);
                     if (Array.isArray(suggestions)) {
@@ -157,7 +159,6 @@ export const chatService = {
                     console.error('[SUGGESTIONS_PARSE_ERROR]', e, currentData);
                   }
                 } else if (currentEvent === 'metadata') {
-                  // Parse metadata JSON object
                   try {
                     const metadata = JSON.parse(currentData);
                     console.log('[METADATA_PARSED]', metadata);
@@ -213,6 +214,9 @@ export const chatService = {
                   flushTimeout = null;
                 }, 30);
               }
+            } else if (currentEvent === 'messageId') {
+              console.log('[MESSAGE_ID_FINAL]', currentData);
+              onMessageId(currentData);
             } else if (currentEvent === 'suggestions') {
               try {
                 const suggestions = JSON.parse(currentData);
