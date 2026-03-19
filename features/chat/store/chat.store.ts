@@ -39,6 +39,7 @@ interface ChatState {
     startNewSession: () => void;
     sendMessage: (content: string, taggedUserEmail?: string) => Promise<void>;
     updateMessageContent: (id: string, chunk: string) => void;
+    updateMessageId: (tempId: string, backendId: string) => void;
     updateMessageSuggestions: (id: string, suggestions: string[]) => void;
     setPendingSuggestion: (metadata: any) => void;
     clearSuggestions: (messageId: string) => void;
@@ -98,6 +99,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
     },
 
+    updateMessageId: (tempId, backendId) => {
+        set((state) => ({
+            messages: state.messages.map((m) =>
+                m.id === tempId ? { ...m, id: backendId } : m
+            ),
+        }));
+    },
+
     updateMessageSuggestions: (id, suggestions) => {
         set((state) => ({
             messages: state.messages.map((m) =>
@@ -155,13 +164,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     set({ currentSessionId: newSessionId });
                 }
             },
+            (messageId) => {
+                console.log('[STORE] Received messageId:', messageId);
+                get().updateMessageId(STREAMING_ID, messageId);
+            },
             () => {
-                set((state) => ({
-                    isStreaming: false,
-                    messages: state.messages.map((m) => 
-                        m.id === STREAMING_ID ? { ...m, id: `ai-${Date.now()}` } : m
-                    )
-                }));
+                set({ isStreaming: false });
                 get().fetchSessions();
             },
             (error) => {

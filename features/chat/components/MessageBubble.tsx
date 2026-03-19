@@ -4,6 +4,8 @@ import Markdown from 'react-native-markdown-display';
 import { Flag } from 'lucide-react-native';
 import { ChatMessageDto } from '../types';
 import { formatMessageTime } from '../../../utils/dateFormatter';
+import FeedbackModal from './FeedbackModal';
+import { reportService } from '../services/report.service';
 
 interface MessageBubbleProps {
   message: ChatMessageDto;
@@ -14,22 +16,28 @@ const ACCENT_COLOR = '#D4A056';
 
 const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
-  
   const handleReport = () => {
-    Alert.alert('Report Message', 'Would you like to report this AI response?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Report', onPress: () => Alert.alert('Thank you', 'Your report has been submitted.') }
-    ]);
+    setShowFeedbackModal(true);
+  };
+
+  const handleConfirmReport = async (reason: string) => {
+    try {
+      await reportService.reportMessage({ reason });
+    } catch (error) {
+      console.error('Failed to report message:', error);
+    }
   };
 
   return (
-    <View
-      style={[
-        styles.messageBubble,
-        isAi ? styles.aiBubble : styles.userBubble
-      ]}
-    >
+    <>
+      <View
+        style={[
+          styles.messageBubble,
+          isAi ? styles.aiBubble : styles.userBubble
+        ]}
+      >
       <View style={styles.messageContentWrapper}>
         {isAi ? (
           <Markdown style={markdownStyles}>
@@ -54,7 +62,14 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
           </TouchableOpacity>
         )}
       </View>
-    </View>
+      </View>
+
+      <FeedbackModal
+        visible={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onConfirm={handleConfirmReport}
+      />
+    </>
   );
 }, (prevProps, nextProps) => {
   return prevProps.message.id === nextProps.message.id && 
