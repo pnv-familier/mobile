@@ -89,18 +89,20 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
         </View>
       </View>
 
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.value}
-            style={[styles.filterBtn, activeFilter === f.value && styles.filterBtnActive]}
-            onPress={() => handleFilterChange(f.value)}
-          >
-            <Text style={[styles.filterText, activeFilter === f.value && styles.filterTextActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.filterWrapper}>
+        <View style={styles.filterRow}>
+          {FILTERS.map((f) => (
+            <TouchableOpacity
+              key={f.value}
+              style={[styles.filterBtn, activeFilter === f.value && styles.filterBtnActive]}
+              onPress={() => handleFilterChange(f.value)}
+            >
+              <Text style={[styles.filterText, activeFilter === f.value && styles.filterTextActive]}>
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {loading ? (
@@ -141,10 +143,18 @@ const styles = StyleSheet.create({
   logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 1 },
   logoIcon: { width: 40, height: 40 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
+  filterWrapper: {
+    marginHorizontal: 8,
+    marginBottom: 12,
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#F5D6B5',
+    paddingHorizontal: 12,
+    paddingVertical: 18,
+  },
   filterRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 12,
     gap: 8,
     justifyContent: 'center',
   },
