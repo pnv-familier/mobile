@@ -833,12 +833,15 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 15,
-    padding: 15,
+    paddingVertical: 12,
     alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
   },
   cancelButtonText: {
-    color: '#999',
+    color: '#666',
     fontWeight: '600',
+    fontSize: 16,
   }
 });
 
