@@ -209,7 +209,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
           <View style={styles.headerLeft}>
             <View style={styles.logoContainer}>
               <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
-              <Text style={styles.headerTitle}>Family Schedule</Text>
+              <Text style={styles.headerTitle}>Calendar</Text>
             </View>
           </View>
           <View style={styles.headerRight}>

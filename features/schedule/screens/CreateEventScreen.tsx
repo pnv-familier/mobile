@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   ampmButton: {
-    backgroundColor: ACCENT_COLOR,
+    backgroundColor: '#D99B5F',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 12,
