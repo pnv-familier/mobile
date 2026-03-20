@@ -1,11 +1,11 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
+import React, { memo, useState } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import { Flag } from 'lucide-react-native';
+import { ThumbsUp, ThumbsDown, Flag } from 'lucide-react-native';
 import { ChatMessageDto } from '../types';
 import { formatMessageTime } from '../../../utils/dateFormatter';
 import FeedbackModal from './FeedbackModal';
-import { reportService } from '../services/report.service';
+import { feedbackService, FeedbackType } from '../services/report.service';
 
 interface MessageBubbleProps {
   message: ChatMessageDto;
@@ -17,6 +17,30 @@ const ACCENT_COLOR = '#D4A056';
 const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
+
+  const handleLike = async () => {
+    if (liked) return;
+    try {
+      await feedbackService.submitFeedback(FeedbackType.LIKE);
+      setLiked(true);
+      setDisliked(false);
+    } catch (error) {
+      console.error('Failed to submit like:', error);
+    }
+  };
+
+  const handleDislike = async () => {
+    if (disliked) return;
+    try {
+      await feedbackService.submitFeedback(FeedbackType.DISLIKE);
+      setDisliked(true);
+      setLiked(false);
+    } catch (error) {
+      console.error('Failed to submit dislike:', error);
+    }
+  };
 
   const handleReport = () => {
     setShowFeedbackModal(true);
@@ -24,7 +48,7 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
 
   const handleConfirmReport = async (reason: string) => {
     try {
-      await reportService.reportMessage({ reason });
+      await feedbackService.submitFeedback(FeedbackType.REPORT, reason);
     } catch (error) {
       console.error('Failed to report message:', error);
     }
@@ -57,9 +81,25 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
           {formatMessageTime(message.timestamp)}
         </Text>
         {isAi && (
-          <TouchableOpacity onPress={handleReport} style={styles.reportButton}>
-            <Flag size={12} color="rgba(0,0,0,0.3)" />
-          </TouchableOpacity>
+          <View style={styles.feedbackButtons}>
+            <TouchableOpacity onPress={handleLike} style={styles.feedbackButton}>
+              <ThumbsUp 
+                size={14} 
+                color={liked ? '#D4A056' : 'rgba(0,0,0,0.3)'}
+                fill={liked ? '#D4A056' : 'transparent'}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDislike} style={styles.feedbackButton}>
+              <ThumbsDown 
+                size={14} 
+                color={disliked ? '#D4A056' : 'rgba(0,0,0,0.3)'}
+                fill={disliked ? '#D4A056' : 'transparent'}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleReport} style={styles.feedbackButton}>
+              <Flag size={12} color="rgba(0,0,0,0.3)" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
       </View>
@@ -214,9 +254,13 @@ const styles = StyleSheet.create({
     width: '100%',
     textAlign: 'right',
   },
-  reportButton: {
+  feedbackButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  feedbackButton: {
     padding: 4,
-    marginLeft: 10,
   },
 });
 

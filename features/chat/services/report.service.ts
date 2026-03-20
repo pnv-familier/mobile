@@ -1,27 +1,33 @@
 import { apiClient } from '../../../api/api';
 import { useAuthStore } from '../../auth/store/auth.store';
 
-interface ReportRequest {
-  reason: string;
+export enum FeedbackType {
+  LIKE = 'LIKE',
+  DISLIKE = 'DISLIKE',
+  REPORT = 'REPORT',
 }
 
-interface ReportResponse {
+interface FeedbackRequest {
+  type: FeedbackType;
+  reason?: string;
+}
+
+interface FeedbackResponse {
   id: string;
-  reason: string;
+  type: FeedbackType;
+  reason: string | null;
   reporterEmail: string;
   reportedAt: string;
 }
 
-export const reportService = {
-  reportMessage: async (data: ReportRequest): Promise<ReportResponse> => {
-    const userEmail = useAuthStore.getState().data?.email;
+export const feedbackService = {
+  submitFeedback: async (type: FeedbackType, reason?: string): Promise<FeedbackResponse> => {
+    const data: FeedbackRequest = { type };
+    if (reason) {
+      data.reason = reason;
+    }
     
-    const response = await apiClient.post<ReportResponse>('/ai/reports', data, {
-      headers: {
-        'X-User-Email': userEmail,
-      },
-    });
-    
+    const response = await apiClient.post<FeedbackResponse>('/ai/feedback', data);
     return response.data;
   },
 };

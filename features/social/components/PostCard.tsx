@@ -76,7 +76,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
           <Text style={styles.timestamp}>{formatInstantRelative(post.created_at)}</Text>
         </View>
         {isOwner && (
-          <TouchableOpacity onPress={() => setShowMenu(true)} style={styles.menuButton}>
+          <TouchableOpacity accessibilityLabel='show-post-menu-icon' testID='show-post-menu-icon' onPress={() => setShowMenu(true)} style={styles.menuButton}>
             <MoreVertical size={20} color="#666" />
           </TouchableOpacity>
         )}
