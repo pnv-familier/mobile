@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Home, Bell, User, Menu, Users, ChevronRight, Plus, X, Image as ImageIcon, Video as VideoIcon, MoreVertical, Edit2, Trash2 } from 'lucide-react-native';
@@ -13,14 +13,21 @@ import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
 import { useFocusEffect } from '@react-navigation/native';
+import { NotificationPopup } from '../../notification/components/NotificationPopup';
+import { NotificationBell } from '../../notification/components/NotificationBell';
+import { useNotificationStore } from '../../notification/store/notification.store';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
 
-export default function FeedScreen({ navigation }: { navigation: any }) {
+export default function FeedScreen({ navigation, route }: { navigation: any; route: any }) {
   const [showOptions, setShowOptions] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [openCommentPostId, setOpenCommentPostId] = useState<number | null>(null);
+  const scrollViewRef = useRef<any>(null);
+  const postRefs = useRef<{ [key: number]: any }>({});
   const [postContent, setPostContent] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
@@ -32,12 +39,32 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
   const { posts, loading, error, refetch, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
+  const openPostId = useNotificationStore(s => s.openPostId);
+  const setOpenPostId = useNotificationStore(s => s.setOpenPostId);
 
   useFocusEffect(
     React.useCallback(() => {
       refetch();
     }, [])
   );
+
+  useEffect(() => {
+    if (!openPostId) return;
+    const postId = Number(openPostId);
+    setOpenCommentPostId(postId);
+    refetch().then(() => {
+      setTimeout(() => {
+        postRefs.current[postId]?.measureLayout(
+          scrollViewRef.current,
+          (_x: number, y: number) => {
+            scrollViewRef.current?.scrollTo({ y, animated: true });
+          },
+          () => {}
+        );
+        setOpenPostId(null);
+      }, 800);
+    });
+  }, [openPostId]);
 
   const handleReaction = async (postId: number) => {
     setReactionLoading(postId);
@@ -207,7 +234,7 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           <Text style={styles.headerTitle}>Social Media</Text>
         </View>
         <View style={styles.headerIcons}>
-          <Bell size={24} color="#D4A056" style={styles.icon} />
+          <NotificationBell onPress={() => setShowNotifications(true)} color="#D4A056" style={styles.icon} />
           <TouchableOpacity 
             accessibilityLabel='profile-options-btn'
             testID='profile-options-btn' 
@@ -219,7 +246,7 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
       </View>
 
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.familyCard}>
           <View style={styles.familyIconBox}>
             <Home size={28} color="#D4A056" />
@@ -286,15 +313,17 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           </View>
         ) : (
           posts.map((post) => (
-            <PostCard 
-              key={post.post_id} 
-              post={post} 
-              currentUserId={user?.id} 
-              onDelete={refetch} 
-              onUpdate={() => incrementCommentCount(post.post_id)}
-              onReaction={handleReaction}
-              reactionLoading={reactionLoading === post.post_id}
-            />
+            <View key={post.post_id} ref={ref => { postRefs.current[post.post_id] = ref; }}>
+              <PostCard
+                post={post}
+                currentUserId={user?.id}
+                onDelete={refetch}
+                onUpdate={() => incrementCommentCount(post.post_id)}
+                onReaction={handleReaction}
+                reactionLoading={reactionLoading === post.post_id}
+                defaultShowComments={openCommentPostId === post.post_id}
+              />
+            </View>
           ))
         )}
       </ScrollView>
@@ -442,6 +471,11 @@ export default function FeedScreen({ navigation }: { navigation: any }) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <NotificationPopup
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </SafeAreaView>
   );
 }

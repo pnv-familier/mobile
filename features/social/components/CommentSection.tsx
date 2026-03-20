@@ -14,6 +14,7 @@ import { Send } from 'lucide-react-native';
 import { useComments } from '../hooks/useComments';
 import { getDefaultAvatar } from '../utils/avatar';
 import { useAuthStore } from '../../auth/store/auth.store';
+import { formatTimestamp } from '../../../utils/formatTimestamp';
 
 interface CommentSectionProps {
   postId: number;
@@ -30,15 +31,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   const [posting, setPosting] = useState(false);
   const { comments, addComment, totalComments } = useComments(postId);
   const currentUser = useAuthStore((state) => state.data);
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
 
   const handleSubmit = async () => {
     if (!commentText.trim() || posting) return;

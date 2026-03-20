@@ -6,6 +6,7 @@ import { getDefaultAvatar } from '../utils/avatar';
 import { deletePost } from '../services/post.service';
 import { VideoPlayer } from './VideoPlayer';
 import { CommentSection } from './CommentSection';
+import { formatInstantRelative } from '../../../utils/instantUtils';
 
 interface PostCardProps {
   post: Post;
@@ -14,6 +15,7 @@ interface PostCardProps {
   onUpdate?: () => void;
   onReaction?: (postId: number) => void;
   reactionLoading?: boolean;
+  defaultShowComments?: boolean;
 }
 
 const ACCENT_COLOR = '#D4A056';
@@ -22,11 +24,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_MARGIN = 30;
 const IMAGE_GAP = 8;
 
-export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading }: PostCardProps) {
+export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading, defaultShowComments = false }: PostCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(defaultShowComments);
 
   const videoUrl = post.videos && post.videos.length > 0 ? post.videos[0] : null;
 
@@ -36,26 +38,6 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
   const displayContent = expanded || !needsExpansion 
     ? post.content 
     : post.content.substring(0, MAX_PREVIEW_LENGTH) + '...';
-
-  const formatTimestamp = (timestamp: string) => {
-    // Handle array format [year, month, day, hour, minute, second, nano]
-    let date: Date;
-    if (Array.isArray(timestamp)) {
-      const [year, month, day, hour = 0, minute = 0] = timestamp as any;
-      date = new Date(year, month - 1, day, hour, minute);
-    } else {
-      // Remove Z suffix to treat as local time if backend sends without timezone
-      const localTimestamp = (timestamp as string).endsWith('Z')
-        ? (timestamp as string).slice(0, -1)
-        : timestamp as string;
-      date = new Date(localTimestamp);
-    }
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -91,7 +73,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
         </View>
         <View style={styles.authorInfo}>
           <Text style={styles.authorName}>{post.author_name}</Text>
-          <Text style={styles.timestamp}>{formatTimestamp(post.created_at)}</Text>
+          <Text style={styles.timestamp}>{formatInstantRelative(post.created_at)}</Text>
         </View>
         {isOwner && (
           <TouchableOpacity onPress={() => setShowMenu(true)} style={styles.menuButton}>

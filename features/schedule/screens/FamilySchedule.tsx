@@ -29,6 +29,9 @@ import { FamilyEvent } from '../types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
 import { useFocusEffect } from '@react-navigation/native';
+import { NotificationPopup } from '../../notification/components/NotificationPopup';
+import { NotificationBell } from '../../notification/components/NotificationBell';
+import { useNotificationStore } from '../../notification/store/notification.store';
 
 const BACKGROUND_COLOR = '#FDF0D5';
 const ACCENT_COLOR = '#D4A056';
@@ -39,6 +42,9 @@ interface FamilyScheduleProps {
 
 const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
   const [showOptions, setShowOptions] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const openEventId = useNotificationStore(s => s.openEventId);
+  const setOpenEventId = useNotificationStore(s => s.setOpenEventId);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const { logout } = useLogout();
@@ -57,6 +63,16 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
       refetch();
     }, [selectedYear, selectedMonth])
   );
+
+  useEffect(() => {
+    if (!openEventId || events.length === 0) return;
+    const event = events.find(e => String(e.eventId) === String(openEventId));
+    if (event) {
+      setSelectedEvent(event);
+      setShowEventDetail(true);
+      setOpenEventId(null);
+    }
+  }, [openEventId, events]);
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -200,9 +216,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity>
-              <Bell size={24} color={ACCENT_COLOR} />
-            </TouchableOpacity>
+            <NotificationBell onPress={() => setShowNotifications(true)} />
             <TouchableOpacity onPress={() => setShowOptions(true)}>
               <User size={24} color={ACCENT_COLOR} style={{ marginHorizontal: 15 }} />
             </TouchableOpacity>
@@ -527,6 +541,11 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <NotificationPopup
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </SafeAreaView>
   );
 };

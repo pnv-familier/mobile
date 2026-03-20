@@ -13,6 +13,7 @@ import {
 import { ChevronLeft, Heart, Calendar, Lightbulb } from 'lucide-react-native';
 import { useSuggestionDetail } from '../hooks/useSuggestionDetail';
 import { SuggestionType, EventPayload, TaskPayload } from '../types';
+import { showBanner } from '../../../utils/banner';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';

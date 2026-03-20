@@ -17,10 +17,10 @@ export type AppStackParamList = {
 }
 
 export type TabStackParamList = {
-    Home: undefined
+    Home: { screen: string; params?: any } | undefined
     Chat: undefined
     Schedule: undefined
-    LoveTasks: undefined
+    LoveTasks: { screen: string; params?: any } | undefined
     Suggestions: undefined
 }
 
