@@ -73,7 +73,7 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ visible, o
   }, [visible]);
 
   const handleNotificationPress = async (notification: Notification) => {
-    if (!notification.isRead) {
+    if (notification.status === 'UNREAD') {
       await markAsRead(notification.id);
     }
     onClose();
@@ -170,24 +170,24 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ visible, o
                     return (
                       <TouchableOpacity
                         key={notification.id}
-                        style={[styles.item, !notification.isRead ? styles.itemUnread : styles.itemRead]}
+                        style={[styles.item, notification.status === 'UNREAD' ? styles.itemUnread : styles.itemRead]}
                         onPress={() => handleNotificationPress(notification)}
                       >
-                        <View style={[styles.iconBox, { backgroundColor: config.color + (!notification.isRead ? '25' : '10') }]}>
-                          <IconComponent size={18} color={notification.isRead ? '#BBB' : config.color} />
+                        <View style={[styles.iconBox, { backgroundColor: config.color + (notification.status === 'UNREAD' ? '25' : '10') }]}>
+                          <IconComponent size={18} color={notification.status === 'READ' ? '#BBB' : config.color} />
                         </View>
                         <View style={styles.itemContent}>
                           <View style={styles.titleRow}>
-                            <Text style={[styles.itemTitle, notification.isRead && styles.itemTitleRead]} numberOfLines={1}>
+                            <Text style={[styles.itemTitle, notification.status === 'READ' && styles.itemTitleRead]} numberOfLines={1}>
                               {notification.title}
                             </Text>
                             <Text style={styles.itemTime}>{formatTime(notification.createdAt)}</Text>
                           </View>
-                          <Text style={[styles.itemBody, notification.isRead && styles.itemBodyRead]} numberOfLines={2}>
+                          <Text style={[styles.itemBody, notification.status === 'READ' && styles.itemBodyRead]} numberOfLines={2}>
                             {notification.body}
                           </Text>
                         </View>
-                        {!notification.isRead && <View style={styles.unreadDot} />}
+                        {notification.status === 'UNREAD' && <View style={styles.unreadDot} />}
                       </TouchableOpacity>
                     );
                   })}
