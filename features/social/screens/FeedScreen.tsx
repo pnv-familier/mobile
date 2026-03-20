@@ -273,7 +273,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
               <View style={styles.fabContent}>
                 <Text style={styles.fabText}>Create post</Text>
                 <View style={styles.fabIconCircle}>
-                  <Plus size={24} color="white" />
+                  <Plus size={20} color="white" />
                 </View>
               </View>
             </TouchableOpacity>
@@ -575,20 +575,20 @@ const styles = StyleSheet.create({
   fabContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 30,
-    paddingLeft: 20,
+    borderRadius: 25,
+    paddingLeft: 14,
   },
   fabIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: ACCENT_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
   },
   fabText: {
-    marginRight: 12,
-    fontSize: 16,
+    marginRight: 10,
+    fontSize: 14,
     fontWeight: '600',
     color: ACCENT_COLOR,
   },
