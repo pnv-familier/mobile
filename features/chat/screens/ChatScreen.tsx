@@ -210,9 +210,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         style={{ flex: 1 }}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <ChevronLeft size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
+          <View style={{ width: 24 }} />
           <Text style={styles.headerTitle}>AI Family Assistant</Text>
           <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
             <History size={24} color={ACCENT_COLOR} />
@@ -331,13 +329,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  backButton: {
-    padding: 5,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
+    textAlign: 'center',
   },
   messageList: {
     flex: 1,

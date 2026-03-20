@@ -207,9 +207,6 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
         
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <ChevronLeft size={28} color="#333" />
-            </TouchableOpacity>
             <View style={styles.logoContainer}>
               <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
               <Text style={styles.headerTitle}>Family Schedule</Text>

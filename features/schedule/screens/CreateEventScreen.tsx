@@ -245,9 +245,6 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color="#333" />
-          </TouchableOpacity>
           <View style={styles.logoContainer}>
             <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
             <Text style={styles.headerTitle}>Create Event</Text>

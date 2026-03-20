@@ -104,9 +104,6 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <ChevronLeft size={28} color="#333" />
-            </TouchableOpacity>
             <View style={styles.logoContainer}>
               <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
               <Text style={styles.headerTitle}>Love Task Details</Text>
