@@ -338,9 +338,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 18,
+    padding: 12,
     borderRadius: 20,
-    marginTop: 25,
+    marginTop: 35,
   },
   btnSendDisabled: { opacity: 0.6 },
   btnText: {
