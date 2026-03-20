@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 100,
+    marginTop: 50,
     gap: 10,
   },
   button: {
