@@ -6,7 +6,7 @@ import { getDefaultAvatar } from '../utils/avatar';
 import { deletePost } from '../services/post.service';
 import { VideoPlayer } from './VideoPlayer';
 import { CommentSection } from './CommentSection';
-import { formatTimestamp } from '../../../utils/formatTimestamp';
+import { formatInstantRelative } from '../../../utils/instantUtils';
 
 interface PostCardProps {
   post: Post;
@@ -73,7 +73,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
         </View>
         <View style={styles.authorInfo}>
           <Text style={styles.authorName}>{post.author_name}</Text>
-          <Text style={styles.timestamp}>{formatTimestamp(post.created_at)}</Text>
+          <Text style={styles.timestamp}>{formatInstantRelative(post.created_at)}</Text>
         </View>
         {isOwner && (
           <TouchableOpacity onPress={() => setShowMenu(true)} style={styles.menuButton}>

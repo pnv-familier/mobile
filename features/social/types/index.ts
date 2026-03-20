@@ -1,9 +1,11 @@
+import { InstantString } from '../../../types/instant';
+
 export interface Post {
   post_id: number;
   family_id: number;
   user_id: string;
   content: string;
-  created_at: string;
+  created_at: InstantString;
   author_name: string;
   author_avatar: string;
   images: PostImage[];
@@ -27,5 +29,5 @@ export interface Comment {
   author_name: string;
   author_avatar: string;
   content: string;
-  created_at: string;
+  created_at: InstantString;
 }
