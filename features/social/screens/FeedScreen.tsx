@@ -228,20 +228,21 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.logoBox}>
-            <Home size={20} color="#8D5B39" />
-          </View>
+          <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
           <Text style={styles.headerTitle}>Social Media</Text>
         </View>
         <View style={styles.headerIcons}>
           <NotificationBell onPress={() => setShowNotifications(true)} color="#D4A056" style={styles.icon} />
           <TouchableOpacity 
             accessibilityLabel='profile-options-btn'
-            testID='profile-options-btn' 
-            onPress={() => setShowOptions(true)}>
-            <User size={24} color="#D4A056" style={styles.icon} />
+            testID='profile-options-btn'
+            onPress={() => setShowOptions(true)}
+          >
+            <User size={24} color={ACCENT_COLOR} style={styles.icon} />
           </TouchableOpacity>
-          <Menu size={24} color="#D4A056" />
+          <TouchableOpacity>
+            <Menu size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -528,30 +529,25 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     paddingBottom: 15,
-    paddingTop: 40,
+    paddingTop: 10,
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    zIndex: 1,
+    marginTop: 35,
   },
   headerLeft: {
     flexDirection: 'row',
-    alignItems: 'center'
-  },
-  logoBox: {
-    padding: 5,
-    backgroundColor: '#FDF2E3',
-    borderRadius: 8
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,
-    color: '#333'
+    color: '#000',
   },
   headerIcons: {
-    flexDirection: 'row'
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   icon: {
     marginRight: 15
