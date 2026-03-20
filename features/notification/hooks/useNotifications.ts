@@ -26,11 +26,11 @@ export const useNotifications = () => {
       setError(null);
       const data = await notificationService.getNotifications();
       const sorted = [...data].sort((a, b) => {
-        if (a.isRead !== b.isRead) return a.isRead ? 1 : -1;
+        if (a.status !== b.status) return a.status === 'READ' ? 1 : -1;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       setNotifications(sorted);
-      setUnreadCount(sorted.filter(n => !n.isRead).length);
+      setUnreadCount(sorted.filter(n => n.status === 'UNREAD').length);
     } catch (err: any) {
       setError(err?.message || 'Failed to load notifications');
     } finally {

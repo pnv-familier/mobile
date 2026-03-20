@@ -28,7 +28,7 @@ export default function RootNavigator() {
             fetchMyFamily();
             notificationService.getNotifications()
                 .then(data => {
-                    const unread = data.filter(n => !n.isRead);
+                    const unread = data.filter(n => n.status === 'UNREAD');
                     setUnreadCount(unread.length);
                     // Chỉ show banner cho unread, đè lên nhau nhanh (500ms)
                     unread.forEach((n, i) => {
