@@ -24,8 +24,9 @@ import { useFamilyStore } from '../store/family.store';
 import * as Clipboard from 'expo-clipboard';
 
 
-const PRIMARY_COLOR = '#FDF2E3';
+const BACKGROUND_COLOR = '#FFF4E6';
 const ACCENT_COLOR = '#D4A056';
+const TEXT_COLOR = '#4A3428';
 
 
 interface ViewListFamilyScreenProps {
@@ -158,7 +159,7 @@ const TabItem = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: BACKGROUND_COLOR,
   },
 
 
@@ -166,39 +167,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingTop: 30,
-    paddingBottom: 10,
-    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingTop: 35,
+    paddingBottom: 15,
+    backgroundColor: BACKGROUND_COLOR,
   },
 
 
   navTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: ACCENT_COLOR,
+    color: TEXT_COLOR,
   },
 
 
   profileSection: {
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 25,
+    paddingHorizontal: 20,
   },
 
   avatarContainer: {
     position: 'relative',
-    marginBottom: 20,
+    marginBottom: 15,
   },
 
   mainAvatar: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    elevation: 5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 3,
+    borderColor: '#FFF',
   },
 
   familyAvatar: {
@@ -209,34 +217,41 @@ const styles = StyleSheet.create({
 
   cameraBtn: {
     position: 'absolute',
-    bottom: 5,
-    right: 5,
+    bottom: 0,
+    right: 0,
     backgroundColor: ACCENT_COLOR,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFF',
+    borderColor: BACKGROUND_COLOR,
+    elevation: 2,
   },
 
 
   familyName: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: TEXT_COLOR,
   },
   inviteCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#F5D6B5',
+    borderColor: '#FFDAB9',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   inviteCodeText: {
     fontSize: 14,
@@ -247,8 +262,8 @@ const styles = StyleSheet.create({
 
 
   familyMeta: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    color: '#666',
   },
 
 
@@ -262,45 +277,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
-    padding: 12,
-    borderRadius: 16,
+    padding: 15,
+    borderRadius: 15,
     marginBottom: 12,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: '#FFDAB9',
   },
 
 
   memberAvatar: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   memberAvatarPlaceholder: {
-    backgroundColor: '#F5D6B5',
+    backgroundColor: '#FFDAB9',
     justifyContent: 'center',
     alignItems: 'center',
   },
   memberAvatarText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: ACCENT_COLOR,
   },
 
 
   memberInfo: {
-    marginLeft: 15,
+    marginLeft: 12,
     flex: 1,
   },
 
 
   memberName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    color: TEXT_COLOR,
+    marginBottom: 2,
   },
 
 
   memberRole: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: 13,
+    color: '#888',
   },
 
   memberDate: {

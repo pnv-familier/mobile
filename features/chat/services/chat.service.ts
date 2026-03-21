@@ -125,6 +125,7 @@ export const chatService = {
         if (xhr.readyState === 3 || xhr.readyState === 4) {
           const responseText = xhr.responseText;
           const newData = responseText.substring(lastIndex);
+          console.log('[RAW_DATA_RECEIVED]', JSON.stringify(newData));
           lastIndex = responseText.length;
           buffer += newData;
 
@@ -190,12 +191,12 @@ export const chatService = {
             if (line.startsWith('event:')) {
               currentEvent = line.replace(/^event:\s*/, '').trim();
             } else if (line.startsWith('data:')) {
-              // SSE spec: multiple data lines should be concatenated with \n
-              const dataLine = line.replace(/^data:\s*/, '');
+              const dataLine = line.substring(5); // Remove 'data:'
+              const content = dataLine.startsWith(' ') ? dataLine.substring(1) : dataLine;
               if (currentData) {
-                currentData += '\n' + dataLine;
+                currentData += '\n' + content;
               } else {
-                currentData = dataLine;
+                currentData = content;
               }
             }
           }
