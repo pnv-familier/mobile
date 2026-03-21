@@ -141,9 +141,8 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
                   resizeMode="cover"
                 />
               </TouchableOpacity>
-              <ScrollView 
+              <View 
                 style={styles.thumbnailScroll}
-                showsVerticalScrollIndicator={false}
               >
                 {post.images.slice(1).map((img, idx) => (
                   <TouchableOpacity 
@@ -158,7 +157,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
                     />
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           )}
         </View>
@@ -178,7 +177,9 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
               color={post.user_reacted ? ACCENT_COLOR : '#999'} 
               fill={post.user_reacted ? ACCENT_COLOR : 'none'} 
             />
-            <Text style={styles.statText}>{post.reaction_count}</Text>
+            <Text style={[styles.statText, post.user_reacted && { color: ACCENT_COLOR, fontWeight: '700' }]}>
+              {post.reaction_count}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.stat}
@@ -331,10 +332,10 @@ const styles = StyleSheet.create({
   },
   thumbnailScroll: {
     flex: 1,
+    gap: 8,
   },
   thumbnailContainer: {
-    marginBottom: 8,
-    height: 80,
+    flex: 1,
   },
   thumbnailImage: {
     width: '100%',

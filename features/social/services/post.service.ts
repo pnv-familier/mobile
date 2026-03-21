@@ -17,7 +17,8 @@ interface PostResponse {
   reactionCount: number;
   commentCount: number;
   hasMore: boolean;
-  userReacted: boolean;
+  userReacted?: boolean;
+  reacted?: boolean;
 }
 
 interface FeedResponse {
@@ -93,7 +94,7 @@ export const updatePost = async (postId: number, content: string, imageUrls: str
 };
 
 export const toggleReaction = async (postId: number) => {
-  const response = await apiClient.post<SuccessResponse<{ reacted: boolean; reactionCount: number }>>(
+  const response = await apiClient.post<SuccessResponse<{ userReacted?: boolean; reacted?: boolean; reactionCount: number }>>(
     `/api/v1/posts/${postId}/reactions`
   );
   return response.data;
