@@ -1,11 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Home, Bell, User, Menu, Users, ChevronRight, Plus, X, Image as ImageIcon, Video as VideoIcon, MoreVertical, Edit2, Trash2 } from 'lucide-react-native';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { useLogout } from '../../auth/hooks/useLogout';
+import { Home, Plus, X, Image as ImageIcon, Video as VideoIcon } from 'lucide-react-native';
 import { useAuthStore } from '../../auth/store/auth.store';
-import AppButton from '../../../components/AppButton';
 import { usePosts } from '../hooks/usePosts';
 import { useCreatePost } from '../hooks/useCreatePost';
 import { useFamilyMembers } from '../../family/hooks/useFamilyMembers';
@@ -13,17 +10,14 @@ import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
 import { useFocusEffect } from '@react-navigation/native';
-import { NotificationPopup } from '../../notification/components/NotificationPopup';
-import { NotificationBell } from '../../notification/components/NotificationBell';
 import { useNotificationStore } from '../../notification/store/notification.store';
+import { AppHeader } from '../../../components/AppHeader';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
 
 export default function FeedScreen({ navigation, route }: { navigation: any; route: any }) {
-  const [showOptions, setShowOptions] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [openCommentPostId, setOpenCommentPostId] = useState<number | null>(null);
   const scrollViewRef = useRef<any>(null);
@@ -34,7 +28,6 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
   const [createError, setCreateError] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [reactionLoading, setReactionLoading] = useState<number | null>(null);
-  const { logout } = useLogout();
   const { data: user } = useAuthStore();
   const { posts, loading, error, refetch, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
@@ -226,25 +219,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
-          <Text style={styles.headerTitle}>Social Media</Text>
-        </View>
-        <View style={styles.headerIcons}>
-          <NotificationBell onPress={() => setShowNotifications(true)} color="#D4A056" style={styles.icon} />
-          <TouchableOpacity 
-            accessibilityLabel='profile-options-btn'
-            testID='profile-options-btn'
-            onPress={() => setShowOptions(true)}
-          >
-            <User size={24} color={ACCENT_COLOR} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Menu size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <AppHeader title="Social Media" navigation={navigation} />
 
 
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -429,54 +404,6 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
-
-      <Modal
-        visible={showOptions}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowOptions(false)}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => setShowOptions(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.optionSheet}>
-                <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>Family Options</Text>
-
-
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setShowOptions(false);
-                  }}
-                >
-                  <View style={styles.optionIconContainer}>
-                    <Users size={20} color={ACCENT_COLOR} />
-                  </View>
-                  <Text style={styles.optionText}>View Member List</Text>
-                  <ChevronRight size={20} color="#CCC" />
-                </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
-
-
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowOptions(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      <NotificationPopup
-        visible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
     </SafeAreaView>
   );
 }
@@ -525,32 +452,6 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    paddingTop: 10,
-    alignItems: 'center',
-    marginTop: 35,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#000',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: 15
   },
   familyCard: {
     flexDirection: 'row',
@@ -771,77 +672,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
   },
-  uploadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  uploadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: ACCENT_COLOR,
-    marginTop: 20,
-  },
-  uploadingSubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-  },
-  optionSheet: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    padding: 20,
-    paddingBottom: 40,
-    width: '100%',
-    marginTop: 'auto',
-  },
-  sheetHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#EEE',
-    borderRadius: 3,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-  sheetTitle: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '600',
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#FDF2E3',
-    borderRadius: 15,
-    marginBottom: 15,
-  },
-  optionIconContainer: {
-    padding: 8,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    marginRight: 15,
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  cancelButton: {
-    marginTop: 15,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontWeight: '600',
-    fontSize: 16,
-  }
 });
 
