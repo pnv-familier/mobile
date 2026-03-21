@@ -12,6 +12,8 @@ import {
   Image,
   Modal,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { ChevronLeft, Bell, User, Menu, Send, Users, ChevronRight } from 'lucide-react-native';
 import { useCreateLoveTask } from '../hooks/useCreateLoveTask';
@@ -78,6 +80,11 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoContainer}>
@@ -98,9 +105,12 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView 
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.card}>
-          <Text style={styles.label}>Send to ?</Text>
+          <Text style={styles.label}>Send to ?<Text style={styles.required}> *</Text></Text>
           <TouchableOpacity 
             style={styles.dropdown}
             onPress={() => setShowUserList(!showUserList)}
@@ -154,7 +164,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           )}
         </View>
 
-        <Text style={styles.labelOutside}>Task Name</Text>
+        <Text style={styles.labelOutside}>Task Name<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.input}
           placeholder="E.g., Take morning vitamin"
@@ -163,7 +173,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           onChangeText={setTitle}
         />
 
-        <Text style={styles.labelOutside}>Description</Text>
+        <Text style={styles.labelOutside}>Description<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Details about what need to be done..."
@@ -174,7 +184,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           onChangeText={setDescription}
         />
 
-        <Text style={styles.labelOutside}>Love Message (revealed on completion)</Text>
+          <Text style={styles.labelOutside}>Love Message (Revealed on completion) <Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.input}
           placeholder="A loving message that will appear when task is completed"
@@ -198,6 +208,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           )}
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={showOptions}
@@ -268,6 +279,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: { fontWeight: 'bold', marginBottom: 10, color: TEXT_COLOR },
+  required: { color: '#FF0000', fontSize: 16 },
   dropdown: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -277,20 +289,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEE',
   },
-  dropdownText: { flex: 1, marginLeft: 10, color: '#AAA' },
-  dropdownTextSelected: { flex: 1, marginLeft: 10, color: TEXT_COLOR, fontWeight: '500' },
+  dropdownText: { flex: 1, marginLeft: 10, color: '#AAA', fontSize: 14 },
+  dropdownTextSelected: { flex: 1, marginLeft: 10, color: TEXT_COLOR, fontWeight: '500', fontSize: 14 },
   chevronDown: { transform: [{ rotate: '-90deg' }] },
-  avatarSmall: { width: 30, height: 30, borderRadius: 15 },
+  avatarSmall: { width: 28, height: 28, borderRadius: 14 },
   avatarPlaceholder: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#E0E0E0',
   },
   userList: {
     marginTop: 15,
-    alignSelf: 'flex-end',
-    width: '70%',
+    width: '100%',
     backgroundColor: 'white',
     borderRadius: 15,
     elevation: 5,
@@ -305,18 +316,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  avatarList: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  avatarList: { width: 36, height: 36, borderRadius: 18, marginRight: 10 },
   avatarListPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     marginRight: 10,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  userName: { fontWeight: 'bold', fontSize: 16, color: TEXT_COLOR },
-  userRole: { fontSize: 12, color: '#888' },
+  userName: { fontWeight: 'bold', fontSize: 15, color: TEXT_COLOR },
+  userRole: { fontSize: 11, color: '#888' },
   labelOutside: {
     fontWeight: 'bold',
     marginTop: 15,
@@ -345,7 +356,7 @@ const styles = StyleSheet.create({
   btnSendDisabled: { opacity: 0.6 },
   btnText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 10,
   },
