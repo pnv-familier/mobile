@@ -64,11 +64,6 @@ export default function MentionDropdown({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.backdrop}
-        activeOpacity={1}
-        onPress={onClose}
-      />
       <View style={styles.dropdown}>
         {loading ? (
           <View style={styles.centerContent}>
@@ -83,6 +78,8 @@ export default function MentionDropdown({
             scrollEnabled={displayMembers.length > 5}
             style={styles.list}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
+            keyboardDismissMode="none"
           >
             {displayMembers.map((member, index) => (
               <TouchableOpacity
@@ -118,18 +115,13 @@ export default function MentionDropdown({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 70,
-    left: 10,
-    right: 10,
+    position: 'relative',
+    marginBottom: 15,
+    marginHorizontal: 10,
     zIndex: 1000,
   },
   backdrop: {
-    position: 'absolute',
-    top: -1000,
-    left: -10,
-    right: -10,
-    height: 1000,
+    display: 'none',
   },
   dropdown: {
     backgroundColor: '#FFF',
