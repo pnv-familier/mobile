@@ -21,6 +21,7 @@ import {
   Calendar,
   X,
   User,
+  Menu,
 } from 'lucide-react-native';
 import { useEvents, parseEventDate } from '../hooks/useEvents';
 import { FamilyEvent } from '../types';
@@ -666,9 +667,9 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     backgroundColor: ACCENT_COLOR,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 54,
+    height: 54,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

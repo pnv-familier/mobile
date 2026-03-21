@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Post, PostImage } from '../types';
 import { getFeed, toggleReaction } from '../services/post.service';
+import { useAuthStore } from '../../auth/store/auth.store';
 
 export const usePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: user } = useAuthStore();
 
   useEffect(() => {
     fetchPosts();
@@ -46,6 +48,31 @@ export const usePosts = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const addNewPost = (newPostData: any) => {
+    const newPost: Post = {
+      post_id: newPostData.postId,
+      family_id: 0,
+      user_id: user?.id || '',
+      content: newPostData.content,
+      created_at: newPostData.createdAt || new Date().toISOString(),
+      author_name: user?.fullName || '',
+      author_avatar: user?.avatarUrl || '',
+      images: (newPostData.imageUrls || newPostData.images || []).map((url: string, idx: number): PostImage => ({
+        image_id: Date.now() + idx,
+        post_id: newPostData.postId,
+        image_url: url,
+        order_index: idx
+      })),
+      videos: newPostData.videoUrls || newPostData.videos || [],
+      reaction_count: 0,
+      comment_count: 0,
+      has_more: false,
+      user_reacted: false,
+    };
+
+    setPosts(prev => [newPost, ...prev]);
   };
 
   const updatePostReaction = async (postId: number) => {
@@ -98,5 +125,5 @@ export const usePosts = () => {
     });
   };
 
-  return { posts, loading, error, refetch: fetchPosts, updatePostReaction, incrementCommentCount };
+  return { posts, loading, error, refetch: fetchPosts, addNewPost, updatePostReaction, incrementCommentCount };
 };

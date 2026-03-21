@@ -29,7 +29,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
   const [isPosting, setIsPosting] = useState(false);
   const [reactionLoading, setReactionLoading] = useState<number | null>(null);
   const { data: user } = useAuthStore();
-  const { posts, loading, error, refetch, updatePostReaction, incrementCommentCount } = usePosts();
+  const { posts, loading, error, refetch, addNewPost, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
   const openPostId = useNotificationStore(s => s.openPostId);
@@ -87,8 +87,12 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
       if (!result.canceled && result.assets.length > 0) {
         const uris = result.assets.map(asset => asset.uri);
-        setSelectedMedia(uris);
-        setMediaType('image');
+        if (mediaType === 'image') {
+          setSelectedMedia(prev => [...prev, ...uris]);
+        } else {
+          setSelectedMedia(uris);
+          setMediaType('image');
+        }
         setCreateError(null);
       }
     } catch (error) {
@@ -201,11 +205,13 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         videoUrls = imageUrls;
         imageUrls = [];
       }
-      await createNewPost(finalContent, imageUrls, videoUrls);
+      const newPost = await createNewPost(finalContent, imageUrls, videoUrls);
+      
+      addNewPost(newPost);
+      
       setPostContent('');
       setSelectedMedia([]);
       setMediaType(null);
-      refetch();
     } catch (err: any) {
       const errorMsg = err?.message || err?.response?.data?.message || 'Failed to create post. Please try again.';
       setIsPosting(false);
@@ -255,7 +261,14 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
           </View>
         )}
 
-        {loading || isPosting ? (
+        {isPosting && (
+          <View style={styles.postingIndicator}>
+            <ActivityIndicator size="small" color={ACCENT_COLOR} />
+            <Text style={styles.postingText}>Posting...</Text>
+          </View>
+        )}
+
+        {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={ACCENT_COLOR} />
             {isPosting && <Text style={styles.loadingText}>Posting...</Text>}
@@ -424,6 +437,24 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 20,
+  },
+  postingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF',
+    marginHorizontal: 15,
+    marginBottom: 15,
+    paddingVertical: 12,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: ACCENT_COLOR,
+  },
+  postingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: ACCENT_COLOR,
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

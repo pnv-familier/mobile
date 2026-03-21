@@ -106,6 +106,29 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
                 resizeMode="cover"
               />
             </TouchableOpacity>
+          ) : post.images.length === 2 ? (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.doubleImageScroll}
+              decelerationRate="fast"
+              snapToInterval={SCREEN_WIDTH - 60 - 12}
+              snapToAlignment="start"
+            >
+              {post.images.map((img, idx) => (
+                <TouchableOpacity 
+                  key={idx}
+                  onPress={() => setFullScreenImage(img.image_url)}
+                  style={styles.doubleImageContainer}
+                >
+                  <Image 
+                    source={{ uri: img.image_url }} 
+                    style={styles.doubleImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.multiImageLayout}>
               <TouchableOpacity 
@@ -277,6 +300,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   singleImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 10,
+  },
+  doubleImageScroll: {
+    width: '100%',
+  },
+  doubleImageContainer: {
+    width: SCREEN_WIDTH - 60 - 20,
+    marginRight: 8,
+  },
+  doubleImage: {
     width: '100%',
     height: 250,
     borderRadius: 10,

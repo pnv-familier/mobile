@@ -159,7 +159,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={handleCreateTask}>
-        <Plus color="white" size={32} />
+        <Plus color="white" size={28} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -294,9 +294,9 @@ const styles = StyleSheet.create({
     bottom: 30,
     right: 20,
     backgroundColor: ACCENT_COLOR,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 54,
+    height: 54,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
