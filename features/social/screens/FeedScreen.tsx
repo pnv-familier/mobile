@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Home, Plus, X, Image as ImageIcon, Video as VideoIcon } from 'lucide-react-native';
 import { useAuthStore } from '../../auth/store/auth.store';
@@ -311,98 +311,105 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         animationType="fade"
         onRequestClose={handleCloseModal}
       >
-        <TouchableWithoutFeedback onPress={handleCloseModal}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.createPostModalContent}>
-                <>
-                    <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>Create a post</Text>
-                      <TouchableOpacity onPress={handleCloseModal}>
-                        <X size={24} color="#333" />
-                      </TouchableOpacity>
-                    </View>
-                   
-                    <View style={styles.modalBody}>
-                      <View style={styles.avatarContainer}>
-                        <Image
-                          source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
-                          style={styles.modalAvatar}
-                          defaultSource={require('../../../assets/icon.png')}
-                        />
-                      </View>
-                      <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
-                    </View>
-
-
-                    <TextInput
-                      style={styles.modalInput}
-                      placeholder="What's on your mind?"
-                      placeholderTextColor="#999"
-                      multiline
-                      value={postContent}
-                      onChangeText={setPostContent}
-                    />
-
-                    {selectedMedia.length > 0 && (
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScrollContainer}>
-                        {selectedMedia.map((uri, index) => (
-                          <View key={index} style={styles.mediaPreviewContainer}>
-                            {mediaType === 'video' ? (
-                              <Image 
-                                source={{ uri }} 
-                                style={styles.mediaPreview}
-                                resizeMode="cover"
-                              />
-                            ) : (
-                              <Image 
-                                source={{ uri }} 
-                                style={styles.mediaPreview}
-                                resizeMode="cover"
-                              />
-                            )}
-                            <TouchableOpacity 
-                              style={styles.removeMediaButton} 
-                              onPress={() => handleRemoveMedia(index)}
-                            >
-                              <X size={16} color="white" />
-                            </TouchableOpacity>
-                          </View>
-                        ))}
-                      </ScrollView>
-                    )}
-
-                    {createError && (
-                      <Text style={styles.errorMessage}>{createError}</Text>
-                    )}
-
-                    <View style={styles.divider} />
-                   
-                    <View style={styles.modalFooter}>
-                      <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
-                        <ImageIcon size={22} color={ACCENT_COLOR} />
-                        <Text style={styles.footerActionText}>Photo</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
-                        <VideoIcon size={22} color={ACCENT_COLOR} />
-                        <Text style={styles.footerActionText}>Video</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[
-                          styles.postSubmitButton, 
-                          (!postContent.trim() && selectedMedia.length === 0) && styles.postSubmitButtonDisabled
-                        ]}
-                        onPress={handleCreatePost}
-                        disabled={!postContent.trim() && selectedMedia.length === 0}
-                      >
-                        <Text style={styles.postSubmitButtonText}>Post</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-              </View>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+          >
+            <TouchableWithoutFeedback onPress={handleCloseModal}>
+              <View style={styles.modalTouchableArea} />
             </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+            <View style={styles.createPostModalContent}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Create a post</Text>
+                  <TouchableOpacity onPress={handleCloseModal}>
+                    <X size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+               
+                <View style={styles.modalBody}>
+                  <View style={styles.avatarContainer}>
+                    <Image
+                      source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
+                      style={styles.modalAvatar}
+                      defaultSource={require('../../../assets/icon.png')}
+                    />
+                  </View>
+                  <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
+                </View>
+
+
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="What's on your mind?"
+                  placeholderTextColor="#999"
+                  multiline
+                  value={postContent}
+                  onChangeText={setPostContent}
+                />
+
+                {selectedMedia.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScrollContainer}>
+                    {selectedMedia.map((uri, index) => (
+                      <View key={index} style={styles.mediaPreviewContainer}>
+                        {mediaType === 'video' ? (
+                          <Image 
+                            source={{ uri }} 
+                            style={styles.mediaPreview}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Image 
+                            source={{ uri }} 
+                            style={styles.mediaPreview}
+                            resizeMode="cover"
+                          />
+                        )}
+                        <TouchableOpacity 
+                          style={styles.removeMediaButton} 
+                          onPress={() => handleRemoveMedia(index)}
+                        >
+                          <X size={16} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+
+                {createError && (
+                  <Text style={styles.errorMessage}>{createError}</Text>
+                )}
+
+                <View style={styles.divider} />
+               
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
+                    <ImageIcon size={22} color={ACCENT_COLOR} />
+                    <Text style={styles.footerActionText}>Photo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
+                    <VideoIcon size={22} color={ACCENT_COLOR} />
+                    <Text style={styles.footerActionText}>Video</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[
+                      styles.postSubmitButton, 
+                      (!postContent.trim() && selectedMedia.length === 0) && styles.postSubmitButtonDisabled
+                    ]}
+                    onPress={handleCreatePost}
+                    disabled={!postContent.trim() && selectedMedia.length === 0}
+                  >
+                    <Text style={styles.postSubmitButtonText}>Post</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -558,14 +565,25 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalTouchableArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   createPostModalContent: {
     width: '90%',
     backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 20,
+    maxHeight: '80%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -605,11 +623,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalInput: {
-    height: 50,
     textAlignVertical: 'top',
     fontSize: 16,
     color: '#333',
     marginBottom: 15,
+    paddingVertical: 8,
   },
   divider: {
     height: 1,
@@ -631,7 +649,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   postSubmitButton: {
-    backgroundColor: '#FFE8CC',
+    backgroundColor: ACCENT_COLOR,
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -640,7 +658,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   postSubmitButtonText: {
-    color: ACCENT_COLOR,
+    color: '#FFF',
     fontWeight: 'bold',
   },
   mediaScrollContainer: {
