@@ -65,9 +65,6 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ChevronLeft size={28} color="#333" />
-          </TouchableOpacity>
           <View style={styles.logoContainer}>
             <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
             <Text style={styles.headerTitle}>Love Tasks</Text>
@@ -444,12 +441,15 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 15,
-    padding: 15,
+    paddingVertical: 12,
     alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
   },
   cancelButtonText: {
-    color: '#999',
+    color: '#666',
     fontWeight: '600',
+    fontSize: 16,
   },
 });
 

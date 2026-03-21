@@ -122,20 +122,30 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     const lastAtIndex = inputText.lastIndexOf('@');
     const atCount = (inputText.match(/@/g) || []).length;
     
-    if (lastChar === '@' && lastAtIndex !== -1 && atCount === 1 && !mentionedUser) {
+    // If @ is deleted, hide dropdown and reset mentioned user
+    if (!inputText.includes('@')) {
+      setShowMentionDropdown(false);
+      setMentionSearchText('');
+      if (mentionedUser) {
+        setMentionedUser(null);
+      }
+      return;
+    }
+    
+    // Only show dropdown if: typing @, and only 1 @
+    if (lastChar === '@' && lastAtIndex !== -1 && atCount === 1) {
       setShowMentionDropdown(true);
       setMentionSearchText('');
-    } else if (lastAtIndex !== -1 && showMentionDropdown && !mentionedUser) {
+    } else if (lastAtIndex !== -1 && showMentionDropdown) {
       const textAfterAt = inputText.substring(lastAtIndex + 1);
-      if (textAfterAt.includes(' ')) {
+      // Hide if space after @ or multiple @
+      if (textAfterAt.includes(' ') || atCount > 1) {
         setShowMentionDropdown(false);
       } else {
         setMentionSearchText(textAfterAt);
       }
-    } else if (atCount > 1 || (mentionedUser && atCount > 1)) {
-      setShowMentionDropdown(false);
     }
-  }, [inputText, mentionedUser]);
+  }, [inputText]);
 
 
 
@@ -144,6 +154,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     
     const messageContent = inputText.trim();
     setInputText('');
+    setShowMentionDropdown(false);
     await sendMessage(messageContent, mentionedUser?.email);
     setMentionedUser(null);
     setMentionSearchText('');
@@ -210,9 +221,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         style={{ flex: 1 }}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <ChevronLeft size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
+          <View style={{ width: 24 }} />
           <Text style={styles.headerTitle}>AI Family Assistant</Text>
           <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
             <History size={24} color={ACCENT_COLOR} />
@@ -263,6 +272,15 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           </View>
         )}
 
+        {showMentionDropdown && (
+          <MentionDropdown
+            visible={showMentionDropdown}
+            onSelect={handleMentionSelect}
+            onClose={() => setShowMentionDropdown(false)}
+            searchText={mentionSearchText}
+          />
+        )}
+
         <View style={styles.inputContainer}>
           <TouchableOpacity
             style={styles.voiceButton}
@@ -291,15 +309,6 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-
-      {showMentionDropdown && (
-        <MentionDropdown
-          visible={showMentionDropdown}
-          onSelect={handleMentionSelect}
-          onClose={() => setShowMentionDropdown(false)}
-          searchText={mentionSearchText}
-        />
-      )}
 
       <SuggestionCard
         visible={!!pendingSuggestion}
@@ -331,13 +340,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  backButton: {
-    padding: 5,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
+    textAlign: 'center',
   },
   messageList: {
     flex: 1,

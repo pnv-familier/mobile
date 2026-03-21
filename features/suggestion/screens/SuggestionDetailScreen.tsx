@@ -95,9 +95,6 @@ const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigat
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronLeft size={28} color="#333" />
-        </TouchableOpacity>
         <View style={styles.logoContainer}>
           <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
           <Text style={styles.headerTitle}>Suggestion Detail</Text>

@@ -228,20 +228,21 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.logoBox}>
-            <Home size={20} color="#8D5B39" />
-          </View>
+          <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
           <Text style={styles.headerTitle}>Social Media</Text>
         </View>
         <View style={styles.headerIcons}>
           <NotificationBell onPress={() => setShowNotifications(true)} color="#D4A056" style={styles.icon} />
           <TouchableOpacity 
             accessibilityLabel='profile-options-btn'
-            testID='profile-options-btn' 
-            onPress={() => setShowOptions(true)}>
-            <User size={24} color="#D4A056" style={styles.icon} />
+            testID='profile-options-btn'
+            onPress={() => setShowOptions(true)}
+          >
+            <User size={24} color={ACCENT_COLOR} style={styles.icon} />
           </TouchableOpacity>
-          <Menu size={24} color="#D4A056" />
+          <TouchableOpacity>
+            <Menu size={24} color={ACCENT_COLOR} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -272,7 +273,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
               <View style={styles.fabContent}>
                 <Text style={styles.fabText}>Create post</Text>
                 <View style={styles.fabIconCircle}>
-                  <Plus size={24} color="white" />
+                  <Plus size={20} color="white" />
                 </View>
               </View>
             </TouchableOpacity>
@@ -528,30 +529,25 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     paddingBottom: 15,
-    paddingTop: 40,
+    paddingTop: 10,
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    zIndex: 1,
+    marginTop: 35,
   },
   headerLeft: {
     flexDirection: 'row',
-    alignItems: 'center'
-  },
-  logoBox: {
-    padding: 5,
-    backgroundColor: '#FDF2E3',
-    borderRadius: 8
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,
-    color: '#333'
+    color: '#000',
   },
   headerIcons: {
-    flexDirection: 'row'
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   icon: {
     marginRight: 15
@@ -579,20 +575,20 @@ const styles = StyleSheet.create({
   fabContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 30,
-    paddingLeft: 20,
+    borderRadius: 25,
+    paddingLeft: 14,
   },
   fabIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: ACCENT_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
   },
   fabText: {
-    marginRight: 12,
-    fontSize: 16,
+    marginRight: 10,
+    fontSize: 14,
     fontWeight: '600',
     color: ACCENT_COLOR,
   },
@@ -837,12 +833,15 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 15,
-    padding: 15,
+    paddingVertical: 12,
     alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
   },
   cancelButtonText: {
-    color: '#999',
+    color: '#666',
     fontWeight: '600',
+    fontSize: 16,
   }
 });
 

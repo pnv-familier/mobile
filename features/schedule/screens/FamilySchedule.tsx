@@ -207,12 +207,9 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
         
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <ChevronLeft size={28} color="#333" />
-            </TouchableOpacity>
             <View style={styles.logoContainer}>
               <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
-              <Text style={styles.headerTitle}>Family Schedule</Text>
+              <Text style={styles.headerTitle}>Calendar</Text>
             </View>
           </View>
           <View style={styles.headerRight}>
@@ -809,12 +806,15 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 15,
-    padding: 15,
+    paddingVertical: 12,
     alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
   },
   cancelButtonText: {
-    color: '#999',
+    color: '#666',
     fontWeight: '600',
+    fontSize: 16,
   },
   eventDetailModal: {
     backgroundColor: '#FFF',
