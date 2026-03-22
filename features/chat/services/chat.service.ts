@@ -97,6 +97,7 @@ export const chatService = {
       let currentData = '';
       let chunkBuffer = '';
       let flushTimeout: any = null;
+      let isFirstChunk = true;
 
       const flush = () => {
         if (chunkBuffer) {
@@ -124,6 +125,12 @@ export const chatService = {
 
         if (xhr.readyState === 3 || xhr.readyState === 4) {
           const responseText = xhr.responseText;
+          const delta = responseText.length - lastIndex;
+          
+          if (delta > 1000) {
+            console.log(`[STREAM_JUMP] responseText jumped by ${delta} characters. Total: ${responseText.length}`);
+          }
+
           const newData = responseText.substring(lastIndex);
           lastIndex = responseText.length;
           buffer += newData;
@@ -133,13 +140,21 @@ export const chatService = {
 
           for (const line of lines) {
             if (line === '') {
-              // Empty line signals end of event - process the event
               if (currentEvent && currentData) {
-                console.log('[SSE_EVENT]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
+                console.log('[SSE_EVENT_RECEIVED]', { event: currentEvent, dataLength: currentData.length });
                 
+                if (currentData.includes('<suggestion_metadata>') || currentData.includes('<suggestions>')) {
+                  console.log('[SSE_TAG_DETECTED] Found suggestion tags in data stream');
+                }
+
                 if (currentEvent === 'message') {
                   chunkBuffer += currentData;
-                  if (!flushTimeout) {
+                  
+                  if (isFirstChunk) {
+                    console.log('[STREAM_FIRST_CHUNK] Accelerating first chunk');
+                    flush();
+                    isFirstChunk = false;
+                  } else if (!flushTimeout) {
                     flushTimeout = setTimeout(() => {
                       flush();
                       flushTimeout = null;
@@ -190,51 +205,34 @@ export const chatService = {
             if (line.startsWith('event:')) {
               currentEvent = line.replace(/^event:\s*/, '').trim();
             } else if (line.startsWith('data:')) {
-              // SSE spec: multiple data lines should be concatenated with \n
-              const dataLine = line.replace(/^data:\s*/, '');
+              const dataLine = line.substring(5);
+              const content = dataLine.startsWith(' ') ? dataLine.substring(1) : dataLine;
               if (currentData) {
-                currentData += '\n' + dataLine;
+                currentData += '\n' + content;
               } else {
-                currentData = dataLine;
+                currentData = content;
               }
             }
           }
         }
 
         if (xhr.readyState === 4) {
-          // Process any remaining event
           if (currentEvent && currentData) {
-            console.log('[SSE_EVENT_FINAL]', { event: currentEvent, dataPreview: currentData.substring(0, 100) });
-            
             if (currentEvent === 'message') {
               chunkBuffer += currentData;
-              if (!flushTimeout) {
-                flushTimeout = setTimeout(() => {
-                  flush();
-                  flushTimeout = null;
-                }, 30);
-              }
+              flush();
             } else if (currentEvent === 'messageId') {
-              console.log('[MESSAGE_ID_FINAL]', currentData);
               onMessageId(currentData);
             } else if (currentEvent === 'suggestions') {
               try {
                 const suggestions = JSON.parse(currentData);
-                if (Array.isArray(suggestions)) {
-                  console.log('[SUGGESTIONS_PARSED_FINAL]', suggestions);
-                  onSuggestions(suggestions);
-                }
-              } catch (e) {
-                console.error('[SUGGESTIONS_PARSE_ERROR_FINAL]', e, currentData);
-              }
+                onSuggestions(suggestions);
+              } catch (e) {}
             } else if (currentEvent === 'metadata') {
               try {
                 const metadata = JSON.parse(currentData);
-                console.log('[METADATA_PARSED_FINAL]', metadata);
                 onMetadata(metadata);
-              } catch (e) {
-                console.error('[METADATA_PARSE_ERROR_FINAL]', e, currentData);
-              }
+              } catch (e) {}
             }
           }
           finish();

@@ -30,6 +30,7 @@ interface ChatState {
     isSessionsLoading: boolean;
     isLoadingMessages: boolean;
     isStreaming: boolean;
+    activeStreamingId: string | null;
     error: string | null;
     pendingSuggestion: any | null;
     lastUserMessage: string | null;
@@ -54,6 +55,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isSessionsLoading: false,
     isLoadingMessages: false,
     isStreaming: false,
+    activeStreamingId: null,
     error: null,
     pendingSuggestion: null,
     lastUserMessage: null,
@@ -100,11 +102,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     updateMessageId: (tempId, backendId) => {
-        set((state) => ({
-            messages: state.messages.map((m) =>
-                m.id === tempId ? { ...m, id: backendId } : m
-            ),
-        }));
+        console.log('[STORE] updateMessageId called:', { tempId, backendId });
+        set((state) => {
+            const hasMessage = state.messages.some(m => m.id === tempId);
+            if (!hasMessage) {
+                console.warn('[STORE] Message with tempId not found:', tempId);
+                return state;
+            }
+            return {
+                activeStreamingId: state.activeStreamingId === tempId ? backendId : state.activeStreamingId,
+                messages: state.messages.map((m) =>
+                    m.id === tempId ? { ...m, id: backendId } : m
+                ),
+            };
+        });
     },
 
     updateMessageSuggestions: (id, suggestions) => {
@@ -138,8 +149,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
             isAi: false
         };
 
+        const tempAiId = `ai-temp-${Date.now()}`;
+        let activeMessageId = tempAiId;
+
         const initialAiMessage: ChatMessageDto = {
-            id: STREAMING_ID,
+            id: tempAiId,
             content: '',
             timestamp,
             isAi: true,
@@ -149,6 +163,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ 
             messages: [...messages, userMessage, initialAiMessage],
             isStreaming: true,
+            activeStreamingId: tempAiId,
             error: null,
             lastUserMessage: content
         });
@@ -156,8 +171,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await chatService.streamChat(
             content,
             currentSessionId,
-            (chunk) => get().updateMessageContent(STREAMING_ID, chunk),
-            (suggestions) => get().updateMessageSuggestions(STREAMING_ID, suggestions),
+            (chunk) => get().updateMessageContent(activeMessageId, chunk),
+            (suggestions) => get().updateMessageSuggestions(activeMessageId, suggestions),
             (metadata) => get().setPendingSuggestion(metadata),
             (newSessionId) => {
                 if (!get().currentSessionId) {
@@ -165,18 +180,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 }
             },
             (messageId) => {
-                console.log('[STORE] Received messageId:', messageId);
-                get().updateMessageId(STREAMING_ID, messageId);
+                console.log('[STORE] Received messageId from service:', messageId);
+                const backendId = messageId.trim();
+                if (backendId) {
+                    get().updateMessageId(activeMessageId, backendId);
+                    activeMessageId = backendId;
+                }
             },
             () => {
-                set({ isStreaming: false });
+                set({ isStreaming: false, activeStreamingId: null });
                 get().fetchSessions();
             },
             (error) => {
                 set((state) => ({
-                    messages: state.messages.filter((m) => m.id !== STREAMING_ID),
+                    messages: state.messages.filter((m) => m.id !== activeMessageId),
                     error: error.message || 'An error occurred while streaming',
-                    isStreaming: false 
+                    isStreaming: false,
+                    activeStreamingId: null
                 }));
             },
             taggedUserEmail

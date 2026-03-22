@@ -10,6 +10,8 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { X, Image as ImageIcon, Video as VideoIcon } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -138,11 +140,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContent}>
-              {isPosting ? (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {isPosting ? (
                 <View style={styles.uploadingContainer}>
                   <ActivityIndicator size="large" color={ACCENT_COLOR} />
                   <Text style={styles.uploadingText}>Posting...</Text>
@@ -225,11 +235,13 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     </TouchableOpacity>
                   </View>
                 </>
-              )}
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+                  )}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -295,9 +307,9 @@ const styles = StyleSheet.create({
   input: {
     fontSize: 16,
     color: '#333',
-    minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 16,
+    paddingVertical: 8,
   },
   mediaScroll: {
     marginBottom: 16,

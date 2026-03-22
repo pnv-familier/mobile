@@ -1,11 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Home, Bell, User, Menu, Users, ChevronRight, Plus, X, Image as ImageIcon, Video as VideoIcon, MoreVertical, Edit2, Trash2 } from 'lucide-react-native';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { useLogout } from '../../auth/hooks/useLogout';
+import { Home, Plus, X, Image as ImageIcon, Video as VideoIcon } from 'lucide-react-native';
 import { useAuthStore } from '../../auth/store/auth.store';
-import AppButton from '../../../components/AppButton';
 import { usePosts } from '../hooks/usePosts';
 import { useCreatePost } from '../hooks/useCreatePost';
 import { useFamilyMembers } from '../../family/hooks/useFamilyMembers';
@@ -13,17 +10,14 @@ import PostCard from '../components/PostCard';
 import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
 import { useFocusEffect } from '@react-navigation/native';
-import { NotificationPopup } from '../../notification/components/NotificationPopup';
-import { NotificationBell } from '../../notification/components/NotificationBell';
 import { useNotificationStore } from '../../notification/store/notification.store';
+import { AppHeader } from '../../../components/AppHeader';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
 
 export default function FeedScreen({ navigation, route }: { navigation: any; route: any }) {
-  const [showOptions, setShowOptions] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [openCommentPostId, setOpenCommentPostId] = useState<number | null>(null);
   const scrollViewRef = useRef<any>(null);
@@ -34,9 +28,8 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
   const [createError, setCreateError] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [reactionLoading, setReactionLoading] = useState<number | null>(null);
-  const { logout } = useLogout();
   const { data: user } = useAuthStore();
-  const { posts, loading, error, refetch, updatePostReaction, incrementCommentCount } = usePosts();
+  const { posts, loading, error, refetch, addNewPost, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
   const openPostId = useNotificationStore(s => s.openPostId);
@@ -94,8 +87,12 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
       if (!result.canceled && result.assets.length > 0) {
         const uris = result.assets.map(asset => asset.uri);
-        setSelectedMedia(uris);
-        setMediaType('image');
+        if (mediaType === 'image') {
+          setSelectedMedia(prev => [...prev, ...uris]);
+        } else {
+          setSelectedMedia(uris);
+          setMediaType('image');
+        }
         setCreateError(null);
       }
     } catch (error) {
@@ -208,11 +205,13 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         videoUrls = imageUrls;
         imageUrls = [];
       }
-      await createNewPost(finalContent, imageUrls, videoUrls);
+      const newPost = await createNewPost(finalContent, imageUrls, videoUrls);
+      
+      addNewPost(newPost);
+      
       setPostContent('');
       setSelectedMedia([]);
       setMediaType(null);
-      refetch();
     } catch (err: any) {
       const errorMsg = err?.message || err?.response?.data?.message || 'Failed to create post. Please try again.';
       setIsPosting(false);
@@ -226,25 +225,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
-          <Text style={styles.headerTitle}>Social Media</Text>
-        </View>
-        <View style={styles.headerIcons}>
-          <NotificationBell onPress={() => setShowNotifications(true)} color="#D4A056" style={styles.icon} />
-          <TouchableOpacity 
-            accessibilityLabel='profile-options-btn'
-            testID='profile-options-btn'
-            onPress={() => setShowOptions(true)}
-          >
-            <User size={24} color={ACCENT_COLOR} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Menu size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <AppHeader title="Social Media" navigation={navigation} />
 
 
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -280,7 +261,14 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
           </View>
         )}
 
-        {loading || isPosting ? (
+        {isPosting && (
+          <View style={styles.postingIndicator}>
+            <ActivityIndicator size="small" color={ACCENT_COLOR} />
+            <Text style={styles.postingText}>Posting...</Text>
+          </View>
+        )}
+
+        {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={ACCENT_COLOR} />
             {isPosting && <Text style={styles.loadingText}>Posting...</Text>}
@@ -336,147 +324,106 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         animationType="fade"
         onRequestClose={handleCloseModal}
       >
-        <TouchableWithoutFeedback onPress={handleCloseModal}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.createPostModalContent}>
-                <>
-                    <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>Create a post</Text>
-                      <TouchableOpacity onPress={handleCloseModal}>
-                        <X size={24} color="#333" />
-                      </TouchableOpacity>
-                    </View>
-                   
-                    <View style={styles.modalBody}>
-                      <View style={styles.avatarContainer}>
-                        <Image
-                          source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
-                          style={styles.modalAvatar}
-                          defaultSource={require('../../../assets/icon.png')}
-                        />
-                      </View>
-                      <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
-                    </View>
-
-
-                    <TextInput
-                      style={styles.modalInput}
-                      placeholder="What's on your mind?"
-                      placeholderTextColor="#999"
-                      multiline
-                      value={postContent}
-                      onChangeText={setPostContent}
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+          >
+            <TouchableWithoutFeedback onPress={handleCloseModal}>
+              <View style={styles.modalTouchableArea} />
+            </TouchableWithoutFeedback>
+            <View style={styles.createPostModalContent}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Create a post</Text>
+                  <TouchableOpacity onPress={handleCloseModal}>
+                    <X size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+               
+                <View style={styles.modalBody}>
+                  <View style={styles.avatarContainer}>
+                    <Image
+                      source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
+                      style={styles.modalAvatar}
+                      defaultSource={require('../../../assets/icon.png')}
                     />
-
-                    {selectedMedia.length > 0 && (
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScrollContainer}>
-                        {selectedMedia.map((uri, index) => (
-                          <View key={index} style={styles.mediaPreviewContainer}>
-                            {mediaType === 'video' ? (
-                              <Image 
-                                source={{ uri }} 
-                                style={styles.mediaPreview}
-                                resizeMode="cover"
-                              />
-                            ) : (
-                              <Image 
-                                source={{ uri }} 
-                                style={styles.mediaPreview}
-                                resizeMode="cover"
-                              />
-                            )}
-                            <TouchableOpacity 
-                              style={styles.removeMediaButton} 
-                              onPress={() => handleRemoveMedia(index)}
-                            >
-                              <X size={16} color="white" />
-                            </TouchableOpacity>
-                          </View>
-                        ))}
-                      </ScrollView>
-                    )}
-
-                    {createError && (
-                      <Text style={styles.errorMessage}>{createError}</Text>
-                    )}
-
-                    <View style={styles.divider} />
-                   
-                    <View style={styles.modalFooter}>
-                      <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
-                        <ImageIcon size={22} color={ACCENT_COLOR} />
-                        <Text style={styles.footerActionText}>Photo</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
-                        <VideoIcon size={22} color={ACCENT_COLOR} />
-                        <Text style={styles.footerActionText}>Video</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[
-                          styles.postSubmitButton, 
-                          (!postContent.trim() && selectedMedia.length === 0) && styles.postSubmitButtonDisabled
-                        ]}
-                        onPress={handleCreatePost}
-                        disabled={!postContent.trim() && selectedMedia.length === 0}
-                      >
-                        <Text style={styles.postSubmitButtonText}>Post</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-
-      <Modal
-        visible={showOptions}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowOptions(false)}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => setShowOptions(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.optionSheet}>
-                <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>Family Options</Text>
-
-
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setShowOptions(false);
-                  }}
-                >
-                  <View style={styles.optionIconContainer}>
-                    <Users size={20} color={ACCENT_COLOR} />
                   </View>
-                  <Text style={styles.optionText}>View Member List</Text>
-                  <ChevronRight size={20} color="#CCC" />
-                </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
+                  <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
+                </View>
 
 
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowOptions(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="What's on your mind?"
+                  placeholderTextColor="#999"
+                  multiline
+                  value={postContent}
+                  onChangeText={setPostContent}
+                />
+
+                {selectedMedia.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScrollContainer}>
+                    {selectedMedia.map((uri, index) => (
+                      <View key={index} style={styles.mediaPreviewContainer}>
+                        {mediaType === 'video' ? (
+                          <Image 
+                            source={{ uri }} 
+                            style={styles.mediaPreview}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Image 
+                            source={{ uri }} 
+                            style={styles.mediaPreview}
+                            resizeMode="cover"
+                          />
+                        )}
+                        <TouchableOpacity 
+                          style={styles.removeMediaButton} 
+                          onPress={() => handleRemoveMedia(index)}
+                        >
+                          <X size={16} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+
+                {createError && (
+                  <Text style={styles.errorMessage}>{createError}</Text>
+                )}
+
+                <View style={styles.divider} />
+               
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
+                    <ImageIcon size={22} color={ACCENT_COLOR} />
+                    <Text style={styles.footerActionText}>Photo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
+                    <VideoIcon size={22} color={ACCENT_COLOR} />
+                    <Text style={styles.footerActionText}>Video</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[
+                      styles.postSubmitButton, 
+                      (!postContent.trim() && selectedMedia.length === 0) && styles.postSubmitButtonDisabled
+                    ]}
+                    onPress={handleCreatePost}
+                    disabled={!postContent.trim() && selectedMedia.length === 0}
+                  >
+                    <Text style={styles.postSubmitButtonText}>Post</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
-
-      <NotificationPopup
-        visible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
     </SafeAreaView>
   );
 }
@@ -490,6 +437,24 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 20,
+  },
+  postingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF',
+    marginHorizontal: 15,
+    marginBottom: 15,
+    paddingVertical: 12,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: ACCENT_COLOR,
+  },
+  postingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: ACCENT_COLOR,
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,
@@ -525,32 +490,6 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    paddingTop: 10,
-    alignItems: 'center',
-    marginTop: 35,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#000',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: 15
   },
   familyCard: {
     flexDirection: 'row',
@@ -657,14 +596,25 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalTouchableArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   createPostModalContent: {
     width: '90%',
     backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 20,
+    maxHeight: '80%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -704,11 +654,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalInput: {
-    height: 50,
     textAlignVertical: 'top',
     fontSize: 16,
     color: '#333',
     marginBottom: 15,
+    paddingVertical: 8,
   },
   divider: {
     height: 1,
@@ -730,7 +680,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   postSubmitButton: {
-    backgroundColor: '#FFE8CC',
+    backgroundColor: ACCENT_COLOR,
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -739,7 +689,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   postSubmitButtonText: {
-    color: ACCENT_COLOR,
+    color: '#FFF',
     fontWeight: 'bold',
   },
   mediaScrollContainer: {
@@ -771,77 +721,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
   },
-  uploadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  uploadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: ACCENT_COLOR,
-    marginTop: 20,
-  },
-  uploadingSubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-  },
-  optionSheet: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    padding: 20,
-    paddingBottom: 40,
-    width: '100%',
-    marginTop: 'auto',
-  },
-  sheetHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#EEE',
-    borderRadius: 3,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-  sheetTitle: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '600',
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#FDF2E3',
-    borderRadius: 15,
-    marginBottom: 15,
-  },
-  optionIconContainer: {
-    padding: 8,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    marginRight: 15,
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  cancelButton: {
-    marginTop: 15,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontWeight: '600',
-    fontSize: 16,
-  }
 });
 

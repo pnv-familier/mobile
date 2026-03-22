@@ -1,40 +1,39 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 
 const TypingIndicator = () => {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
+  const animations = [
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+  ];
 
   useEffect(() => {
-    const animateDot = (dot: Animated.Value, delay: number) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(dot, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(dot, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-        ])
-      );
+    const createAnimation = (animatedValue: Animated.Value) => {
+      return Animated.sequence([
+        Animated.timing(animatedValue, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(animatedValue, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        }),
+      ]);
     };
 
-    const animation = Animated.parallel([
-      animateDot(dot1, 0),
-      animateDot(dot2, 150),
-      animateDot(dot3, 300),
-    ]);
+    const mainAnimation = Animated.loop(
+      Animated.stagger(150, animations.map(createAnimation))
+    );
 
-    animation.start();
+    mainAnimation.start();
 
-    return () => animation.stop();
-  }, []);
+    return () => mainAnimation.stop();
+  }, [animations]);
 
   const getDotStyle = (animatedValue: Animated.Value) => ({
     opacity: animatedValue.interpolate({
@@ -45,7 +44,13 @@ const TypingIndicator = () => {
       {
         translateY: animatedValue.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, -8],
+          outputRange: [0, -6],
+        }),
+      },
+      {
+        scale: animatedValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.2],
         }),
       },
     ],
@@ -53,9 +58,9 @@ const TypingIndicator = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.dot, getDotStyle(dot1)]} />
-      <Animated.View style={[styles.dot, getDotStyle(dot2)]} />
-      <Animated.View style={[styles.dot, getDotStyle(dot3)]} />
+      {animations.map((anim, index) => (
+        <Animated.View key={index} style={[styles.dot, getDotStyle(anim)]} />
+      ))}
     </View>
   );
 };
@@ -65,24 +70,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFF',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8F9FA',
     borderRadius: 20,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    alignSelf: 'flex-start',
+    marginLeft: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#D4A056',
     marginHorizontal: 3,
   },
 });
 
 export default TypingIndicator;
+

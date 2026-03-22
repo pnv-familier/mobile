@@ -1,7 +1,8 @@
 import React, { memo, useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import { ThumbsUp, ThumbsDown, Flag } from 'lucide-react-native';
+import { ThumbsUp, ThumbsDown, Flag, Copy, Check } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import { ChatMessageDto } from '../types';
 import { formatMessageTime } from '../../../utils/dateFormatter';
 import FeedbackModal from './FeedbackModal';
@@ -19,6 +20,17 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await Clipboard.setStringAsync(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+    }
+  };
 
   const handleLike = async () => {
     if (liked) return;
@@ -35,8 +47,8 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
     if (disliked) return;
     try {
       await feedbackService.submitFeedback(FeedbackType.DISLIKE);
-      setDisliked(true);
       setLiked(false);
+      setDisliked(true);
     } catch (error) {
       console.error('Failed to submit dislike:', error);
     }
@@ -74,6 +86,15 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
         )}
       </View>
       <View style={styles.footer}>
+        {!isAi && (
+          <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+            {copied ? (
+              <Check size={12} color="rgba(255,255,255,0.9)" />
+            ) : (
+              <Copy size={12} color="rgba(255,255,255,0.7)" />
+            )}
+          </TouchableOpacity>
+        )}
         <Text style={[
           styles.timestamp,
           isAi ? styles.aiTimestamp : styles.userTimestamp
@@ -250,9 +271,8 @@ const styles = StyleSheet.create({
   },
   userTimestamp: {
     color: 'rgba(255,255,255,0.7)',
-    alignSelf: 'flex-end',
-    width: '100%',
     textAlign: 'right',
+    flex: 1,
   },
   feedbackButtons: {
     flexDirection: 'row',
@@ -262,6 +282,10 @@ const styles = StyleSheet.create({
   feedbackButton: {
     padding: 4,
   },
+  copyButton: {
+    padding: 4,
+    marginRight: 8,
+  },
 });
 
 export default React.memo(MessageBubble, (prev, next) => {
@@ -270,3 +294,4 @@ export default React.memo(MessageBubble, (prev, next) => {
          prev.message.suggestions === next.message.suggestions &&
          prev.isStreaming === next.isStreaming;
 });
+

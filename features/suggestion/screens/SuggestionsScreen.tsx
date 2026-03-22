@@ -9,10 +9,11 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { ChevronLeft, Lightbulb, Heart, Calendar } from 'lucide-react-native';
+import { Lightbulb, Heart, Calendar } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSuggestions, FilterValue } from '../hooks/useSuggestions';
 import { SuggestionListItem, SuggestionType } from '../types';
+import { AppHeader } from '../../../components/AppHeader';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';
@@ -80,14 +81,7 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoContainer}>
-            <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-            <Text style={styles.headerTitle}>AI Suggestions</Text>
-          </View>
-        </View>
-      </View>
+      <AppHeader title="AI Suggestions" navigation={navigation} />
 
       <View style={styles.filterWrapper}>
         <View style={styles.filterRow}>
@@ -132,17 +126,6 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 35,
-    paddingBottom: 15,
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 1 },
-  logoIcon: { width: 40, height: 40 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
   filterWrapper: {
     marginHorizontal: 8,
     marginBottom: 12,
