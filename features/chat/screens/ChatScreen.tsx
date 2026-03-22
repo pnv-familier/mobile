@@ -62,6 +62,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     sendMessage, 
     isLoadingMessages, 
     isStreaming, 
+    activeStreamingId,
     error, 
     clearError,
     clearSuggestions,
@@ -89,8 +90,10 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [error]);
 
+  const lastAiMessageContent = messages.find(m => m.id === activeStreamingId)?.content;
+
   useEffect(() => {
-    if (isStreaming && messages.length > 0) {
+    if (isStreaming && lastAiMessageContent) {
       if (!scrollTimeoutRef.current) {
         scrollTimeoutRef.current = setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
@@ -98,23 +101,24 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         }, 100);
       }
     }
-  }, [messages]);
+  }, [lastAiMessageContent, isStreaming]);
 
   useEffect(() => {
     if (!isLoadingMessages && messages.length > 0) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
-      }, 300);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isLoadingMessages]);
+  }, [isLoadingMessages, currentSessionId]);
 
   useEffect(() => {
     return () => {
       if (isStreaming) {
-        useChatStore.setState({ isStreaming: false });
+        useChatStore.setState({ isStreaming: false, activeStreamingId: null });
       }
     };
-  }, []);
+  }, [isStreaming]);
 
   // Detect @ mention trigger - only allow one mention per message
   useEffect(() => {
@@ -230,12 +234,17 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
         <FlatList
           ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
+          data={messages.filter(m => !(m.isAi && m.content === '' && m.id === activeStreamingId))}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          onContentSizeChange={() => {
+            if (isStreaming || messages.length > 0) {
+              flatListRef.current?.scrollToEnd({ animated: isStreaming });
+            }
+          }}
           renderItem={({ item }) => (
             <MessageBubble 
               message={item} 
-              isStreaming={isStreaming && item.id === 'active-ai-stream'}
+              isStreaming={isStreaming && item.id === activeStreamingId}
             />
           )}
           style={styles.messageList}
@@ -255,7 +264,12 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
             ) : null
           )}
           ListFooterComponent={() => (
-            <View>
+            <View style={styles.footerComponent}>
+              {isStreaming && (
+                <View style={styles.typingIndicatorFooter}>
+                  <TypingIndicator />
+                </View>
+              )}
               {showSuggestions && (
                 <SuggestionChips 
                   suggestions={lastMessage.suggestions!} 
@@ -265,12 +279,6 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
             </View>
           )}
         />
-
-        {isStreaming && (
-          <View style={styles.typingIndicatorContainer}>
-            <TypingIndicator />
-          </View>
-        )}
 
         {showMentionDropdown && (
           <MentionDropdown
@@ -373,10 +381,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#8D5B39',
   },
-  typingIndicatorContainer: {
-    backgroundColor: PRIMARY_COLOR,
-    paddingHorizontal: 15,
+  footerComponent: {
     paddingBottom: 10,
+  },
+  typingIndicatorFooter: {
+    marginBottom: 5,
   },
   suggestionsWrapper: {
     marginTop: 5,
