@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
   ScrollView,
   Alert,
   ActivityIndicator,
   Modal,
   Image
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { scheduleService } from '../services/schedule.service';
 import { getFamilyMembers } from '../../family/service/family.service';
 import { useAuthStore } from '../../auth/store/auth.store';
+import { showBanner } from '../../../utils/banner';
+import { AppHeader } from '../../../components/AppHeader';
 
-const BACKGROUND_COLOR = '#FDF2E2';
-const ACCENT_COLOR = '#D4A017';
+const BACKGROUND_COLOR = '#FFF4E6';
+const ACCENT_COLOR = '#D4A056';
 
 interface FamilyMember {
   userId: string;
@@ -30,6 +32,7 @@ interface FamilyMember {
 
 interface CreateEventScreenProps {
   navigation: any;
+  route?: any;
 }
 
 const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route }) => {
@@ -65,14 +68,14 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       setLoadingMembers(true);
       const response = await getFamilyMembers();
       console.log('Family members response:', response);
-      
+
       let members = [];
       if (response?.members && Array.isArray(response.members)) {
         members = response.members;
       } else if (Array.isArray(response)) {
         members = response;
       }
-      
+
       const filteredMembers = members.filter((member: any) => member.userId !== currentUser?.id);
       setFamilyMembers(filteredMembers);
     } catch (error: any) {
@@ -116,13 +119,13 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
   const parseTimeInput = (timeText: string, ampm: string) => {
     const [hours, minutes] = timeText.split(':').map(s => parseInt(s.trim()) || 0);
     let hour24 = hours;
-    
+
     if (ampm === 'PM' && hours !== 12) {
       hour24 = hours + 12;
     } else if (ampm === 'AM' && hours === 12) {
       hour24 = 0;
     }
-    
+
     const date = new Date();
     date.setHours(hour24, minutes, 0, 0);
     return date;
@@ -135,10 +138,10 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     }
 
     const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])$/;
-    
+
     const trimmedStartTime = startTimeText.trim();
     const trimmedEndTime = endTimeText.trim();
-    
+
     if (!timeRegex.test(trimmedStartTime)) {
       Alert.alert('Validation Error', `Start Time format is invalid. Please use format like 10:30\nYou entered: "${trimmedStartTime}"`);
       return false;
@@ -151,21 +154,21 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
 
     const [startHours, startMinutes] = trimmedStartTime.split(':').map(s => parseInt(s.trim()));
     const [endHours, endMinutes] = trimmedEndTime.split(':').map(s => parseInt(s.trim()));
-    
+
     let startHour24 = startHours;
     if (startAmPm === 'PM' && startHours !== 12) {
       startHour24 = startHours + 12;
     } else if (startAmPm === 'AM' && startHours === 12) {
       startHour24 = 0;
     }
-    
+
     let endHour24 = endHours;
     if (endAmPm === 'PM' && endHours !== 12) {
       endHour24 = endHours + 12;
     } else if (endAmPm === 'AM' && endHours === 12) {
       endHour24 = 0;
     }
-    
+
     const startTotalMinutes = startHour24 * 60 + startMinutes;
     const endTotalMinutes = endHour24 * 60 + endMinutes;
 
@@ -180,16 +183,16 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
   const combineDateTime = (date: Date, timeText: string, ampm: string) => {
     const [hours, minutes] = timeText.split(':').map(s => parseInt(s.trim()) || 0);
     let hour24 = hours;
-    
+
     if (ampm === 'PM' && hours !== 12) {
       hour24 = hours + 12;
     } else if (ampm === 'AM' && hours === 12) {
       hour24 = 0;
     }
-    
+
     const combined = new Date(date);
     combined.setHours(hour24, minutes, 0, 0);
-    
+
     // Send as local datetime string to avoid UTC offset issues
     const yyyy = combined.getFullYear();
     const MM = String(combined.getMonth() + 1).padStart(2, '0');
@@ -206,7 +209,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
 
     try {
       setLoading(true);
-      
+
       const eventData = {
         title: eventName.trim(),
         description: note.trim(),
@@ -216,12 +219,13 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       };
 
       await scheduleService.createEvent(eventData);
+      showBanner('📅 Event Created!', `"${eventName}" has been added to the schedule`);
 
       // Call onSuccess callback if provided (from Suggestion)
       if (prefill?.onSuccess) {
         await prefill.onSuccess();
       }
-      
+
       Alert.alert('Success', 'Event created successfully', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
@@ -241,28 +245,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color="#333" />
-          </TouchableOpacity>
-          <View style={styles.logoContainer}>
-            <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
-            <Text style={styles.headerTitle}>Create Event</Text>
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity>
-            <Ionicons name="notifications" size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="person" size={24} color={ACCENT_COLOR} style={{ marginHorizontal: 15 }} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="menu" size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <AppHeader title="Create Event" navigation={navigation} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.label}>Event Title</Text>
@@ -286,8 +269,8 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
         )}
 
         <Text style={styles.label}>Date</Text>
-        <TouchableOpacity 
-          style={styles.inputWithIcon} 
+        <TouchableOpacity
+          style={styles.inputWithIcon}
           onPress={openDatePicker}
           disabled={loading}
         >
@@ -307,7 +290,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
                 keyboardType="numbers-and-punctuation"
                 editable={!loading}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.ampmButton}
                 onPress={() => setStartAmPm(startAmPm === 'AM' ? 'PM' : 'AM')}
                 disabled={loading}
@@ -327,7 +310,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
                 keyboardType="numbers-and-punctuation"
                 editable={!loading}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.ampmButton}
                 onPress={() => setEndAmPm(endAmPm === 'AM' ? 'PM' : 'AM')}
                 disabled={loading}
@@ -350,8 +333,8 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
         />
 
         <Text style={styles.label}>Participants</Text>
-        <TouchableOpacity 
-          style={styles.dropdown} 
+        <TouchableOpacity
+          style={styles.dropdown}
           onPress={() => setShowParticipantPicker(true)}
           disabled={loading || loadingMembers}
         >
@@ -359,8 +342,8 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             <Ionicons name="people" size={16} color="#999" />
           </View>
           <Text style={{ color: '#888', flex: 1, marginLeft: 10 }}>
-            {selectedParticipants.length > 0 
-              ? `${selectedParticipants.length} selected` 
+            {selectedParticipants.length > 0
+              ? `${selectedParticipants.length} selected`
               : 'Add Recipient'}
           </Text>
           <Ionicons name="chevron-down" size={20} color="#888" />
@@ -384,15 +367,15 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
         )}
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity 
-            style={[styles.button, styles.cancelBtn]} 
+          <TouchableOpacity
+            style={[styles.button, styles.cancelBtn]}
             onPress={handleCancel}
             disabled={loading}
           >
             <Text style={styles.buttonText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.button, styles.saveBtn, loading && styles.buttonDisabled]} 
+          <TouchableOpacity
+            style={[styles.button, styles.saveBtn, loading && styles.buttonDisabled]}
             onPress={handleSave}
             disabled={loading}
           >
@@ -419,7 +402,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
                 <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-            
+
             {loadingMembers ? (
               <ActivityIndicator size="large" color={ACCENT_COLOR} style={{ marginVertical: 20 }} />
             ) : familyMembers.length > 0 ? (
@@ -453,8 +436,8 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             ) : (
               <Text style={styles.emptyText}>No family members found</Text>
             )}
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.confirmButton}
               onPress={() => setShowParticipantPicker(false)}
             >
@@ -528,18 +511,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BACKGROUND_COLOR,
   },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginTop: 40, 
-    marginBottom: 15,
-    paddingHorizontal: 20,
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 1 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
-  headerRight: { flexDirection: 'row', alignItems: 'center' },
   scrollContent: { padding: 16, paddingBottom: 30 },
   label: {
     fontSize: 16,
@@ -584,7 +555,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   ampmButton: {
-    backgroundColor: ACCENT_COLOR,
+    backgroundColor: '#D99B5F',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -605,16 +576,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: ACCENT_COLOR,
   },
-  avatarPlaceholder: { 
-    width: 32, 
-    height: 32, 
-    borderRadius: 16, 
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  participantList: { 
-    flexDirection: 'row', 
+  participantList: {
+    flexDirection: 'row',
     flexWrap: 'wrap',
     marginTop: 8,
     gap: 8,
@@ -631,16 +602,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  participantText: { 
-    fontSize: 11, 
-    marginTop: 4, 
+  participantText: {
+    fontSize: 11,
+    marginTop: 4,
     color: '#333',
     textAlign: 'center',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 100,
+    marginTop: 50,
     gap: 10,
   },
   button: {

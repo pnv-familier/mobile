@@ -1,9 +1,12 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import { Flag } from 'lucide-react-native';
+import { ThumbsUp, ThumbsDown, Flag, Copy, Check } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import { ChatMessageDto } from '../types';
 import { formatMessageTime } from '../../../utils/dateFormatter';
+import FeedbackModal from './FeedbackModal';
+import { feedbackService, FeedbackType } from '../services/report.service';
 
 interface MessageBubbleProps {
   message: ChatMessageDto;
@@ -11,82 +14,70 @@ interface MessageBubbleProps {
 }
 
 const ACCENT_COLOR = '#D4A056';
-const TYPEWRITER_SPEED = 5;
 
 const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps) => {
   const isAi = message.isAi === true;
-  const [displayContent, setDisplayContent] = useState('');
-  const fullContentRef = useRef('');
-  const displayIndexRef = useRef(0);
-  const animationRef = useRef<NodeJS.Timeout | null>(null);
-  
-  useEffect(() => {
-    if (!isAi || !isStreaming) {
-      setDisplayContent(message.content);
-      fullContentRef.current = message.content;
-      displayIndexRef.current = message.content.length;
-      
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-        animationRef.current = null;
-      }
-      return;
-    }
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-    fullContentRef.current = message.content;
-
-    if (!animationRef.current) {
-      const animate = () => {
-        if (displayIndexRef.current < fullContentRef.current.length) {
-          displayIndexRef.current++;
-          setDisplayContent(fullContentRef.current.substring(0, displayIndexRef.current));
-          animationRef.current = setTimeout(animate, TYPEWRITER_SPEED);
-        } else {
-          animationRef.current = null;
-        }
-      };
-      
-      animate();
+  const handleCopy = async () => {
+    try {
+      await Clipboard.setStringAsync(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy text:', error);
     }
+  };
 
-    return () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-        animationRef.current = null;
-      }
-    };
-  }, [message.content, isAi, isStreaming]);
-  
-  useEffect(() => {
-    if (!isStreaming && isAi) {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-        animationRef.current = null;
-      }
-      setDisplayContent(message.content);
-      fullContentRef.current = message.content;
-      displayIndexRef.current = message.content.length;
+  const handleLike = async () => {
+    if (liked) return;
+    try {
+      await feedbackService.submitFeedback(FeedbackType.LIKE);
+      setLiked(true);
+      setDisliked(false);
+    } catch (error) {
+      console.error('Failed to submit like:', error);
     }
-  }, [isStreaming, isAi, message.content]);
-  
+  };
+
+  const handleDislike = async () => {
+    if (disliked) return;
+    try {
+      await feedbackService.submitFeedback(FeedbackType.DISLIKE);
+      setLiked(false);
+      setDisliked(true);
+    } catch (error) {
+      console.error('Failed to submit dislike:', error);
+    }
+  };
+
   const handleReport = () => {
-    Alert.alert('Report Message', 'Would you like to report this AI response?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Report', onPress: () => Alert.alert('Thank you', 'Your report has been submitted.') }
-    ]);
+    setShowFeedbackModal(true);
+  };
+
+  const handleConfirmReport = async (reason: string) => {
+    try {
+      await feedbackService.submitFeedback(FeedbackType.REPORT, reason);
+    } catch (error) {
+      console.error('Failed to report message:', error);
+    }
   };
 
   return (
-    <View
-      style={[
-        styles.messageBubble,
-        isAi ? styles.aiBubble : styles.userBubble
-      ]}
-    >
+    <>
+      <View
+        style={[
+          styles.messageBubble,
+          isAi ? styles.aiBubble : styles.userBubble
+        ]}
+      >
       <View style={styles.messageContentWrapper}>
         {isAi ? (
           <Markdown style={markdownStyles}>
-            {displayContent}
+            {message.content}
           </Markdown>
         ) : (
           <Text style={styles.userMessageText}>
@@ -95,6 +86,15 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
         )}
       </View>
       <View style={styles.footer}>
+        {!isAi && (
+          <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+            {copied ? (
+              <Check size={12} color="rgba(255,255,255,0.9)" />
+            ) : (
+              <Copy size={12} color="rgba(255,255,255,0.7)" />
+            )}
+          </TouchableOpacity>
+        )}
         <Text style={[
           styles.timestamp,
           isAi ? styles.aiTimestamp : styles.userTimestamp
@@ -102,12 +102,35 @@ const MessageBubble = memo(({ message, isStreaming = false }: MessageBubbleProps
           {formatMessageTime(message.timestamp)}
         </Text>
         {isAi && (
-          <TouchableOpacity onPress={handleReport} style={styles.reportButton}>
-            <Flag size={12} color="rgba(0,0,0,0.3)" />
-          </TouchableOpacity>
+          <View style={styles.feedbackButtons}>
+            <TouchableOpacity onPress={handleLike} style={styles.feedbackButton}>
+              <ThumbsUp 
+                size={14} 
+                color={liked ? '#D4A056' : 'rgba(0,0,0,0.3)'}
+                fill={liked ? '#D4A056' : 'transparent'}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDislike} style={styles.feedbackButton}>
+              <ThumbsDown 
+                size={14} 
+                color={disliked ? '#D4A056' : 'rgba(0,0,0,0.3)'}
+                fill={disliked ? '#D4A056' : 'transparent'}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleReport} style={styles.feedbackButton}>
+              <Flag size={12} color="rgba(0,0,0,0.3)" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
-    </View>
+      </View>
+
+      <FeedbackModal
+        visible={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onConfirm={handleConfirmReport}
+      />
+    </>
   );
 }, (prevProps, nextProps) => {
   return prevProps.message.id === nextProps.message.id && 
@@ -248,14 +271,27 @@ const styles = StyleSheet.create({
   },
   userTimestamp: {
     color: 'rgba(255,255,255,0.7)',
-    alignSelf: 'flex-end',
-    width: '100%',
     textAlign: 'right',
+    flex: 1,
   },
-  reportButton: {
+  feedbackButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  feedbackButton: {
     padding: 4,
-    marginLeft: 10,
+  },
+  copyButton: {
+    padding: 4,
+    marginRight: 8,
   },
 });
 
-export default MessageBubble;
+export default React.memo(MessageBubble, (prev, next) => {
+  return prev.message.id === next.message.id && 
+         prev.message.content === next.message.content &&
+         prev.message.suggestions === next.message.suggestions &&
+         prev.isStreaming === next.isStreaming;
+});
+

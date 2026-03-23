@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import { useFamilyStore } from "../store/family.store";
 import { getFamilyPreview, joinFamilyWithRelationship } from "../service/family.service";
 import { FamilyPreview } from "../types";
+import { showBanner } from "../../../utils/banner";
 
 export const useJoinFamily = () => {
     const setFamily = useFamilyStore((state) => state.setFamily);
@@ -50,6 +51,7 @@ export const useJoinFamily = () => {
                 return;
             }
             await joinFamilyWithRelationship(code, relationship);
+            showBanner('👨‍👩‍👧‍👦 Joined Family!', `Welcome to ${familyPreview.familyName}!`);
             Alert.alert("Success", "You have joined the family!");
             setFamily({} as any);
         } catch (error: any) {

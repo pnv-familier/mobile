@@ -6,6 +6,7 @@ import { getDefaultAvatar } from '../utils/avatar';
 import { deletePost } from '../services/post.service';
 import { VideoPlayer } from './VideoPlayer';
 import { CommentSection } from './CommentSection';
+import { formatInstantRelative } from '../../../utils/instantUtils';
 
 interface PostCardProps {
   post: Post;
@@ -14,6 +15,7 @@ interface PostCardProps {
   onUpdate?: () => void;
   onReaction?: (postId: number) => void;
   reactionLoading?: boolean;
+  defaultShowComments?: boolean;
 }
 
 const ACCENT_COLOR = '#D4A056';
@@ -22,11 +24,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_MARGIN = 30;
 const IMAGE_GAP = 8;
 
-export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading }: PostCardProps) {
+export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading, defaultShowComments = false }: PostCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(defaultShowComments);
 
   const videoUrl = post.videos && post.videos.length > 0 ? post.videos[0] : null;
 
@@ -36,26 +38,6 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
   const displayContent = expanded || !needsExpansion 
     ? post.content 
     : post.content.substring(0, MAX_PREVIEW_LENGTH) + '...';
-
-  const formatTimestamp = (timestamp: string) => {
-    // Handle array format [year, month, day, hour, minute, second, nano]
-    let date: Date;
-    if (Array.isArray(timestamp)) {
-      const [year, month, day, hour = 0, minute = 0] = timestamp as any;
-      date = new Date(year, month - 1, day, hour, minute);
-    } else {
-      // Remove Z suffix to treat as local time if backend sends without timezone
-      const localTimestamp = (timestamp as string).endsWith('Z')
-        ? (timestamp as string).slice(0, -1)
-        : timestamp as string;
-      date = new Date(localTimestamp);
-    }
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -91,10 +73,10 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
         </View>
         <View style={styles.authorInfo}>
           <Text style={styles.authorName}>{post.author_name}</Text>
-          <Text style={styles.timestamp}>{formatTimestamp(post.created_at)}</Text>
+          <Text style={styles.timestamp}>{formatInstantRelative(post.created_at)}</Text>
         </View>
         {isOwner && (
-          <TouchableOpacity onPress={() => setShowMenu(true)} style={styles.menuButton}>
+          <TouchableOpacity accessibilityLabel='show-post-menu-icon' testID='show-post-menu-icon' onPress={() => setShowMenu(true)} style={styles.menuButton}>
             <MoreVertical size={20} color="#666" />
           </TouchableOpacity>
         )}
@@ -124,6 +106,29 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
                 resizeMode="cover"
               />
             </TouchableOpacity>
+          ) : post.images.length === 2 ? (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.doubleImageScroll}
+              decelerationRate="fast"
+              snapToInterval={SCREEN_WIDTH - 60 - 12}
+              snapToAlignment="start"
+            >
+              {post.images.map((img, idx) => (
+                <TouchableOpacity 
+                  key={idx}
+                  onPress={() => setFullScreenImage(img.image_url)}
+                  style={styles.doubleImageContainer}
+                >
+                  <Image 
+                    source={{ uri: img.image_url }} 
+                    style={styles.doubleImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.multiImageLayout}>
               <TouchableOpacity 
@@ -136,9 +141,8 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
                   resizeMode="cover"
                 />
               </TouchableOpacity>
-              <ScrollView 
+              <View 
                 style={styles.thumbnailScroll}
-                showsVerticalScrollIndicator={false}
               >
                 {post.images.slice(1).map((img, idx) => (
                   <TouchableOpacity 
@@ -153,7 +157,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
                     />
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           )}
         </View>
@@ -173,7 +177,9 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
               color={post.user_reacted ? ACCENT_COLOR : '#999'} 
               fill={post.user_reacted ? ACCENT_COLOR : 'none'} 
             />
-            <Text style={styles.statText}>{post.reaction_count}</Text>
+            <Text style={[styles.statText, post.user_reacted && { color: ACCENT_COLOR, fontWeight: '700' }]}>
+              {post.reaction_count}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.stat}
@@ -299,6 +305,18 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 10,
   },
+  doubleImageScroll: {
+    width: '100%',
+  },
+  doubleImageContainer: {
+    width: SCREEN_WIDTH - 60 - 20,
+    marginRight: 8,
+  },
+  doubleImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 10,
+  },
   multiImageLayout: {
     flexDirection: 'row',
     height: 250,
@@ -314,10 +332,10 @@ const styles = StyleSheet.create({
   },
   thumbnailScroll: {
     flex: 1,
+    gap: 8,
   },
   thumbnailContainer: {
-    marginBottom: 8,
-    height: 80,
+    flex: 1,
   },
   thumbnailImage: {
     width: '100%',

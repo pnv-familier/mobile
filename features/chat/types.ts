@@ -1,14 +1,16 @@
+import { InstantString } from '../../../types/instant';
+
 export interface ChatSession {
   id: string;
   userId: string;
   targetContext: string;
-  createdAt: string;
+  createdAt: InstantString;
 }
 
 export interface ChatMessageDto {
   id: string;
   content: string;
-  timestamp: string;
+  timestamp: InstantString;
   isAi: boolean;
   suggestions?: string[];
 }

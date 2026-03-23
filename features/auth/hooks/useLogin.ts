@@ -6,6 +6,7 @@ import { login } from "../services/auth.service";
 import { saveTokens } from "../utils/token";
 import { Alert } from "react-native";
 import { ErrorResponse } from "../../../types/api";
+import { showBanner } from "../../../utils/banner";
 
 const INITIAL_VALUES: LoginPayload = {
     email: "",
@@ -33,6 +34,7 @@ export function useLogin() {
             const data: AuthResponse = (await login(values)).data
             saveTokens(data)
             setAuth(data.user)
+            showBanner('👋 Welcome back!', `Good to see you again, ${data.user.fullName}`)
         } catch (error: any) {
             const err: ErrorResponse = error;
             if (err.details) {

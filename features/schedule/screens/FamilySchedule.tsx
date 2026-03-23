@@ -14,23 +14,22 @@ import {
 } from 'react-native';
 import { 
   ChevronLeft, 
-  Bell, 
-  User, 
-  Menu, 
   Search, 
   ChevronRight, 
   Plus,
   Users,
   Calendar,
   X,
+  User,
+  Menu,
 } from 'lucide-react-native';
 import { useEvents, parseEventDate } from '../hooks/useEvents';
 import { FamilyEvent } from '../types';
-import { useLogout } from '../../auth/hooks/useLogout';
-import AppButton from '../../../components/AppButton';
 import { useFocusEffect } from '@react-navigation/native';
+import { useNotificationStore } from '../../notification/store/notification.store';
+import { AppHeader } from '../../../components/AppHeader';
 
-const BACKGROUND_COLOR = '#FDF0D5';
+const BACKGROUND_COLOR = '#FFF4E6';
 const ACCENT_COLOR = '#D4A056';
 
 interface FamilyScheduleProps {
@@ -38,10 +37,10 @@ interface FamilyScheduleProps {
 }
 
 const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
-  const [showOptions, setShowOptions] = useState(false);
+  const openEventId = useNotificationStore(s => s.openEventId);
+  const setOpenEventId = useNotificationStore(s => s.setOpenEventId);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [searchQuery, setSearchQuery] = useState('');
-  const { logout } = useLogout();
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -57,6 +56,16 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
       refetch();
     }, [selectedYear, selectedMonth])
   );
+
+  useEffect(() => {
+    if (!openEventId || events.length === 0) return;
+    const event = events.find(e => String(e.eventId) === String(openEventId));
+    if (event) {
+      setSelectedEvent(event);
+      setShowEventDetail(true);
+      setOpenEventId(null);
+    }
+  }, [openEventId, events]);
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -187,30 +196,8 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <AppHeader title="Calendar" navigation={navigation} />
       <View style={styles.container}>
-        
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <ChevronLeft size={28} color="#333" />
-            </TouchableOpacity>
-            <View style={styles.logoContainer}>
-              <Image source={require('../../../assets/icon.png')} style={{ width: 40, height: 40 }} />
-              <Text style={styles.headerTitle}>Family Schedule</Text>
-            </View>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity>
-              <Bell size={24} color={ACCENT_COLOR} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowOptions(true)}>
-              <User size={24} color={ACCENT_COLOR} style={{ marginHorizontal: 15 }} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Menu size={24} color={ACCENT_COLOR} />
-            </TouchableOpacity>
-          </View>
-        </View>
 
         <View style={styles.searchContainer}>
           <Search size={20} color="#999" style={styles.searchIcon} />
@@ -397,46 +384,6 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
       </View>
 
       <Modal
-        visible={showOptions}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowOptions(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowOptions(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.optionSheet}>
-                <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>Family Options</Text>
-
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setShowOptions(false);
-                    navigation.navigate('ViewListFamily');
-                  }}
-                >
-                  <View style={styles.optionIconContainer}>
-                    <Users size={20} color={ACCENT_COLOR} />
-                  </View>
-                  <Text style={styles.optionText}>View Member List</Text>
-                  <ChevronRight size={20} color="#CCC" />
-                </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
-
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowOptions(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      <Modal
         visible={showEventDetail}
         transparent={true}
         animationType="fade"
@@ -534,13 +481,6 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
   container: { flex: 1, paddingHorizontal: 20 },
-  
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 35, marginBottom: 15 },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 1  },
-  logoIcon: { width: 35, height: 35, backgroundColor: ACCENT_COLOR, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
-  headerRight: { flexDirection: 'row', alignItems: 'center' },
 
   searchContainer: { 
     flexDirection: 'row', 
@@ -550,7 +490,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderWidth: 1,
     borderColor: ACCENT_COLOR,
-    marginBottom: 20
+    marginBottom: 20,
   },
   searchIcon: { marginRight: 10 },
   searchInput: { flex: 1, height: 45, fontSize: 16 },
@@ -727,9 +667,9 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     backgroundColor: ACCENT_COLOR,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 54,
+    height: 54,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -743,59 +683,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  optionSheet: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    padding: 20,
-    paddingBottom: 40,
-    width: '100%',
-    marginTop: 'auto',
-  },
-  sheetHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#EEE',
-    borderRadius: 3,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-  sheetTitle: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '600',
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#FDF2E3',
-    borderRadius: 15,
-    marginBottom: 15,
-  },
-  optionIconContainer: {
-    padding: 8,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    marginRight: 15,
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  cancelButton: {
-    marginTop: 15,
-    padding: 15,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#999',
-    fontWeight: '600',
   },
   eventDetailModal: {
     backgroundColor: '#FFF',

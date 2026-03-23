@@ -25,7 +25,7 @@ import { FamilyMember } from '../types';
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
-const SuggestionChips = ({ suggestions, onSelect }: { suggestions: string[], onSelect: (s: string) => void }) => {
+const SuggestionChips = React.memo(({ suggestions, onSelect }: { suggestions: string[], onSelect: (s: string) => void }) => {
   if (!suggestions || suggestions.length === 0) return null;
   return (
     <View style={styles.suggestionsWrapper}>
@@ -46,7 +46,7 @@ const SuggestionChips = ({ suggestions, onSelect }: { suggestions: string[], onS
       </ScrollView>
     </View>
   );
-};
+});
 
 export default function ChatScreen({ navigation }: { navigation: any }) {
   const [inputText, setInputText] = useState('');
@@ -55,12 +55,14 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   const [mentionedUser, setMentionedUser] = useState<FamilyMember | null>(null);
   const [mentionSearchText, setMentionSearchText] = useState('');
   const flatListRef = useRef<FlatList>(null);
+  const scrollTimeoutRef = useRef<any>(null);
   
   const { 
     messages, 
     sendMessage, 
     isLoadingMessages, 
     isStreaming, 
+    activeStreamingId,
     error, 
     clearError,
     clearSuggestions,
@@ -88,27 +90,35 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [error]);
 
+  const lastAiMessageContent = messages.find(m => m.id === activeStreamingId)?.content;
+
   useEffect(() => {
-    if (isStreaming && messages.length > 0) {
-      flatListRef.current?.scrollToEnd({ animated: true });
+    if (isStreaming && lastAiMessageContent) {
+      if (!scrollTimeoutRef.current) {
+        scrollTimeoutRef.current = setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+          scrollTimeoutRef.current = null;
+        }, 100);
+      }
     }
-  }, [messages, isStreaming]);
+  }, [lastAiMessageContent, isStreaming]);
 
   useEffect(() => {
     if (!isLoadingMessages && messages.length > 0) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
-      }, 300);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isLoadingMessages]);
+  }, [isLoadingMessages, currentSessionId]);
 
   useEffect(() => {
     return () => {
       if (isStreaming) {
-        useChatStore.setState({ isStreaming: false });
+        useChatStore.setState({ isStreaming: false, activeStreamingId: null });
       }
     };
-  }, []);
+  }, [isStreaming]);
 
   // Detect @ mention trigger - only allow one mention per message
   useEffect(() => {
@@ -116,20 +126,30 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     const lastAtIndex = inputText.lastIndexOf('@');
     const atCount = (inputText.match(/@/g) || []).length;
     
-    if (lastChar === '@' && lastAtIndex !== -1 && atCount === 1 && !mentionedUser) {
+    // If @ is deleted, hide dropdown and reset mentioned user
+    if (!inputText.includes('@')) {
+      setShowMentionDropdown(false);
+      setMentionSearchText('');
+      if (mentionedUser) {
+        setMentionedUser(null);
+      }
+      return;
+    }
+    
+    // Only show dropdown if: typing @, and only 1 @
+    if (lastChar === '@' && lastAtIndex !== -1 && atCount === 1) {
       setShowMentionDropdown(true);
       setMentionSearchText('');
-    } else if (lastAtIndex !== -1 && showMentionDropdown && !mentionedUser) {
+    } else if (lastAtIndex !== -1 && showMentionDropdown) {
       const textAfterAt = inputText.substring(lastAtIndex + 1);
-      if (textAfterAt.includes(' ')) {
+      // Hide if space after @ or multiple @
+      if (textAfterAt.includes(' ') || atCount > 1) {
         setShowMentionDropdown(false);
       } else {
         setMentionSearchText(textAfterAt);
       }
-    } else if (atCount > 1 || (mentionedUser && atCount > 1)) {
-      setShowMentionDropdown(false);
     }
-  }, [inputText, mentionedUser]);
+  }, [inputText]);
 
 
 
@@ -138,6 +158,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     
     const messageContent = inputText.trim();
     setInputText('');
+    setShowMentionDropdown(false);
     await sendMessage(messageContent, mentionedUser?.email);
     setMentionedUser(null);
     setMentionSearchText('');
@@ -204,9 +225,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         style={{ flex: 1 }}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <ChevronLeft size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
+          <View style={{ width: 24 }} />
           <Text style={styles.headerTitle}>AI Family Assistant</Text>
           <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
             <History size={24} color={ACCENT_COLOR} />
@@ -215,18 +234,27 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
         <FlatList
           ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
+          data={messages.filter(m => !(m.isAi && m.content === '' && m.id === activeStreamingId))}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          onContentSizeChange={() => {
+            if (isStreaming || messages.length > 0) {
+              flatListRef.current?.scrollToEnd({ animated: isStreaming });
+            }
+          }}
           renderItem={({ item }) => (
             <MessageBubble 
               message={item} 
-              isStreaming={isStreaming && item.id === 'active-ai-stream'}
+              isStreaming={isStreaming && item.id === activeStreamingId}
             />
           )}
           style={styles.messageList}
           contentContainerStyle={styles.messageListContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          removeClippedSubviews
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
           ListHeaderComponent={() => (
             messages.length === 0 && !isLoadingMessages ? (
               <View style={styles.welcomeContainer}>
@@ -236,7 +264,12 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
             ) : null
           )}
           ListFooterComponent={() => (
-            <View>
+            <View style={styles.footerComponent}>
+              {isStreaming && (
+                <View style={styles.typingIndicatorFooter}>
+                  <TypingIndicator />
+                </View>
+              )}
               {showSuggestions && (
                 <SuggestionChips 
                   suggestions={lastMessage.suggestions!} 
@@ -247,10 +280,13 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           )}
         />
 
-        {isStreaming && (
-          <View style={styles.typingIndicatorContainer}>
-            <TypingIndicator />
-          </View>
+        {showMentionDropdown && (
+          <MentionDropdown
+            visible={showMentionDropdown}
+            onSelect={handleMentionSelect}
+            onClose={() => setShowMentionDropdown(false)}
+            searchText={mentionSearchText}
+          />
         )}
 
         <View style={styles.inputContainer}>
@@ -282,15 +318,6 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         </View>
       </KeyboardAvoidingView>
 
-      {showMentionDropdown && (
-        <MentionDropdown
-          visible={showMentionDropdown}
-          onSelect={handleMentionSelect}
-          onClose={() => setShowMentionDropdown(false)}
-          searchText={mentionSearchText}
-        />
-      )}
-
       <SuggestionCard
         visible={!!pendingSuggestion}
         metadata={pendingSuggestion}
@@ -321,13 +348,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  backButton: {
-    padding: 5,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
+    textAlign: 'center',
   },
   messageList: {
     flex: 1,
@@ -355,10 +381,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#8D5B39',
   },
-  typingIndicatorContainer: {
-    backgroundColor: PRIMARY_COLOR,
-    paddingHorizontal: 15,
+  footerComponent: {
     paddingBottom: 10,
+  },
+  typingIndicatorFooter: {
+    marginBottom: 5,
   },
   suggestionsWrapper: {
     marginTop: 5,
@@ -417,8 +444,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   sendButton: {
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
     borderRadius: 22,
     backgroundColor: ACCENT_COLOR,
     justifyContent: 'center',

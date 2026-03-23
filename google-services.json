@@ -40,6 +40,25 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:755837463966:android:cd2fd25ff6204bfd5cfa8f",
+        "android_client_info": {
+          "package_name": "com.familier.familier"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaPflqWlFGSH1Z5_xrdW_5TjayKl0x6gY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

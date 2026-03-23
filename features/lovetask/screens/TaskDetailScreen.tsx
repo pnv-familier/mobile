@@ -12,15 +12,16 @@ import {
   Modal,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { ChevronLeft, Bell, User, Menu, CheckCircle2, Users, ChevronRight } from 'lucide-react-native';
+import { CheckCircle2, Users, ChevronRight, User } from 'lucide-react-native';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { CreatePostModal } from '../../social/components/CreatePostModal';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
+import { AppHeader } from '../../../components/AppHeader';
 
-const BACKGROUND_COLOR = '#FFF4E6';
-const ACCENT_COLOR = '#EAB676';
+const BACKGROUND_COLOR = '#FDF2E3';
+const ACCENT_COLOR = '#D69E66';
 const TEXT_COLOR = '#4A3428';
 
 interface TaskDetailScreenProps {
@@ -92,6 +93,7 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <AppHeader title="Love Task Details" navigation={navigation} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={ACCENT_COLOR} />
         </View>
@@ -102,28 +104,7 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
   if (error || !task) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <ChevronLeft size={28} color="#333" />
-            </TouchableOpacity>
-            <View style={styles.logoContainer}>
-              <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-              <Text style={styles.headerTitle}>Love Task Details</Text>
-            </View>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity>
-              <Bell size={24} color={ACCENT_COLOR} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <User size={24} color={ACCENT_COLOR} style={styles.headerIconGap} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Menu size={24} color={ACCENT_COLOR} />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <AppHeader title="Love Task Details" navigation={navigation} />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || 'Task not found'}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={refetch}>
@@ -138,28 +119,7 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ChevronLeft size={28} color="#333" />
-          </TouchableOpacity>
-          <View style={styles.logoContainer}>
-            <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-            <Text style={styles.headerTitle}>Love Task Details</Text>
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity>
-            <Bell size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowOptions(true)}>
-            <User size={24} color={ACCENT_COLOR} style={styles.headerIconGap} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Menu size={24} color={ACCENT_COLOR} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <AppHeader title="Love Task Details" navigation={navigation} onUserPress={() => setShowOptions(true)} />
 
       <ScrollView contentContainerStyle={styles.container}>
         {/* Profile Match Card */}
@@ -316,20 +276,6 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 35,
-    paddingBottom: 15,
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 1 },
-  logoIcon: { width: 40, height: 40 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
-  headerRight: { flexDirection: 'row', alignItems: 'center' },
-  headerIconGap: { marginHorizontal: 15 },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

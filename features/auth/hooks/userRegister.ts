@@ -6,6 +6,7 @@ import { register } from "../services/auth.service"
 import { checkPasswordStrength, PasswordStrength } from "../utils/password"
 import { saveTokens } from "../utils/token"
 import { useAuthStore } from "../store/auth.store"
+import { showBanner } from "../../../utils/banner"
 
 const INITIAL_VALUES: RegisterForm = {
     fullName: "",
@@ -44,6 +45,7 @@ export function useRegister() {
             const data: AuthResponse = (await register(rest)).data
             saveTokens(data)
             setAuth(data.user)
+            showBanner('🎉 Welcome to Family Emotions!', `Hi ${data.user.fullName}, your account is ready`)
         } catch (err: any) {
             if (err.details) {
                 setErrors(err.details)

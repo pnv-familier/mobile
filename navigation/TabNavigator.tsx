@@ -30,7 +30,9 @@ export default function TabNavigator() {
                 },
             })}
         >
-            <Tab.Screen name="Suggestions" component={SuggestionNavigator} />
+            <Tab.Screen name="Suggestions" component={SuggestionNavigator} listeners={({ navigation }) => ({
+                tabPress: () => navigation.reset({ index: 0, routes: [{ name: 'Suggestions' }] })
+            })} />
             <Tab.Screen name="Chat" component={ChatNavigator} />
             <Tab.Screen name="Home" component={SocialNavigator} />
             <Tab.Screen name="Schedule" component={ScheduleNavigator} listeners={({ navigation }) => ({
