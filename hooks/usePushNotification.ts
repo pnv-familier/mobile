@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import { useAuthStore } from '../features/auth/store/auth.store';
 import { apiClient } from '../api/api';
 import { useNotificationStore } from '../features/notification/store/notification.store';
+import { notificationService } from '../features/notification/services/notification.service';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -38,7 +39,16 @@ export function usePushNotification(navigation?: any) {
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       const { title, body } = notification.request.content;
       const store = useNotificationStore.getState();
-      store.setUnreadCount(store.unreadCount + 1);
+      
+      // Refresh list from server to get full notification object
+      notificationService.getNotifications().then(data => {
+        store.setNotifications(data);
+        store.setUnreadCount(data.filter(n => n.status === 'UNREAD').length);
+      }).catch(() => {
+        // Fallback if fetch fails: just increment count
+        store.setUnreadCount(store.unreadCount + 1);
+      });
+
       if (title) {
         const now = new Date();
         const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });

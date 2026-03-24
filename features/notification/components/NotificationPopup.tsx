@@ -69,7 +69,7 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ visible, o
   const setOpenEventId = useNotificationStore(s => s.setOpenEventId);
 
   useEffect(() => {
-    if (visible && notifications.length === 0) fetchNotifications();
+    if (visible) fetchNotifications();
   }, [visible]);
 
   const handleNotificationPress = async (notification: Notification) => {

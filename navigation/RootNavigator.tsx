@@ -21,6 +21,8 @@ export default function RootNavigator() {
     const banner = useNotificationStore(s => s.banner)
     const clearBanner = useNotificationStore(s => s.clearBanner)
 
+    const setNotifications = useNotificationStore(s => s.setNotifications)
+
     usePushNotification();
 
     useEffect(() => {
@@ -28,6 +30,7 @@ export default function RootNavigator() {
             fetchMyFamily();
             notificationService.getNotifications()
                 .then(data => {
+                    setNotifications(data);
                     const unread = data.filter(n => n.status === 'UNREAD');
                     setUnreadCount(unread.length);
                     // Chỉ show banner cho unread, đè lên nhau nhanh (500ms)
