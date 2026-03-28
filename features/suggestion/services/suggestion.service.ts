@@ -1,5 +1,6 @@
 import { apiClient } from '../../../api/api';
 import { SuggestionListItem, SuggestionDetail, SuggestionStatus } from '../types';
+import { UrgentSuggestion } from '../types/urgent';
 
 interface ConfirmSuggestionResponse {
   success: boolean;
@@ -51,6 +52,21 @@ export const suggestionService = {
       console.error('Failed to confirm suggestion:', error);
       throw error;
     }
+  },
+
+  getUrgentSuggestions: async (): Promise<UrgentSuggestion[]> => {
+    const response = await apiClient.get<{ message: string; data: UrgentSuggestion[] }>(
+      '/api/v1/suggestions/urgent'
+    );
+    return response.data.data;
+  },
+
+  markUrgentAsRead: async (id: string): Promise<void> => {
+    await apiClient.patch(`/api/v1/suggestions/urgent/${id}/read`);
+  },
+
+  markAllUrgentAsRead: async (): Promise<void> => {
+    await apiClient.patch('/api/v1/suggestions/urgent/read-all');
   },
 };
 

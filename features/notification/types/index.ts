@@ -8,6 +8,7 @@ export interface Notification {
   title: string;
   body: string;
   status: NotificationStatus;
+  notified?: boolean;
   createdAt: string;
   referenceId?: string; // postId, taskId, eventId, suggestionId
 }

@@ -2,6 +2,7 @@ import {create} from "zustand"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isAxiosError } from "axios";
 import { User } from "../../user/type";
+import { storage } from "../../../utils/storage";
 
 type AuthState = {
     data: User | null;
@@ -56,6 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     reset: async () => {
         await AsyncStorage.removeItem("accessToken");
         await AsyncStorage.removeItem("refreshToken");
+        await storage.clearNotifiedIds();
         set({ data: null, error: null, isLoading: false });
     },
 

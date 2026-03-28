@@ -4,6 +4,9 @@ import * as Device from 'expo-device';
 import { useAuthStore } from '../features/auth/store/auth.store';
 import { apiClient } from '../api/api';
 import { useNotificationStore } from '../features/notification/store/notification.store';
+import { storage } from '../utils/storage';
+import { useUrgentSuggestionStore } from '../features/suggestion/store/urgentSuggestion.store';
+import { suggestionService } from '../features/suggestion/services/suggestion.service';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -35,18 +38,32 @@ export function usePushNotification(navigation?: any) {
 
     registerForPushNotifications();
 
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+    notificationListener.current = Notifications.addNotificationReceivedListener(async (notification) => {
       const { title, body } = notification.request.content;
+      const notificationId = notification.request.content.data?.id as string | undefined;
+      const notifiedFlag = notification.request.content.data?.notified as boolean | undefined;
       const store = useNotificationStore.getState();
       store.setUnreadCount(store.unreadCount + 1);
-      if (title) {
-        const now = new Date();
-        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        store.showBanner({ title, body: body || '', time });
+      
+      if (title && notificationId) {
+        let shouldShow = true;
+        if (notifiedFlag !== undefined && notifiedFlag !== null) {
+          shouldShow = !notifiedFlag;
+        } else {
+          const notifiedIds = await storage.getNotifiedIds();
+          shouldShow = !notifiedIds.has(notificationId);
+        }
+        
+        if (shouldShow) {
+          const now = new Date();
+          const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+          store.showBanner({ title, body: body || '', time });
+          await storage.addNotifiedIds([notificationId]);
+        }
       }
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(async response => {
       const data = response.notification.request.content.data;
       handleNotificationTap(data);
     });
