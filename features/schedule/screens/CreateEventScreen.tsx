@@ -47,10 +47,24 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<FamilyMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [startTimeText, setStartTimeText] = useState(prefill?.prefillStartTime || '10:30');
-  const [endTimeText, setEndTimeText] = useState(prefill?.prefillEndTime || '1:30');
-  const [startAmPm, setStartAmPm] = useState('AM');
-  const [endAmPm, setEndAmPm] = useState('PM');
+  
+  // Parse prefilled time to extract time and AM/PM
+  const parseTimeString = (timeStr: string) => {
+    if (!timeStr) return { time: '', ampm: 'AM' };
+    const match = timeStr.match(/^(\d{1,2}:\d{2})\s*(AM|PM)?$/i);
+    if (match) {
+      return { time: match[1], ampm: match[2]?.toUpperCase() || 'AM' };
+    }
+    return { time: timeStr, ampm: 'AM' };
+  };
+  
+  const startParsed = parseTimeString(prefill?.prefillStartTime);
+  const endParsed = parseTimeString(prefill?.prefillEndTime);
+  
+  const [startTimeText, setStartTimeText] = useState(startParsed.time || '10:30');
+  const [endTimeText, setEndTimeText] = useState(endParsed.time || '1:30');
+  const [startAmPm, setStartAmPm] = useState(startParsed.ampm);
+  const [endAmPm, setEndAmPm] = useState(endParsed.ampm);
   const [showInvalidCharWarning, setShowInvalidCharWarning] = useState(false);
 
   const [tempDate, setTempDate] = useState({ day: 1, month: 1, year: 2024 });

@@ -30,7 +30,7 @@ export const suggestionService = {
     triggerContext: string
   ): Promise<ConfirmSuggestionResponse> => {
     try {
-      const type = detectType(metadata);
+      const type = metadata.type;
 
       const requestBody = {
         type,
@@ -54,15 +54,3 @@ export const suggestionService = {
   },
 };
 
-const detectType = (metadata: any): 'EVENT' | 'TASK' | 'OFFLINE' => {
-  if ('startTime' in metadata && 'endTime' in metadata) {
-    return 'EVENT';
-  }
-  if ('assigneeEmail' in metadata && 'title' in metadata) {
-    return 'TASK';
-  }
-  if ('action' in metadata) {
-    return 'OFFLINE';
-  }
-  throw new Error('Unknown metadata type');
-};
