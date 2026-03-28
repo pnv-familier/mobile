@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSuggestions, FilterValue } from '../hooks/useSuggestions';
 import { SuggestionListItem, SuggestionType } from '../types';
 import { AppHeader } from '../../../components/AppHeader';
+import { useTranslation } from 'react-i18next';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';
@@ -22,6 +23,15 @@ const TYPE_CONFIG: Record<SuggestionType, { icon: any; label: string; color: str
   TASK: { icon: Heart, label: 'Love Task', color: '#E91E63' },
   EVENT: { icon: Calendar, label: 'Event', color: '#2196F3' },
   OFFLINE: { icon: Lightbulb, label: 'Offline', color: '#FF9800' },
+};
+
+const getFilterLabel = (t: any, value: FilterValue) => {
+  switch (value) {
+    case 'ALL': return t('suggestions.all');
+    case 'PENDING': return t('suggestions.pending');
+    case 'ACCEPTED': return t('suggestions.done');
+    default: return value;
+  }
 };
 
 const FILTERS: { label: string; value: FilterValue }[] = [
@@ -35,6 +45,7 @@ interface SuggestionsScreenProps {
 }
 
 const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => {
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterValue>('ALL');
   const { suggestions, loading, error, fetchSuggestions } = useSuggestions();
 
@@ -68,7 +79,7 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
             <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
             <View style={[styles.statusBadge, isDone ? styles.statusDone : styles.statusPending]}>
               <Text style={[styles.statusText, isDone ? styles.statusTextDone : styles.statusTextPending]}>
-                {isDone ? 'Done' : 'Pending'}
+                {isDone ? t('suggestions.done') : t('suggestions.pending')}
               </Text>
             </View>
           </View>
@@ -81,7 +92,7 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AppHeader title="AI Suggestions" navigation={navigation} />
+      <AppHeader title={t('suggestions.aiSuggestions')} navigation={navigation} />
 
       <View style={styles.filterWrapper}>
         <View style={styles.filterRow}>
@@ -92,7 +103,7 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
               onPress={() => handleFilterChange(f.value)}
             >
               <Text style={[styles.filterText, activeFilter === f.value && styles.filterTextActive]}>
-                {f.label}
+                {getFilterLabel(t, f.value)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -107,13 +118,13 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
         <View style={styles.centered}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => fetchSuggestions(activeFilter)}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : suggestions.length === 0 ? (
         <View style={styles.centered}>
           <Lightbulb size={60} color={ACCENT_COLOR} opacity={0.4} />
-          <Text style={styles.emptyText}>No suggestions found</Text>
+          <Text style={styles.emptyText}>{t('suggestions.noSuggestionsFound')}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.list}>

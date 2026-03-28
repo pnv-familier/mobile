@@ -8,8 +8,10 @@ import AuthInput from "../components/AuthInput"
 import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator"
 import { useGoogleLogin } from "../hooks/useGoogleLogin"
 import { useNavigation } from "@react-navigation/native"
+import { useTranslation } from "react-i18next"
 
 const RegisterScreen = () => {
+    const { t } = useTranslation()
     const { values, errors, loading, onChange, submit, passwordStrength } = useRegister()
     const { login: googleLogin, loading: isGoogleLoading } = useGoogleLogin()
     const navigation = useNavigation<any>();
@@ -31,28 +33,28 @@ const RegisterScreen = () => {
                     style={styles.logo}
                 />
 
-                <AppText style={styles.title}>Create an account</AppText>
+                <AppText style={styles.title}>{t('auth.registerTitle')}</AppText>
                 <AppText style={styles.subtitle}>
-                    Begin the journey of connecting with family.
+                    {t('auth.registerSubtitle')}
                 </AppText>
 
                 <AuthInput
                     icon="user"
-                    placeholder="Full Name"
+                    placeholder={t('auth.fullName')}
                     value={values.fullName}
                     onChangeText={v => onChange("fullName", v)}
                     error={errors.fullName}
                 />
                 <AuthInput
                     icon="mail"
-                    placeholder="Email"
+                    placeholder={t('auth.email')}
                     value={values.email}
                     onChangeText={v => onChange("email", v)}
                     error={errors.email}
                 />
                 <AuthInput
                     icon="lock"
-                    placeholder="Password"
+                    placeholder={t('auth.password')}
                     secure
                     value={values.password}
                     onChangeText={v => onChange("password", v)}
@@ -61,7 +63,7 @@ const RegisterScreen = () => {
                 <PasswordStrengthIndicator strength={passwordStrength} />
                 <AuthInput
                     icon="lock"
-                    placeholder="Confirm password"
+                    placeholder={t('auth.confirmPassword')}
                     secure
                     value={values.confirmPassword}
                     onChangeText={v => onChange("confirmPassword", v)}
@@ -73,7 +75,7 @@ const RegisterScreen = () => {
                     onPress={submit}
                     disabled={loading}
                 >
-                    <AppText style={styles.registerText}>Register</AppText>
+                    <AppText style={styles.registerText}>{t('auth.register')}</AppText>
                 </TouchableOpacity>
 
                 <TouchableOpacity 
@@ -85,13 +87,13 @@ const RegisterScreen = () => {
                         style={styles.googleIcon}
                     />
                     <AppText style={styles.googleText}>
-                        Continue with Google
+                        {t('auth.continueWithGoogle')}
                     </AppText>
                 </TouchableOpacity>
 
                 <AppText style={styles.loginText} onPress={() => navigation.navigate("Login")}>
-                    Already have an account?{" "}
-                    <AppText style={styles.loginLink}>Login</AppText>
+                    {t('auth.alreadyHaveAccount')}{" "}
+                    <AppText style={styles.loginLink}>{t('auth.login')}</AppText>
                 </AppText>
                 </ScrollView>
             </KeyboardAvoidingView>

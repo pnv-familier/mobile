@@ -7,8 +7,10 @@ import AppButton from "../../../components/AppButton"
 import AuthInput from "../components/AuthInput"
 import { useGoogleLogin } from "../hooks/useGoogleLogin"
 import { useLogin } from "../hooks/useLogin"
+import { useTranslation } from "react-i18next"
 
 const LoginScreen = () => {
+    const { t } = useTranslation()
     const navigation = useNavigation<any>()
     const { login: googleLogin, loading: isGoogleLoading } = useGoogleLogin()
     const { values, errors, loading, onChange, submit } = useLogin()
@@ -17,22 +19,22 @@ const LoginScreen = () => {
         <AppScreen style={styles.container}>
             <Image source={require("../../../assets/icon.png")} style={styles.logo} />
 
-            <AppText style={styles.title}>Log in</AppText>
+            <AppText style={styles.title}>{t('auth.loginTitle')}</AppText>
             <AppText style={styles.subtitle}>
-                Welcome back to the family
+                {t('auth.loginSubtitle')}
             </AppText>
 
             <View style={styles.form}>
                 <AuthInput
                     icon="mail"
-                    placeholder="Email"
+                    placeholder={t('auth.email')}
                     value={values.email}
                     onChangeText={(v) => onChange("email", v)}
                     error={errors.email}
                 />
                 <AuthInput
                     icon="lock"
-                    placeholder="Password"
+                    placeholder={t('auth.password')}
                     secure
                     value={values.password}
                     onChangeText={(v) => onChange("password", v)}
@@ -40,11 +42,11 @@ const LoginScreen = () => {
                 />
             </View>
 
-            <AppButton title="Log In" style={styles.loginBtn} onPress={submit} loading={loading} />
+            <AppButton title={t('auth.login')} style={styles.loginBtn} onPress={submit} loading={loading} />
 
             <View style={styles.dividerWrapper}>
                 <View style={styles.divider} />
-                <AppText style={styles.orText}>Or</AppText>
+                <AppText style={styles.orText}>{t('common.or')}</AppText>
                 <View style={styles.divider} />
             </View>
 
@@ -57,27 +59,27 @@ const LoginScreen = () => {
                     style={styles.googleIcon}
                 />
                 <AppText style={styles.googleText}>
-                    Continue with Google
+                    {t('auth.continueWithGoogle')}
                 </AppText>
             </TouchableOpacity>
 
             <AppText style={styles.signupText}>
-                Don&apos;t have an account?{" "}
+                {t('auth.dontHaveAccount')}{" "}
                 <AppText
                     style={styles.signupLink}
                     onPress={() => navigation.navigate("Register")}
                 >
-                    Sign Up
+                    {t('auth.signUp')}
                 </AppText>
             </AppText>
 
             <AppText style={styles.versionText}>
-                App Version: v{Constants.expoConfig?.version}{" "}
+                {t('auth.appVersion')}: v{Constants.expoConfig?.version}{" "}
                 <AppText
                     style={styles.versionLink}
                     onPress={() => navigation.navigate("Version")}
                 >
-                    | Check Info
+                    | {t('auth.checkInfo')}
                 </AppText>
             </AppText>
         </AppScreen>

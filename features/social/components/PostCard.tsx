@@ -7,6 +7,7 @@ import { deletePost } from '../services/post.service';
 import { VideoPlayer } from './VideoPlayer';
 import { CommentSection } from './CommentSection';
 import { formatInstantRelative } from '../../../utils/instantUtils';
+import { useTranslation } from 'react-i18next';
 
 interface PostCardProps {
   post: Post;
@@ -25,6 +26,7 @@ const IMAGE_MARGIN = 30;
 const IMAGE_GAP = 8;
 
 export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading, defaultShowComments = false }: PostCardProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -41,19 +43,19 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
 
   const handleDelete = () => {
     Alert.alert(
-      'Delete Post',
-      'Are you sure you want to delete this post?',
+      t('social.deletePost'),
+      t('social.deletePostConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deletePost(post.post_id);
               onDelete?.();
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete post');
+              Alert.alert(t('common.error'), t('social.failedToDeletePost'));
             }
           }
         }
@@ -86,7 +88,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
       
       {needsExpansion && !expanded && (
         <TouchableOpacity onPress={() => setExpanded(true)}>
-          <Text style={styles.seeMore}>See more</Text>
+          <Text style={styles.seeMore}>{t('social.seeMore')}</Text>
         </TouchableOpacity>
       )}
 
@@ -210,7 +212,7 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
           <View style={styles.menuContainer}>
             <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); handleDelete(); }}>
               <Trash2 size={20} color="#FF6B6B" />
-              <Text style={[styles.menuText, { color: '#FF6B6B' }]}>Delete Post</Text>
+              <Text style={[styles.menuText, { color: '#FF6B6B' }]}>{t('social.deletePost')}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

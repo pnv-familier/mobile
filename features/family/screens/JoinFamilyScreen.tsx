@@ -14,8 +14,10 @@ import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import { RELATIONSHIP_LIST } from "../../user/constant/relationshipList";
 import { useJoinFamily } from "../hooks/useJoinFamily";
+import { useTranslation } from "react-i18next";
 
 const JoinFamilyScreen = () => {
+    const { t } = useTranslation();
     const navigation = useNavigation();
     const {
         joinCode,
@@ -32,15 +34,15 @@ const JoinFamilyScreen = () => {
 
     const renderStep1 = () => (
         <View style={styles.stepContainer}>
-            <AppText style={styles.stepTitle}>Enter Family Code</AppText>
-            <AppText style={styles.stepSubtitle}>Ask your family admin for the invite code</AppText>
+            <AppText style={styles.stepTitle}>{t('family.enterFamilyCode')}</AppText>
+            <AppText style={styles.stepSubtitle}>{t('family.familyCodeRequired')}</AppText>
 
             <View style={styles.inputCard}>
-                <AppText style={styles.inputLabel}>Family Code</AppText>
+                <AppText style={styles.inputLabel}>{t('family.familyCode')}</AppText>
                 <View style={styles.inputWrapper}>
                     <Feather name="key" size={18} color="#E39A5A" />
                     <TextInput
-                        placeholder="e.g., FAM-ABC-1234"
+                        placeholder={t('family.enterFamilyCode')}
                         placeholderTextColor="#B8860B"
                         style={styles.textInput}
                         value={joinCode}
@@ -51,7 +53,7 @@ const JoinFamilyScreen = () => {
             </View>
 
             <AppButton
-                title={loading ? "Checking..." : "Continue"}
+                title={loading ? t('common.loading') : t('common.next')}
                 style={styles.continueButton}
                 onPress={fetchFamilyPreview}
                 disabled={!joinCode.trim() || loading}
@@ -61,7 +63,7 @@ const JoinFamilyScreen = () => {
 
     const renderStep2 = () => (
         <View style={styles.stepContainer}>
-            <AppText style={styles.stepTitle}>Join Family</AppText>
+            <AppText style={styles.stepTitle}>{t('family.joinFamily')}</AppText>
 
             {familyPreview && (
                 <View style={styles.familyCard}>
@@ -73,7 +75,7 @@ const JoinFamilyScreen = () => {
                         <View style={styles.familyInfo}>
                             <AppText style={styles.familyName}>{familyPreview.familyName}</AppText>
                             <AppText style={styles.adminName}>Admin: {familyPreview.admin.fullName}</AppText>
-                            <AppText style={styles.memberCount}>{familyPreview.memberCount} members</AppText>
+                            <AppText style={styles.memberCount}>{familyPreview.memberCount} {t('family.members')}</AppText>
                         </View>
                     </View>
                 </View>
@@ -115,12 +117,12 @@ const JoinFamilyScreen = () => {
 
             <View style={styles.buttonRow}>
                 <AppButton
-                    title="Back"
+                    title={t('common.back')}
                     style={styles.backButton}
                     onPress={goBack}
                 />
                 <AppButton
-                    title={loading ? "Joining..." : "Join Family"}
+                    title={loading ? t('common.loading') : t('family.join')}
                     style={styles.joinButton}
                     onPress={joinFamilyWithRelationshipHandler}
                     disabled={!relationship || loading}
@@ -136,7 +138,7 @@ const JoinFamilyScreen = () => {
                     <Feather name="arrow-left" size={22} color="#E39A5A" />
                 </TouchableOpacity>
                 <Feather name="users" size={32} color="#E39A5A" />
-                <AppText style={styles.headerTitle}>Join Your Family</AppText>
+                <AppText style={styles.headerTitle}>{t('family.joinFamily')}</AppText>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

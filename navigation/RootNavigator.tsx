@@ -21,9 +21,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>()
 
 function AppContent() {
     const navigation = useNavigation<any>();
+    const user = useAuthStore(s => s.data)
     const currentSuggestion = useUrgentSuggestionStore(s => s.currentSuggestion)
     const setCurrentSuggestion = useUrgentSuggestionStore(s => s.setCurrentSuggestion)
-    const { markAsRead } = useUrgentSuggestions(true)
+    const { markAsRead } = useUrgentSuggestions(!!user)
 
     const handleUrgentSuggestionPress = () => {
         // Modal sẽ hiển thị currentSuggestion
@@ -54,8 +55,11 @@ function AppContent() {
     return (
         <>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="Auth" component={AuthNavigator} />
-                <Stack.Screen name="App" component={AppNavigator} />
+                {!user ? (
+                    <Stack.Screen name="Auth" component={AuthNavigator} />
+                ) : (
+                    <Stack.Screen name="App" component={AppNavigator} />
+                )}
             </Stack.Navigator>
 
             <UrgentSuggestionBanner
