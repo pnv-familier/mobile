@@ -4,9 +4,9 @@ import { Notification, NotificationType, NotificationTab } from '../types';
 import { useNotificationStore } from '../store/notification.store';
 
 const TAB_TYPES: Record<NotificationTab, NotificationType[]> = {
-  ALL: ['POST_COMMENT', 'POST_REACTION', 'LOVE_TASK', 'SCHEDULE', 'AI'],
+  ALL: ['POST_COMMENT', 'POST_REACTION', 'LOVE_TASK', 'SCHEDULE', 'AI', 'URGENT_SUGGESTION'],
   POST: ['POST_COMMENT', 'POST_REACTION'],
-  AI: ['AI'],
+  AI: ['AI', 'URGENT_SUGGESTION'],
   LOVE_TASK: ['LOVE_TASK'],
   SCHEDULE: ['SCHEDULE'],
 };

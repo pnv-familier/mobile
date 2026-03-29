@@ -13,6 +13,7 @@ import { User, Plus, CheckCircle2, Heart } from 'lucide-react-native';
 import { useLoveTasks } from '../hooks/useLoveTasks';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppHeader } from '../../../components/AppHeader';
+import { useTranslation } from 'react-i18next';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';
@@ -22,6 +23,7 @@ interface LoveTasksScreenProps {
 }
 
 const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'received' | 'created'>('received');
   const { tasks, receivedCount, createdCount, loading, error, refetch } = useLoveTasks(activeTab);
 
@@ -44,6 +46,19 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'COMPLETED':
+        return t('loveTasks.completed');
+      case 'PENDING':
+        return t('loveTasks.pending');
+      case 'SHARED':
+        return t('loveTasks.shared');
+      default:
+        return status;
+    }
+  };
+
   const handleTaskPress = (taskId: number) => {
     navigation.navigate('TaskDetail', { taskId });
   };
@@ -54,15 +69,15 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AppHeader title="Love Tasks" navigation={navigation} />
+      <AppHeader title={t('loveTasks.loveTasks')} navigation={navigation} />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.bannerCard}>
           <View style={styles.bannerContent}>
             <Heart color="#E91E63" size={40} fill="#E91E63" />
             <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>Love Tasks</Text>
-              <Text style={styles.bannerSubTitle}>Love through every little thing</Text>
+              <Text style={styles.bannerTitle}>{t('loveTasks.loveTasks')}</Text>
+              <Text style={styles.bannerSubTitle}>{t('loveTasks.loveTasksDesc')}</Text>
             </View>
           </View>
 
@@ -72,7 +87,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
               onPress={() => setActiveTab('received')}
             >
               <Text style={[styles.tabText, activeTab === 'received' && styles.tabTextActive]}>
-                Received ({receivedCount})
+                {t('loveTasks.received')} ({receivedCount})
               </Text>
             </TouchableOpacity>
             <TouchableOpacity 
@@ -80,7 +95,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
               onPress={() => setActiveTab('created')}
             >
               <Text style={[styles.tabText, activeTab === 'created' && styles.tabTextActive]}>
-                Created ({createdCount})
+                {t('loveTasks.created')} ({createdCount})
               </Text>
             </TouchableOpacity>
           </View>
@@ -95,7 +110,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
             <View style={styles.emptyContainer}>
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-                <Text style={styles.retryButtonText}>Retry</Text>
+                <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
               </TouchableOpacity>
             </View>
           ) : tasks.length > 0 ? (
@@ -114,7 +129,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
                         <CheckCircle2 size={14} color={statusColors.text} style={styles.statusIcon} />
                       )}
                       <Text style={[styles.statusText, { color: statusColors.text }]}>
-                        {task.status.charAt(0) + task.status.slice(1).toLowerCase()}
+                        {getStatusText(task.status)}
                       </Text>
                     </View>
                   </View>
@@ -129,7 +144,7 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
                     )}
                     <View style={styles.taskMainContent}>
                       <Text style={styles.description} numberOfLines={1}>{task.description}</Text>
-                      <Text style={styles.fromText}>From: {task.sender.fullName}</Text>
+                      <Text style={styles.fromText}>{t('loveTasks.from')}: {task.sender.fullName}</Text>
                     </View>
                   </View>
 
@@ -150,8 +165,8 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
               />
               <Text style={styles.emptyText}>
                 {activeTab === 'received' 
-                  ? "You haven't received any love tasks yet" 
-                  : "You haven't created any love tasks yet"}
+                  ? t('loveTasks.noTasksReceived')
+                  : t('loveTasks.noTasksCreated')}
               </Text>
             </View>
           )}

@@ -22,6 +22,7 @@ import { FamilyMember } from '../../family/types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import AppButton from '../../../components/AppButton';
 import { useAuthStore } from '../../auth/store/auth.store';
+import { useTranslation } from 'react-i18next';
 
 const BACKGROUND_COLOR = '#FFF4E6';
 const ACCENT_COLOR = '#EAB676';
@@ -33,6 +34,7 @@ interface CreateLoveTaskScreenProps {
 }
 
 const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const prefill = route?.params;
   const [title, setTitle] = useState(prefill?.prefillTitle || '');
   const [description, setDescription] = useState(prefill?.prefillDescription || '');
@@ -50,31 +52,30 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
 
   const handleCreate = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a task name');
+      Alert.alert(t('common.error'), t('loveTasks.taskTitleRequired'));
       return;
     }
     if (!description.trim()) {
-      Alert.alert('Error', 'Please enter a description');
+      Alert.alert(t('common.error'), t('loveTasks.taskDescRequired'));
       return;
     }
     if (!assignedToUserId.trim()) {
-      Alert.alert('Error', 'Please select who to send this task to');
+      Alert.alert(t('common.error'), t('loveTasks.assigneeRequired'));
       return;
     }
 
     try {
       await createTask(title.trim(), description.trim(), assignedToUserId.trim(), loveMessage.trim() || undefined);
 
-      // Call onSuccess callback if provided (from Suggestion)
       if (prefill?.onSuccess) {
         await prefill.onSuccess();
       }
 
-      Alert.alert('Success', 'Love task sent successfully!', [
+      Alert.alert(t('common.success'), t('loveTasks.createTaskSuccess'), [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to create love task');
+      Alert.alert(t('common.error'), err?.message || t('loveTasks.createTaskFailed'));
     }
   };
 
@@ -89,7 +90,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
         <View style={styles.headerLeft}>
           <View style={styles.logoContainer}>
             <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-            <Text style={styles.headerTitle}>Create Love Task</Text>
+            <Text style={styles.headerTitle}>{t('loveTasks.createLoveTask')}</Text>
           </View>
         </View>
         <View style={styles.headerRight}>
@@ -110,7 +111,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.card}>
-          <Text style={styles.label}>Send to ?<Text style={styles.required}> *</Text></Text>
+          <Text style={styles.label}>{t('loveTasks.assignTo')}<Text style={styles.required}> *</Text></Text>
           <TouchableOpacity 
             style={styles.dropdown}
             onPress={() => setShowUserList(!showUserList)}
@@ -130,7 +131,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
             ) : (
               <>
                 <View style={styles.avatarPlaceholder} />
-                <Text style={styles.dropdownText}>Select recipient</Text>
+                <Text style={styles.dropdownText}>{t('loveTasks.selectMember')}</Text>
               </>
             )}
             <ChevronLeft style={styles.chevronDown} size={20} color="#CCC" />
@@ -164,19 +165,19 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           )}
         </View>
 
-        <Text style={styles.labelOutside}>Task Name<Text style={styles.required}> *</Text></Text>
+        <Text style={styles.labelOutside}>{t('loveTasks.taskTitle')}<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.input}
-          placeholder="E.g., Take morning vitamin"
+          placeholder={t('loveTasks.taskTitlePlaceholder')}
           placeholderTextColor="#AAA"
           value={title}
           onChangeText={setTitle}
         />
 
-        <Text style={styles.labelOutside}>Description<Text style={styles.required}> *</Text></Text>
+        <Text style={styles.labelOutside}>{t('loveTasks.taskDescription')}<Text style={styles.required}> *</Text></Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Details about what need to be done..."
+          placeholder={t('loveTasks.taskDescPlaceholder')}
           placeholderTextColor="#AAA"
           multiline
           numberOfLines={4}
@@ -184,10 +185,10 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           onChangeText={setDescription}
         />
 
-          <Text style={styles.labelOutside}>Love Message (Revealed on completion) <Text style={styles.required}> *</Text></Text>
+          <Text style={styles.labelOutside}>{t('loveTasks.loveMessage')} <Text style={styles.required}> *</Text></Text>
         <TextInput
           style={styles.input}
-          placeholder="A loving message that will appear when task is completed"
+          placeholder={t('loveTasks.loveMessagePlaceholder')}
           placeholderTextColor="#AAA"
           value={loveMessage}
           onChangeText={setLoveMessage}
@@ -203,7 +204,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
           ) : (
             <>
               <Send size={24} color="white" />
-              <Text style={styles.btnText}>Send Love Task</Text>
+              <Text style={styles.btnText}>{t('loveTasks.sendLoveTask')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -221,7 +222,7 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
             <TouchableWithoutFeedback>
               <View style={styles.optionSheet}>
                 <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>Family Options</Text>
+                <Text style={styles.sheetTitle}>{t('settings.familyOptions')}</Text>
 
                 <TouchableOpacity
                   style={styles.optionItem}
@@ -233,16 +234,16 @@ const CreateLoveTaskScreen: React.FC<CreateLoveTaskScreenProps> = ({ navigation,
                   <View style={styles.optionIconContainer}>
                     <Users size={20} color={ACCENT_COLOR} />
                   </View>
-                  <Text style={styles.optionText}>View Member List</Text>
+                  <Text style={styles.optionText}>{t('settings.viewMembers')}</Text>
                   <ChevronRight size={20} color="#CCC" />
                 </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
+                <AppButton title={t('common.logout')} onPress={logout} style={{ backgroundColor: '#D4A056' }} />
 
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setShowOptions(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Close</Text>
+                  <Text style={styles.cancelButtonText}>{t('common.close')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>

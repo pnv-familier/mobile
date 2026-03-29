@@ -15,6 +15,10 @@ export const notificationService = {
     await apiClient.patch('/api/v1/notifications/read-all');
   },
 
+  markAsNotified: async (id: string): Promise<void> => {
+    await apiClient.patch(`/api/v1/notifications/${id}/notified`);
+  },
+
   removePushToken: async (token: string): Promise<void> => {
     await apiClient.delete('/api/v1/notifications/push-token', { data: { token } });
   },
