@@ -23,17 +23,10 @@ class UrgentSuggestionWebSocket {
 
     const wsUrl = this.getWebSocketUrl();
     
-    console.log('[UrgentSuggestion WS] Connecting to:', wsUrl);
-    console.log('[UrgentSuggestion WS] Token (first 50 chars):', token.substring(0, 50));
-    
     try {
-      // Thử với subprotocol nếu backend yêu cầu
       this.ws = new WebSocket(`${wsUrl}?token=${token}`, []);
-      // Hoặc: this.ws = new WebSocket(`${wsUrl}?token=${token}`, ['v1.urgent-suggestions']);
 
       this.ws.onopen = () => {
-        console.log('[UrgentSuggestion WS] Connected');
-        console.log('[UrgentSuggestion WS] ReadyState:', this.ws?.readyState);
         this.reconnectAttempts = 0;
         this.startPingInterval();
       };
@@ -41,16 +34,13 @@ class UrgentSuggestionWebSocket {
       this.ws.onmessage = (event) => {
         try {
           const data = event.data;
-          console.log('[UrgentSuggestion WS] Raw message received:', data);
           
           if (data === 'pong') {
-            console.log('[UrgentSuggestion WS] Pong received');
             this.clearPongTimeout();
             return;
           }
           
           const parsed = JSON.parse(data);
-          console.log('[UrgentSuggestion WS] Message received:', parsed);
           onMessage(parsed);
         } catch (error) {
           console.error('[UrgentSuggestion WS] Parse error:', error);
@@ -63,25 +53,15 @@ class UrgentSuggestionWebSocket {
       };
 
       this.ws.onclose = (event) => {
-        console.log('[UrgentSuggestion WS] Closed:', event.code, event.reason);
-        console.log('[UrgentSuggestion WS] Close details:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-        });
         this.stopPingInterval();
         this.ws = null;
 
-        // Nếu 401 Unauthorized, không reconnect
         if (event.code === 1006 && event.reason?.includes('401')) {
-          console.error('[UrgentSuggestion WS] Token invalid, stop reconnecting');
           this.isIntentionallyClosed = true;
           return;
         }
 
-        // Nếu 1002 Protocol error, log và dừng reconnect
         if (event.code === 1002) {
-          console.error('[UrgentSuggestion WS] Protocol error - Backend issue, stop reconnecting');
           this.isIntentionallyClosed = true;
           return;
         }
@@ -101,12 +81,9 @@ class UrgentSuggestionWebSocket {
     
     this.pingTimer = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        console.log('[UrgentSuggestion WS] Sending ping');
         this.ws.send('ping');
         
-        // Đợi pong trong 10s, nếu không có thì reconnect
         this.pongTimer = setTimeout(() => {
-          console.warn('[UrgentSuggestion WS] Pong timeout, reconnecting...');
           this.ws?.close();
         }, this.pongTimeout);
       }
@@ -131,8 +108,6 @@ class UrgentSuggestionWebSocket {
   private scheduleReconnect() {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * this.reconnectAttempts;
-    
-    console.log(`[UrgentSuggestion WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
     
     this.reconnectTimer = setTimeout(() => {
       if (this.token && this.onMessageCallback) {

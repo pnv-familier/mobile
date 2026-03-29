@@ -6,7 +6,9 @@ export type UrgentSuggestionSubType =
 
 export interface UrgentSuggestion {
   id: string;
+  senderId: string;
   senderName: string;
+  senderPhone?: string;
   emotion: string;
   context: string;
   subType: UrgentSuggestionSubType;

@@ -37,21 +37,6 @@ function AppContent() {
         }
     }
 
-    const handleMessage = async () => {
-        if (currentSuggestion) {
-            await markAsRead(currentSuggestion.id)
-            navigation.navigate('App', { screen: 'MainTabs', params: { screen: 'Chat' } })
-            setCurrentSuggestion(null)
-        }
-    }
-
-    const handleCall = async () => {
-        if (currentSuggestion) {
-            await markAsRead(currentSuggestion.id)
-            setCurrentSuggestion(null)
-        }
-    }
-
     return (
         <>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -71,8 +56,6 @@ function AppContent() {
             <UrgentSuggestionModal
                 visible={!!currentSuggestion}
                 suggestion={currentSuggestion}
-                onMessage={handleMessage}
-                onCall={handleCall}
                 onDismiss={handleUrgentSuggestionDismiss}
             />
         </>

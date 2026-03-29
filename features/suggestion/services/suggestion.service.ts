@@ -68,5 +68,12 @@ export const suggestionService = {
   markAllUrgentAsRead: async (): Promise<void> => {
     await apiClient.patch('/api/v1/suggestions/urgent/read-all');
   },
+
+  getUrgentSuggestionById: async (id: string): Promise<UrgentSuggestion> => {
+    const response = await apiClient.get<{ message: string; data: UrgentSuggestion }>(
+      `/api/v1/suggestions/urgent/${id}`
+    );
+    return response.data.data;
+  },
 };
 

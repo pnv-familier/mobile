@@ -6,28 +6,55 @@ import {
   TouchableOpacity,
   StyleSheet,
   Linking,
+  Alert,
+  Share,
 } from 'react-native';
 import { MessageCircle, Phone, X } from 'lucide-react-native';
 import { UrgentSuggestion, URGENT_SUGGESTION_CONFIG } from '../types/urgent';
+import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 interface UrgentSuggestionModalProps {
   visible: boolean;
   suggestion: UrgentSuggestion | null;
-  onMessage: () => void;
-  onCall: () => void;
   onDismiss: () => void;
 }
 
 export const UrgentSuggestionModal: React.FC<UrgentSuggestionModalProps> = ({
   visible,
   suggestion,
-  onMessage,
-  onCall,
   onDismiss,
 }) => {
+  const navigation = useNavigation<any>();
+  const { t } = useTranslation();
+
   if (!suggestion) return null;
 
   const config = URGENT_SUGGESTION_CONFIG[suggestion.subType];
+
+  const handleMessage = async () => {
+    try {
+      const message = `Message to ${suggestion.senderName}`;
+      await Share.share({ message });
+    } catch (error) {
+      // User cancelled
+    }
+  };
+
+  const handleCall = async () => {
+    const phone = suggestion.senderPhone;
+    
+    if (!phone) {
+      Alert.alert(t('suggestions.noPhoneNumber'), t('suggestions.noPhoneNumberDesc'));
+      return;
+    }
+
+    try {
+      await Linking.openURL(`tel:${phone}`);
+    } catch (error) {
+      Alert.alert(t('suggestions.cannotOpenApp'), t('suggestions.cannotOpenAppDesc'));
+    }
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -37,9 +64,11 @@ export const UrgentSuggestionModal: React.FC<UrgentSuggestionModalProps> = ({
             <X size={20} color="#999" />
           </TouchableOpacity>
 
-          <Text style={styles.icon}>{config.icon}</Text>
-          <Text style={styles.title}>AI nhận thấy {suggestion.senderName}</Text>
-          <Text style={styles.subtitle}>đang {suggestion.emotion}</Text>
+          <View style={[styles.iconCircle, { backgroundColor: config.color + '15' }]}>
+            <Text style={styles.icon}>{config.icon}</Text>
+          </View>
+          <Text style={styles.title}>{t('suggestions.aiDetected')} {suggestion.senderName}</Text>
+          <Text style={styles.subtitle}>{t('suggestions.isFeeling')} {suggestion.emotion}</Text>
 
           {suggestion.context && (
             <View style={styles.contextBox}>
@@ -53,23 +82,23 @@ export const UrgentSuggestionModal: React.FC<UrgentSuggestionModalProps> = ({
 
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.actionBtn, styles.primaryBtn, { backgroundColor: config.color }]}
-              onPress={onMessage}
+              style={[styles.actionBtn, styles.primaryBtn]}
+              onPress={handleMessage}
             >
               <MessageCircle size={18} color="#FFF" />
-              <Text style={styles.primaryBtnText}>Nhắn tin cho {suggestion.senderName}</Text>
+              <Text style={styles.primaryBtnText}>{t('suggestions.messageTo')} {suggestion.senderName}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.actionBtn, styles.secondaryBtn]}
-              onPress={onCall}
+              onPress={handleCall}
             >
-              <Phone size={18} color={config.color} />
-              <Text style={[styles.secondaryBtnText, { color: config.color }]}>Gọi điện</Text>
+              <Phone size={18} color="#D4A056" />
+              <Text style={[styles.secondaryBtnText]}>{t('suggestions.call')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.dismissBtn} onPress={onDismiss}>
-              <Text style={styles.dismissText}>Bỏ qua</Text>
+              <Text style={styles.dismissText}>{t('suggestions.dismiss')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -87,41 +116,53 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modal: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
+    backgroundColor: '#FFF4E6',
+    borderRadius: 24,
     padding: 24,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F5D6B5',
   },
   closeBtn: {
     position: 'absolute',
     top: 12,
     right: 12,
     padding: 8,
+    zIndex: 10,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   icon: {
     fontSize: 48,
-    marginBottom: 12,
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#4A3428',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#8B7355',
     textAlign: 'center',
     marginBottom: 16,
   },
   contextBox: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     width: '100%',
+    borderWidth: 1,
+    borderColor: '#F5D6B5',
   },
   contextText: {
     fontSize: 13,
@@ -131,7 +172,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 14,
-    color: '#666',
+    color: '#8B7355',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -156,13 +197,14 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   secondaryBtn: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+    borderWidth: 2,
+    borderColor: '#D4A056',
   },
   secondaryBtnText: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#D4A056',
   },
   dismissBtn: {
     paddingVertical: 12,

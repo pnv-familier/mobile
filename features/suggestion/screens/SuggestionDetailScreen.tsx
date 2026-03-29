@@ -10,10 +10,11 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { ChevronLeft, Heart, Calendar, Lightbulb } from 'lucide-react-native';
+import { Heart, Calendar, Lightbulb, FileText, Sparkles, Target } from 'lucide-react-native';
 import { useSuggestionDetail } from '../hooks/useSuggestionDetail';
 import { SuggestionType, EventPayload, TaskPayload } from '../types';
-import { showBanner } from '../../../utils/banner';
+import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '../../../utils/dateFormat';
 
 const BACKGROUND_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D69E66';
@@ -30,6 +31,7 @@ interface SuggestionDetailScreenProps {
 }
 
 const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigation, route }) => {
+  const { t, i18n } = useTranslation();
   const { id } = route.params;
   const { suggestion, loading, error, refetch, acceptSuggestion } = useSuggestionDetail(id);
 
@@ -47,9 +49,9 @@ const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigat
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error || 'Suggestion not found'}</Text>
+          <Text style={styles.errorText}>{error || t('suggestions.suggestionNotFound')}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={refetch}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -97,7 +99,7 @@ const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigat
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-          <Text style={styles.headerTitle}>Suggestion Detail</Text>
+          <Text style={styles.headerTitle}>{t('suggestions.suggestionDetail')}</Text>
         </View>
       </View>
 
@@ -113,37 +115,47 @@ const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigat
           </View>
           <View style={[styles.statusBadge, isDone ? styles.statusDone : styles.statusPending]}>
             <Text style={[styles.statusText, isDone ? styles.statusTextDone : styles.statusTextPending]}>
-              {isDone ? 'Done' : 'Pending'}
+              {isDone ? t('suggestions.done') : t('suggestions.pending')}
             </Text>
           </View>
         </View>
 
         {/* Suggestion Content - AC016.12 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📝 Suggestion</Text>
+          <View style={styles.sectionTitleRow}>
+            <FileText size={18} color={ACCENT_COLOR} />
+            <Text style={styles.sectionTitle}>{t('suggestions.suggestionContent')}</Text>
+          </View>
           <Text style={styles.sectionBody}>{suggestion.description}</Text>
         </View>
 
         {/* Why This Suggestion - AC016.13 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Why This Suggestion</Text>
+          <View style={styles.sectionTitleRow}>
+            <Sparkles size={18} color={ACCENT_COLOR} />
+            <Text style={styles.sectionTitle}>{t('suggestions.whyThisSuggestion')}</Text>
+          </View>
           <Text style={styles.sectionBody}>{suggestion.triggerContext}</Text>
+          <Text style={styles.timestamp}>{formatRelativeTime(suggestion.createdAt, t)}</Text>
         </View>
 
         {/* Choose an action - AC016.14, 15, 16 */}
         {!isDone && suggestion.type !== 'OFFLINE' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎯 Choose an action</Text>
+            <View style={styles.sectionTitleRow}>
+              <Target size={18} color={ACCENT_COLOR} />
+              <Text style={styles.sectionTitle}>{t('suggestions.chooseAction')}</Text>
+            </View>
             {suggestion.type === 'TASK' && (
               <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#E91E63' }]} onPress={handleCreateLoveTask}>
                 <Heart size={20} color="#FFF" />
-                <Text style={styles.actionBtnText}>Create Love Task</Text>
+                <Text style={styles.actionBtnText}>{t('suggestions.createLoveTask')}</Text>
               </TouchableOpacity>
             )}
             {suggestion.type === 'EVENT' && (
               <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#2196F3' }]} onPress={handleAddToSchedule}>
                 <Calendar size={20} color="#FFF" />
-                <Text style={styles.actionBtnText}>Add to Schedule</Text>
+                <Text style={styles.actionBtnText}>{t('suggestions.addToSchedule')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -202,8 +214,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F5D6B5',
   },
-  sectionTitle: { fontSize: 15, fontWeight: 'bold', color: ACCENT_COLOR, marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: 'bold', color: ACCENT_COLOR },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   sectionBody: { fontSize: 14, color: '#555', lineHeight: 22 },
+  timestamp: { fontSize: 12, color: '#999', marginTop: 8, fontStyle: 'italic' },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
