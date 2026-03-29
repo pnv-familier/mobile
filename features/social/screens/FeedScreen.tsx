@@ -557,14 +557,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: 15,
     paddingHorizontal: 20,
-    paddingVertical: 30,
+    paddingVertical: 20,
     borderRadius: 15,
     marginTop: 5,
   },
   noPostImage: {
-    width: 250,
-    height: 250,
-    marginBottom: 20,
+    width: 180,
+    height: 180,
+    marginBottom: 15,
   },
   noPostTitle: {
     fontSize: 20,
