@@ -69,10 +69,56 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
     }
   }, [openEventId, events]);
 
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'];
-  
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const getMonthName = (monthIndex: number) => {
+    const months = [
+      t('time.january'), t('time.february'), t('time.march'), t('time.april'),
+      t('time.may'), t('time.june'), t('time.july'), t('time.august'),
+      t('time.september'), t('time.october'), t('time.november'), t('time.december')
+    ];
+    return months[monthIndex];
+  };
+
+  const getDayName = (dayIndex: number) => {
+    const days = [
+      t('time.monday'), t('time.tuesday'), t('time.wednesday'), t('time.thursday'),
+      t('time.friday'), t('time.saturday'), t('time.sunday')
+    ];
+    return days[dayIndex];
+  };
+
+  const getDayShortName = (dayIndex: number) => {
+    const shortDays = [
+      t('time.mon'), t('time.tue'), t('time.wed'), t('time.thu'),
+      t('time.fri'), t('time.sat'), t('time.sun')
+    ];
+    return shortDays[dayIndex];
+  };
+
+  const formatDateRange = (startDate: Date, endDate: Date) => {
+    const startMonth = getMonthName(startDate.getMonth());
+    const endMonth = getMonthName(endDate.getMonth());
+    const startDay = startDate.getDate();
+    const endDay = endDate.getDate();
+    
+    // Format: "30 Tháng ba - 5 Tháng tư" for Vietnamese
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${startDay} - ${endDay} ${startMonth}`;
+    }
+    return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+  };
+
+  const formatEventDate = (date: Date) => {
+    const dayName = getDayName(date.getDay() === 0 ? 6 : date.getDay() - 1);
+    const monthName = getMonthName(date.getMonth());
+    const day = date.getDate();
+    const year = date.getFullYear();
+    
+    // Format: "Thứ hai, 15 Tháng một, 2024" for Vietnamese
+    return `${dayName}, ${day} ${monthName}, ${year}`;
+  };
+
+  const monthNames = Array.from({ length: 12 }, (_, i) => getMonthName(i));
+  const days = Array.from({ length: 7 }, (_, i) => getDayShortName(i));
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate();
@@ -299,7 +345,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                 </TouchableOpacity>
                 <View style={styles.monthSelector}>
                   <Text style={styles.monthText}>
-                    {monthNames[weekDates[0].getMonth()]} {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]} {weekDates[6].getDate()}
+                    {formatDateRange(weekDates[0], weekDates[6])}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={handleNextWeek}>
@@ -316,7 +362,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                     <View key={idx} style={styles.weekDayRow}>
                       <View style={styles.weekDayHeader}>
                         <View style={styles.weekDayInfo}>
-                          <Text style={styles.weekDayName}>{days[idx]}</Text>
+                          <Text style={styles.weekDayName}>{getDayShortName(idx)}</Text>
                           <View style={[styles.weekDateCircle, isToday && styles.weekDateCircleToday]}>
                             <Text style={[styles.weekDateNumber, isToday && styles.weekDateNumberToday]}>
                               {date.getDate()}
@@ -408,12 +454,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                     <View style={styles.eventDetailInfo}>
                       <Text style={styles.eventDetailLabel}>{t('schedule.date')}</Text>
                       <Text style={styles.eventDetailValue}>
-                        {selectedEvent && parseEventDate(selectedEvent.startTime).toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
+                        {selectedEvent && formatEventDate(parseEventDate(selectedEvent.startTime))}
                       </Text>
                     </View>
                   </View>
