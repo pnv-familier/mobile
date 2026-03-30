@@ -89,7 +89,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
         showsVerticalScrollIndicator={true}
       >
         {comments.map((comment) => (
-          <View key={comment.comment_id} style={styles.commentItem}>
+          <View testID='comment-item' accessibilityLabel='comment-item' key={comment.comment_id} style={styles.commentItem}>
             <Image
               source={{ uri: comment.author_avatar || getDefaultAvatar(comment.author_name) }}
               style={styles.commentAvatar}

@@ -42,7 +42,7 @@ const LoginScreen = () => {
                 />
             </View>
 
-            <AppButton title={t('auth.login')} style={styles.loginBtn} onPress={submit} loading={loading} />
+            <AppButton testID="login-btn" accessibilityLabel="login-btn" title={t('auth.login')} style={styles.loginBtn} onPress={submit} loading={loading} />
 
             <View style={styles.dividerWrapper}>
                 <View style={styles.divider} />

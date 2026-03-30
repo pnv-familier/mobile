@@ -13,6 +13,8 @@ type Props = {
     disabled?: boolean
     loading?: boolean
     style?: ViewStyle
+    testID?: string
+    accessibilityLabel?: string
 }
 
 export default function AppButton({
@@ -21,9 +23,13 @@ export default function AppButton({
     disabled,
     loading,
     style,
+    testID,
+    accessibilityLabel,
 }: Props) {
     return (
         <TouchableOpacity
+            testID={testID}
+            accessibilityLabel={accessibilityLabel}
             style={[
                 styles.button,
                 disabled && styles.disabled,
