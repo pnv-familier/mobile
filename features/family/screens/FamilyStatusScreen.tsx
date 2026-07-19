@@ -11,12 +11,13 @@ import {
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FamilyParamsList } from '../types';
-
 import { useLogout } from '../../auth/hooks/useLogout';
+import { useTranslation } from 'react-i18next';
 
 type Props = NativeStackScreenProps<FamilyParamsList, 'FamilyStatus'>;
 
 export default function FamilyStatusScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { logout } = useLogout();
   return (
     <SafeAreaView style={styles.container}>
@@ -45,9 +46,9 @@ export default function FamilyStatusScreen({ navigation }: Props) {
           resizeMode="contain"
         />
 
-        <Text style={styles.title}>Family Status</Text>
+        <Text style={styles.title}>{t('family.familyStatus')}</Text>
         <Text style={styles.subtitle}>
-          Let us know so we can connect{"\n"}you with your family!
+          {t('family.chooseOption')}
         </Text>
 
         <TouchableOpacity 
@@ -58,8 +59,8 @@ export default function FamilyStatusScreen({ navigation }: Props) {
             <Ionicons name="people-outline" size={32} color="#D48141" />
           </View>
           <View style={styles.cardTextContainer}>
-            <Text style={styles.cardTitle}>You already have a family group</Text>
-            <Text style={styles.cardDesc}>Join an existing family group.</Text>
+            <Text style={styles.cardTitle}>{t('family.joinFamily')}</Text>
+            <Text style={styles.cardDesc}>{t('family.joinFamilyDesc')}</Text>
           </View>
         </TouchableOpacity>
 
@@ -71,8 +72,8 @@ export default function FamilyStatusScreen({ navigation }: Props) {
             <MaterialIcons name="person-add-alt" size={32} color="#D48141" />
           </View>
           <View style={styles.cardTextContainer}>
-            <Text style={styles.cardTitle}>No family group yet</Text>
-            <Text style={styles.cardDesc}>Create a new family group</Text>
+            <Text style={styles.cardTitle}>{t('family.createFamily')}</Text>
+            <Text style={styles.cardDesc}>{t('family.createFamilyDesc')}</Text>
           </View>
         </TouchableOpacity>
       </ScrollView>

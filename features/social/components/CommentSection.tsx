@@ -15,6 +15,7 @@ import { useComments } from '../hooks/useComments';
 import { getDefaultAvatar } from '../utils/avatar';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { formatTimestamp } from '../../../utils/formatTimestamp';
+import { useTranslation } from 'react-i18next';
 
 interface CommentSectionProps {
   postId: number;
@@ -27,6 +28,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   postId,
   onCommentAdded,
 }) => {
+  const { t } = useTranslation();
   const [commentText, setCommentText] = useState('');
   const [posting, setPosting] = useState(false);
   const { comments, addComment, totalComments } = useComments(postId);
@@ -41,7 +43,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       setCommentText('');
       onCommentAdded?.();
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to post comment');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('social.failedToCreatePost'));
     } finally {
       setPosting(false);
     }
@@ -56,7 +58,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
         />
         <TextInput
           style={styles.input}
-          placeholder="Write a comment..."
+          placeholder={t('social.writeComment')}
           placeholderTextColor="#999"
           value={commentText}
           onChangeText={setCommentText}
@@ -87,7 +89,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
         showsVerticalScrollIndicator={true}
       >
         {comments.map((comment) => (
-          <View key={comment.comment_id} style={styles.commentItem}>
+          <View testID='comment-item' accessibilityLabel='comment-item' key={comment.comment_id} style={styles.commentItem}>
             <Image
               source={{ uri: comment.author_avatar || getDefaultAvatar(comment.author_name) }}
               style={styles.commentAvatar}

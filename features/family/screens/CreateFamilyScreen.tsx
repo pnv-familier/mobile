@@ -5,8 +5,10 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCreateFamily } from '../hooks/useCreateFamily';
+import { useTranslation } from 'react-i18next';
 
 export default function CreateFamilyScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const {
     familyName,
     setFamilyName,
@@ -24,7 +26,7 @@ export default function CreateFamilyScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="#D48141" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create a family</Text>
+        <Text style={styles.headerTitle}>{t('family.createFamily')}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -40,14 +42,14 @@ export default function CreateFamilyScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.mainTitle}>Name the family</Text>
-        <Text style={styles.instructionText}>Choose a special name for your family</Text>
+        <Text style={styles.mainTitle}>{t('family.familyName')}</Text>
+        <Text style={styles.instructionText}>{t('family.enterFamilyName')}</Text>
 
         <View style={[styles.inputContainer, validationError ? styles.inputErrorBorder : null]}>
           <MaterialCommunityIcons name="home-outline" size={24} color="#D48141" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Example: Pink Family"
+            placeholder={t('family.enterFamilyName')}
             placeholderTextColor="#E0C3A5"
             value={familyName}
             onChangeText={setFamilyName}
@@ -79,7 +81,7 @@ export default function CreateFamilyScreen({ navigation }: any) {
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.continueText}>Continue</Text>
+            <Text style={styles.continueText}>{t('common.next')}</Text>
           )}
         </TouchableOpacity>
       </View>

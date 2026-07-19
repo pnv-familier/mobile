@@ -14,6 +14,8 @@ import { useNotifications } from '../hooks/useNotifications';
 import { Notification, NotificationTab, NotificationType } from '../types';
 import { useNotificationStore } from '../store/notification.store';
 import { useNavigation } from '@react-navigation/native';
+import { useUrgentSuggestionStore } from '../../suggestion/store/urgentSuggestion.store';
+import { suggestionService } from '../../suggestion/services/suggestion.service';
 
 const ACCENT_COLOR = '#D4A056';
 
@@ -31,6 +33,7 @@ const TYPE_ICON: Record<NotificationType, { icon: any; color: string }> = {
   LOVE_TASK: { icon: CheckCircle2, color: '#4CAF50' },
   SCHEDULE: { icon: Calendar, color: '#FF9800' },
   AI: { icon: Sparkles, color: ACCENT_COLOR },
+  URGENT_SUGGESTION: { icon: Sparkles, color: '#FF5722' },
 };
 
 interface NotificationPopupProps {
@@ -67,6 +70,7 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ visible, o
   const unreadCount = useNotificationStore(s => s.unreadCount);
   const setOpenPostId = useNotificationStore(s => s.setOpenPostId);
   const setOpenEventId = useNotificationStore(s => s.setOpenEventId);
+  const setCurrentSuggestion = useUrgentSuggestionStore(s => s.setCurrentSuggestion);
 
   useEffect(() => {
     if (visible) fetchNotifications();
@@ -95,6 +99,16 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ visible, o
       case 'SCHEDULE':
         setOpenEventId(notification.referenceId || null);
         navigation.navigate('Schedule');
+        break;
+      case 'URGENT_SUGGESTION':
+        if (notification.referenceId) {
+          try {
+            const urgentSuggestion = await suggestionService.getUrgentSuggestionById(notification.referenceId);
+            setCurrentSuggestion(urgentSuggestion);
+          } catch (error) {
+            console.error('Failed to fetch urgent suggestion:', error);
+          }
+        }
         break;
       case 'AI':
         if (notification.referenceId) {

@@ -12,12 +12,14 @@ import { uploadImages, uploadVideo } from '../services/post.service';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNotificationStore } from '../../notification/store/notification.store';
 import { AppHeader } from '../../../components/AppHeader';
+import { useTranslation } from 'react-i18next';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
 
 
 export default function FeedScreen({ navigation, route }: { navigation: any; route: any }) {
+  const { t } = useTranslation();
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [openCommentPostId, setOpenCommentPostId] = useState<number | null>(null);
   const scrollViewRef = useRef<any>(null);
@@ -64,7 +66,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
     try {
       await updatePostReaction(postId);
     } catch (err) {
-      Alert.alert('Error', 'Failed to update reaction');
+      Alert.alert(t('common.error'), t('social.failedToUpload'));
     } finally {
       setReactionLoading(null);
     }
@@ -74,7 +76,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow access to photos');
+        Alert.alert(t('common.error'), t('social.failedToUpload'));
         return;
       }
 
@@ -96,7 +98,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         setCreateError(null);
       }
     } catch (error) {
-      setCreateError('Failed to pick image');
+      setCreateError(t('social.failedToUpload'));
     }
   };
 
@@ -104,7 +106,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow access to photos');
+        Alert.alert(t('common.error'), t('social.failedToUpload'));
         return;
       }
 
@@ -120,7 +122,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         setCreateError(null);
       }
     } catch (error) {
-      setCreateError('Failed to pick video');
+      setCreateError(t('social.failedToUpload'));
     }
   };
 
@@ -136,12 +138,12 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
   const handleCloseModal = () => {
     if (postContent.trim() || selectedMedia.length > 0) {
       Alert.alert(
-        'Discard post?',
-        'Are you sure you want to discard this post?',
+        t('social.discardPost'),
+        t('social.discardPostConfirm'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           { 
-            text: 'Discard', 
+            text: t('social.discard'), 
             style: 'destructive',
             onPress: () => {
               setPostContent('');
@@ -213,9 +215,9 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
       setSelectedMedia([]);
       setMediaType(null);
     } catch (err: any) {
-      const errorMsg = err?.message || err?.response?.data?.message || 'Failed to create post. Please try again.';
+      const errorMsg = err?.message || err?.response?.data?.message || t('social.failedToCreatePost');
       setIsPosting(false);
-      Alert.alert('Error', errorMsg);
+      Alert.alert(t('common.error'), errorMsg);
       return;
     } finally {
       setIsPosting(false);
@@ -225,7 +227,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
   return (
     <SafeAreaView style={styles.container}>
-      <AppHeader title="Social Media" navigation={navigation} />
+      <AppHeader title={t('social.socialMedia')} navigation={navigation} />
 
 
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -234,14 +236,14 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
             <Home size={28} color="#D4A056" />
           </View>
           <View style={{ flex: 1, marginLeft: 15 }}>
-            <Text style={styles.familyTitle}>My family</Text>
-            <Text style={styles.familySub}>{members.length} {members.length === 1 ? 'member' : 'members'}</Text>
+            <Text style={styles.familyTitle}>{t('family.myFamily')}</Text>
+            <Text style={styles.familySub}>{members.length} {members.length === 1 ? t('family.member') : t('family.members')}</Text>
           </View>
 
           <TouchableOpacity
             onPress={() => navigation.navigate('ViewListFamily')}
           >
-            <Text style={styles.xemText}>View</Text>
+            <Text style={styles.xemText}>{t('family.view')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -252,7 +254,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
               onPress={() => setShowCreatePost(true)}
             >
               <View style={styles.fabContent}>
-                <Text style={styles.fabText}>Create post</Text>
+                <Text style={styles.fabText}>{t('social.createPost')}</Text>
                 <View style={styles.fabIconCircle}>
                   <Plus size={20} color="white" />
                 </View>
@@ -264,7 +266,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         {isPosting && (
           <View style={styles.postingIndicator}>
             <ActivityIndicator size="small" color={ACCENT_COLOR} />
-            <Text style={styles.postingText}>Posting...</Text>
+            <Text style={styles.postingText}>{t('social.posting')}</Text>
           </View>
         )}
 
@@ -280,7 +282,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
               style={styles.retryButton}
               onPress={refetch}
             >
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : posts.length === 0 ? (
@@ -290,14 +292,14 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
               style={styles.noPostImage}
               resizeMode="contain"
             />
-            <Text style={styles.noPostTitle}>No posts yet</Text>
+            <Text style={styles.noPostTitle}>{t('social.noPostsYet')}</Text>
             <Text style={styles.noPostSubtitle}>
-              Be the first to share a memorable moment with your family! Every post is a memory preserved forever.
+              {t('social.noPostsDesc')}
             </Text>
            
             <TouchableOpacity style={styles.createPostButton} onPress={() => setShowCreatePost(true)}>
               <Plus size={20} color="white" />
-              <Text style={styles.createPostButtonText}>Create first Post</Text>
+              <Text style={styles.createPostButtonText}>{t('social.createFirstPost')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -338,7 +340,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Create a post</Text>
+                  <Text style={styles.modalTitle}>{t('social.createPost')}</Text>
                   <TouchableOpacity onPress={handleCloseModal}>
                     <X size={24} color="#333" />
                   </TouchableOpacity>
@@ -358,7 +360,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
                 <TextInput
                   style={styles.modalInput}
-                  placeholder="What's on your mind?"
+                  placeholder={t('social.whatsOnYourMind')}
                   placeholderTextColor="#999"
                   multiline
                   value={postContent}
@@ -402,11 +404,11 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
                 <View style={styles.modalFooter}>
                   <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
                     <ImageIcon size={22} color={ACCENT_COLOR} />
-                    <Text style={styles.footerActionText}>Photo</Text>
+                    <Text style={styles.footerActionText}>{t('social.photo')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
                     <VideoIcon size={22} color={ACCENT_COLOR} />
-                    <Text style={styles.footerActionText}>Video</Text>
+                    <Text style={styles.footerActionText}>{t('social.video')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[
@@ -416,7 +418,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
                     onPress={handleCreatePost}
                     disabled={!postContent.trim() && selectedMedia.length === 0}
                   >
-                    <Text style={styles.postSubmitButtonText}>Post</Text>
+                    <Text style={styles.postSubmitButtonText}>{t('social.post')}</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>

@@ -13,8 +13,10 @@ import AppButton from "../../../components/AppButton"
 import { GENDER_LIST } from "../constant/genderList"
 import { HOBBY_LIST } from "../constant/hobbyList"
 import { useSetupProfile } from "../hook/setupProfile"
+import { useTranslation } from "react-i18next"
 
 const SetupProfileScreen = () => {
+    const { t } = useTranslation();
     const {
         dateOfBirth,
         setDateOfBirth,
@@ -45,10 +47,10 @@ const SetupProfileScreen = () => {
                 <View style={styles.pickerContainer}>
                     <View style={styles.pickerHeader}>
                         <TouchableOpacity onPress={onClose}>
-                            <AppText style={styles.pickerCancel}>Cancel</AppText>
+                            <AppText style={styles.pickerCancel}>{t('common.cancel')}</AppText>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={onClose}>
-                            <AppText style={styles.pickerDone}>Done</AppText>
+                            <AppText style={styles.pickerDone}>{t('common.done')}</AppText>
                         </TouchableOpacity>
                     </View>
                     <ScrollView style={styles.pickerScroll}>
@@ -82,15 +84,15 @@ const SetupProfileScreen = () => {
         <AppScreen style={styles.container}>
             <View style={styles.header}>
                 <Feather name="users" size={32} color="#E39A5A" />
-                <AppText style={styles.headerTitle}>Let's personalize your family experience!</AppText>
+                <AppText style={styles.headerTitle}>{t('profile.setupSubtitle')}</AppText>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.stepContainer}>
-                    <AppText style={styles.stepTitle}>Basic Information</AppText>
+                    <AppText style={styles.stepTitle}>{t('profile.setupProfile')}</AppText>
                     
                     <View style={styles.inputCard}>
-                        <AppText style={styles.inputLabel}>Date of Birth</AppText>
+                        <AppText style={styles.inputLabel}>{t('profile.dateOfBirth')}</AppText>
                         <AppText style={styles.inputSubtext}>Used for family calendar and birthday reminders</AppText>
                         <View style={styles.datePickerContainer}>
                             <TouchableOpacity style={styles.dateSelector} onPress={() => setShowDayPicker(true)}>
@@ -109,7 +111,7 @@ const SetupProfileScreen = () => {
                     </View>
 
                     <View style={styles.inputCard}>
-                        <AppText style={styles.inputLabel}>Gender</AppText>
+                        <AppText style={styles.inputLabel}>{t('profile.gender')}</AppText>
                         <AppText style={styles.inputSubtext}>Used for correct pronoun usage by AI</AppText>
                         <View style={styles.genderContainer}>
                             {GENDER_LIST.map((item) => (
@@ -138,8 +140,8 @@ const SetupProfileScreen = () => {
                     </View>
 
                     <View style={styles.inputCard}>
-                        <AppText style={styles.inputLabel}>Your Preferences</AppText>
-                        <AppText style={styles.inputSubtext}>Choose up to 5 hobbies to help your family understand you better</AppText>
+                        <AppText style={styles.inputLabel}>{t('profile.hobbies')}</AppText>
+                        <AppText style={styles.inputSubtext}>{t('profile.selectHobbies')}</AppText>
                         <View style={styles.hobbiesContainer}>
                             {HOBBY_LIST.map((hobby, index) => {
                                 const isActive = selectedHobbies.includes(hobby);
@@ -175,7 +177,7 @@ const SetupProfileScreen = () => {
                     </View>
 
                     <AppButton
-                        title={loading ? "Saving..." : "Save Profile"}
+                        title={loading ? t('common.loading') : t('common.save')}
                         style={styles.saveButton}
                         onPress={onSaveProfile}
                         disabled={!gender || loading}

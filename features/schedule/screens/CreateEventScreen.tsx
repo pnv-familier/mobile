@@ -18,6 +18,7 @@ import { getFamilyMembers } from '../../family/service/family.service';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { showBanner } from '../../../utils/banner';
 import { AppHeader } from '../../../components/AppHeader';
+import { useTranslation } from 'react-i18next';
 
 const BACKGROUND_COLOR = '#FFF4E6';
 const ACCENT_COLOR = '#D4A056';
@@ -36,6 +37,7 @@ interface CreateEventScreenProps {
 }
 
 const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route }) => {
+  const { t, i18n } = useTranslation();
   const prefill = route?.params;
   const currentUser = useAuthStore((state) => state.data);
   const [eventName, setEventName] = useState(prefill?.prefillTitle || '');
@@ -47,16 +49,32 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<FamilyMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [startTimeText, setStartTimeText] = useState(prefill?.prefillStartTime || '10:30');
-  const [endTimeText, setEndTimeText] = useState(prefill?.prefillEndTime || '1:30');
-  const [startAmPm, setStartAmPm] = useState('AM');
-  const [endAmPm, setEndAmPm] = useState('PM');
+  
+  // Parse prefilled time to extract time and AM/PM
+  const parseTimeString = (timeStr: string) => {
+    if (!timeStr) return { time: '', ampm: 'AM' };
+    const match = timeStr.match(/^(\d{1,2}:\d{2})\s*(AM|PM)?$/i);
+    if (match) {
+      return { time: match[1], ampm: match[2]?.toUpperCase() || 'AM' };
+    }
+    return { time: timeStr, ampm: 'AM' };
+  };
+  
+  const startParsed = parseTimeString(prefill?.prefillStartTime);
+  const endParsed = parseTimeString(prefill?.prefillEndTime);
+  
+  const [startTimeText, setStartTimeText] = useState(startParsed.time || '10:30');
+  const [endTimeText, setEndTimeText] = useState(endParsed.time || '1:30');
+  const [startAmPm, setStartAmPm] = useState(startParsed.ampm);
+  const [endAmPm, setEndAmPm] = useState(endParsed.ampm);
   const [showInvalidCharWarning, setShowInvalidCharWarning] = useState(false);
 
   const [tempDate, setTempDate] = useState({ day: 1, month: 1, year: 2024 });
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = i18n.language === 'vi' 
+    ? ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12']
+    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
 
   useEffect(() => {
@@ -67,7 +85,6 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     try {
       setLoadingMembers(true);
       const response = await getFamilyMembers();
-      console.log('Family members response:', response);
 
       let members = [];
       if (response?.members && Array.isArray(response.members)) {
@@ -79,9 +96,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       const filteredMembers = members.filter((member: any) => member.userId !== currentUser?.id);
       setFamilyMembers(filteredMembers);
     } catch (error: any) {
-      console.error('Failed to load family members:', error);
-      console.error('Error details:', error?.response?.data || error?.message);
-      Alert.alert('Error', 'Failed to load family members. Please try again.');
+      Alert.alert(t('common.error'), t('schedule.loadMembersFailed'));
     } finally {
       setLoadingMembers(false);
     }
@@ -133,7 +148,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
 
   const validateForm = () => {
     if (!eventName.trim()) {
-      Alert.alert('Validation Error', 'Event Title is required');
+      Alert.alert(t('common.error'), t('schedule.eventTitleRequired'));
       return false;
     }
 
@@ -143,12 +158,12 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     const trimmedEndTime = endTimeText.trim();
 
     if (!timeRegex.test(trimmedStartTime)) {
-      Alert.alert('Validation Error', `Start Time format is invalid. Please use format like 10:30\nYou entered: "${trimmedStartTime}"`);
+      Alert.alert(t('common.error'), `${t('schedule.startTimeRequired')}\n${t('schedule.timeFormatExample')}: "${trimmedStartTime}"`);
       return false;
     }
 
     if (!timeRegex.test(trimmedEndTime)) {
-      Alert.alert('Validation Error', `End Time format is invalid. Please use format like 1:30\nYou entered: "${trimmedEndTime}"`);
+      Alert.alert(t('common.error'), `${t('schedule.endTimeRequired')}\n${t('schedule.timeFormatExample')}: "${trimmedEndTime}"`);
       return false;
     }
 
@@ -173,7 +188,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     const endTotalMinutes = endHour24 * 60 + endMinutes;
 
     if (endTotalMinutes <= startTotalMinutes) {
-      Alert.alert('Validation Error', `End Time must be later than Start Time\nStart: ${trimmedStartTime} ${startAmPm} (${startHour24}:${startMinutes})\nEnd: ${trimmedEndTime} ${endAmPm} (${endHour24}:${endMinutes})`);
+      Alert.alert(t('common.error'), `${t('schedule.endTimeAfterStart')}\n${t('schedule.startTime')}: ${trimmedStartTime} ${startAmPm}\n${t('schedule.endTime')}: ${trimmedEndTime} ${endAmPm}`);
       return false;
     }
 
@@ -226,32 +241,32 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
         await prefill.onSuccess();
       }
 
-      Alert.alert('Success', 'Event created successfully', [
+      Alert.alert(t('common.success'), t('schedule.createEventSuccess'), [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to create event');
+      Alert.alert(t('common.error'), error?.message || t('schedule.createEventFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    Alert.alert('Cancel', 'Are you sure you want to cancel?', [
-      { text: 'No', style: 'cancel' },
-      { text: 'Yes', onPress: () => navigation.goBack() }
+    Alert.alert(t('common.cancel'), t('schedule.cancelConfirm'), [
+      { text: t('common.no'), style: 'cancel' },
+      { text: t('common.yes'), onPress: () => navigation.goBack() }
     ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <AppHeader title="Create Event" navigation={navigation} />
+      <AppHeader title={t('schedule.createEvent')} navigation={navigation} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.label}>Event Title</Text>
+        <Text style={styles.label}>{t('schedule.eventTitle')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Event name*"
+          placeholder={t('schedule.eventTitlePlaceholder')}
           value={eventName}
           onChangeText={(text) => {
             const hasInvalidChars = /[0-9@#$%^&*()_+=\[\]{}|<>?/\\"';:,~`!]/.test(text);
@@ -265,10 +280,10 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
           editable={!loading}
         />
         {showInvalidCharWarning && (
-          <Text style={styles.warningText}>Numbers and special characters are not allowed</Text>
+          <Text style={styles.warningText}>{t('schedule.invalidCharsWarning')}</Text>
         )}
 
-        <Text style={styles.label}>Date</Text>
+        <Text style={styles.label}>{t('schedule.date')}</Text>
         <TouchableOpacity
           style={styles.inputWithIcon}
           onPress={openDatePicker}
@@ -280,7 +295,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
 
         <View style={styles.row}>
           <View style={{ flex: 1, marginRight: 5 }}>
-            <Text style={styles.label}>Start time</Text>
+            <Text style={styles.label}>{t('schedule.startTime')}</Text>
             <View style={styles.timeInputRow}>
               <TextInput
                 style={styles.timeInput}
@@ -300,7 +315,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             </View>
           </View>
           <View style={{ flex: 1, marginLeft: 5 }}>
-            <Text style={styles.label}>End time</Text>
+            <Text style={styles.label}>{t('schedule.endTime')}</Text>
             <View style={styles.timeInputRow}>
               <TextInput
                 style={styles.timeInput}
@@ -321,10 +336,10 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
           </View>
         </View>
 
-        <Text style={styles.label}>Note</Text>
+        <Text style={styles.label}>{t('schedule.note')}</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Type the note here..."
+          placeholder={t('schedule.notePlaceholder')}
           multiline
           numberOfLines={3}
           value={note}
@@ -332,7 +347,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
           editable={!loading}
         />
 
-        <Text style={styles.label}>Participants</Text>
+        <Text style={styles.label}>{t('schedule.participants')}</Text>
         <TouchableOpacity
           style={styles.dropdown}
           onPress={() => setShowParticipantPicker(true)}
@@ -343,8 +358,8 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
           </View>
           <Text style={{ color: '#888', flex: 1, marginLeft: 10 }}>
             {selectedParticipants.length > 0
-              ? `${selectedParticipants.length} selected`
-              : 'Add Recipient'}
+              ? `${selectedParticipants.length} ${t('schedule.selected')}`
+              : t('schedule.addRecipient')}
           </Text>
           <Ionicons name="chevron-down" size={20} color="#888" />
         </TouchableOpacity>
@@ -372,7 +387,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             onPress={handleCancel}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>Cancel</Text>
+            <Text style={styles.buttonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.saveBtn, loading && styles.buttonDisabled]}
@@ -382,7 +397,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             {loading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text style={styles.buttonText}>Save</Text>
+              <Text style={styles.buttonText}>{t('common.save')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -397,7 +412,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
         <View style={styles.modalOverlay}>
           <View style={styles.participantModal}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Participants</Text>
+              <Text style={styles.modalTitle}>{t('schedule.selectParticipants')}</Text>
               <TouchableOpacity onPress={() => setShowParticipantPicker(false)}>
                 <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
@@ -434,14 +449,14 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
                 })}
               </ScrollView>
             ) : (
-              <Text style={styles.emptyText}>No family members found</Text>
+              <Text style={styles.emptyText}>{t('schedule.noMembersFound')}</Text>
             )}
 
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={() => setShowParticipantPicker(false)}
             >
-              <Text style={styles.confirmButtonText}>Done</Text>
+              <Text style={styles.confirmButtonText}>{t('common.done')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -455,7 +470,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       >
         <View style={styles.modalOverlay}>
           <View style={styles.pickerModal}>
-            <Text style={styles.pickerTitle}>Select Date</Text>
+            <Text style={styles.pickerTitle}>{t('schedule.selectDate')}</Text>
             <View style={styles.pickerContainer}>
               <ScrollView style={styles.pickerColumn} showsVerticalScrollIndicator={false}>
                 {days.map(day => (
@@ -493,10 +508,10 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             </View>
             <View style={styles.pickerButtons}>
               <TouchableOpacity style={styles.pickerButton} onPress={() => setShowDatePicker(false)}>
-                <Text style={styles.pickerButtonText}>Cancel</Text>
+                <Text style={styles.pickerButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.pickerButton, styles.pickerButtonConfirm]} onPress={confirmDatePicker}>
-                <Text style={[styles.pickerButtonText, styles.pickerButtonTextConfirm]}>Confirm</Text>
+                <Text style={[styles.pickerButtonText, styles.pickerButtonTextConfirm]}>{t('common.confirm')}</Text>
               </TouchableOpacity>
             </View>
           </View>

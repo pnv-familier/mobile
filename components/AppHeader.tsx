@@ -7,12 +7,14 @@ import {
   Image,
   Modal,
   TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
-import { User, Menu, Users, ChevronRight } from 'lucide-react-native';
+import { Menu, Users, ChevronRight, Globe, LogOut } from 'lucide-react-native';
 import { NotificationBell } from '../features/notification/components/NotificationBell';
 import { NotificationPopup } from '../features/notification/components/NotificationPopup';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage } from '../i18n';
 import { useLogout } from '../features/auth/hooks/useLogout';
-import AppButton from './AppButton';
 
 const ACCENT_COLOR = '#D4A056';
 
@@ -31,9 +33,35 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   showProfile = true,
   showMenu = true,
 }) => {
+  const { t, i18n } = useTranslation();
+  const { logout } = useLogout();
   const [showOptions, setShowOptions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { logout } = useLogout();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const currentLanguage = i18n.language;
+
+  const handleLogout = () => {
+    Alert.alert(
+      t('common.confirm'),
+      t('settings.logoutConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.logout'),
+          style: 'destructive',
+          onPress: () => {
+            logout();
+            setShowOptions(false);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleChangeLanguage = async (lang: 'en' | 'vi') => {
+    await changeLanguage(lang);
+    setShowLanguageModal(false);
+  };
 
   return (
     <>
@@ -58,7 +86,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </TouchableOpacity>
           )}
           {showMenu && (
-            <TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => setShowOptions(true)}
+              testID="menu-options-btn"
+              accessibilityLabel="menu-options-btn"
+            >
               <Menu size={24} color={ACCENT_COLOR} />
             </TouchableOpacity>
           )}
@@ -76,13 +108,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <TouchableWithoutFeedback>
               <View style={styles.optionSheet}>
                 <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>Family Options</Text>
+                <Text style={styles.sheetTitle}>{t('settings.familyOptions')}</Text>
 
                 <TouchableOpacity
                   style={styles.optionItem}
                   onPress={() => {
                     setShowOptions(false);
                     if (navigation) {
+                      // Navigate within the same stack navigator
                       navigation.navigate('ViewListFamily');
                     }
                   }}
@@ -90,16 +123,43 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   <View style={styles.optionIconContainer}>
                     <Users size={20} color={ACCENT_COLOR} />
                   </View>
-                  <Text style={styles.optionText}>View Member List</Text>
+                  <Text style={styles.optionText}>{t('settings.viewMembers')}</Text>
                   <ChevronRight size={20} color="#CCC" />
                 </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
+
+                <TouchableOpacity
+                  style={[styles.optionItem, { backgroundColor: '#E3F2FD' }]}
+                  onPress={() => {
+                    setShowOptions(false);
+                    setShowLanguageModal(true);
+                  }}
+                >
+                  <View style={[styles.optionIconContainer, { backgroundColor: '#FFF' }]}>
+                    <Globe size={20} color="#2196F3" />
+                  </View>
+                  <Text style={styles.optionText}>{t('common.language')}</Text>
+                  <Text style={styles.languageValue}>
+                    {currentLanguage === 'vi' ? 'Tiếng Việt' : 'English'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.optionItem, { backgroundColor: '#FFEBEE' }]}
+                  onPress={handleLogout}
+                  testID="logout-button"
+                  accessibilityLabel="Logout"
+                >
+                  <View style={[styles.optionIconContainer, { backgroundColor: '#FFF' }]}>
+                    <LogOut size={20} color="#F44336" />
+                  </View>
+                  <Text style={[styles.optionText, { color: '#F44336' }]}>{t('common.logout')}</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setShowOptions(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Close</Text>
+                  <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -111,6 +171,50 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         visible={showNotifications}
         onClose={() => setShowNotifications(false)}
       />
+
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowLanguageModal(false)}>
+          <View style={styles.languageOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.languageContent}>
+                <Text style={styles.languageTitle}>{t('settings.selectLanguage')}</Text>
+
+                <TouchableOpacity
+                  style={styles.languageOption}
+                  onPress={() => handleChangeLanguage('vi')}
+                >
+                  <Text style={styles.languageText}>{t('settings.vietnamese')}</Text>
+                  {currentLanguage === 'vi' && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.languageOption}
+                  onPress={() => handleChangeLanguage('en')}
+                >
+                  <Text style={styles.languageText}>{t('settings.english')}</Text>
+                  {currentLanguage === 'en' && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.languageCancelButton}
+                  onPress={() => setShowLanguageModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </>
   );
 };
@@ -153,8 +257,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   optionSheet: {
     backgroundColor: '#FFF',
@@ -163,7 +266,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     width: '100%',
-    marginTop: 'auto',
   },
   sheetHandle: {
     width: 40,
@@ -211,5 +313,56 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '600',
     fontSize: 16,
+  },
+  languageValue: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 'auto',
+  },
+  languageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  languageContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+  },
+  languageTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 10,
+  },
+  languageText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  checkmark: {
+    fontSize: 20,
+    color: ACCENT_COLOR,
+    fontWeight: 'bold',
+  },
+  languageCancelButton: {
+    marginTop: 10,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
   },
 });

@@ -6,6 +6,7 @@
  * - Automatic conversion to user's local timezone
  * - Various display formats for different UI contexts
  * - Type safety and error handling
+ * - Multi-language support
  */
 
 export interface InstantFormatOptions {
@@ -13,6 +14,7 @@ export interface InstantFormatOptions {
   use24Hour?: boolean;
   includeTimezone?: boolean;
   locale?: string;
+  t?: (key: string, options?: any) => string; // Translation function
 }
 
 /**
@@ -119,8 +121,12 @@ export const formatInstantDate = (instantString: string): string => {
 
 /**
  * Format Instant for relative time (2m ago, 1h ago, Yesterday)
+ * Supports multi-language with translation function
  */
-export const formatInstantRelative = (instantString: string): string => {
+export const formatInstantRelative = (
+  instantString: string,
+  t?: (key: string, options?: any) => string
+): string => {
   try {
     const date = parseInstant(instantString);
     const now = new Date();
@@ -130,7 +136,23 @@ export const formatInstantRelative = (instantString: string): string => {
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.floor(diffDays / 7);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
     
+    if (t) {
+      // Multi-language support
+      if (diffSeconds < 30) return t('time.justNow');
+      if (diffMinutes < 1) return `${diffSeconds} ${t('time.secondsAgo')}`;
+      if (diffMinutes < 60) return `${diffMinutes} ${t('time.minutesAgo')}`;
+      if (diffHours < 24) return `${diffHours} ${t('time.hoursAgo')}`;
+      if (diffDays < 7) return `${diffDays} ${t('time.daysAgo')}`;
+      if (diffWeeks < 4) return `${diffWeeks} ${t('time.weeksAgo')}`;
+      if (diffMonths < 12) return `${diffMonths} ${t('time.monthsAgo')}`;
+      return `${diffYears} ${t('time.yearsAgo')}`;
+    }
+    
+    // Fallback to English
     if (diffSeconds < 30) return 'Just now';
     if (diffMinutes < 1) return `${diffSeconds}s ago`;
     if (diffMinutes < 60) return `${diffMinutes}m ago`;

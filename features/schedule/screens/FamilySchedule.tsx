@@ -28,6 +28,7 @@ import { FamilyEvent } from '../types';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNotificationStore } from '../../notification/store/notification.store';
 import { AppHeader } from '../../../components/AppHeader';
+import { useTranslation } from 'react-i18next';
 
 const BACKGROUND_COLOR = '#FFF4E6';
 const ACCENT_COLOR = '#D4A056';
@@ -37,6 +38,7 @@ interface FamilyScheduleProps {
 }
 
 const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
+  const { t } = useTranslation();
   const openEventId = useNotificationStore(s => s.openEventId);
   const setOpenEventId = useNotificationStore(s => s.setOpenEventId);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
@@ -67,10 +69,56 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
     }
   }, [openEventId, events]);
 
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'];
-  
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const getMonthName = (monthIndex: number) => {
+    const months = [
+      t('time.january'), t('time.february'), t('time.march'), t('time.april'),
+      t('time.may'), t('time.june'), t('time.july'), t('time.august'),
+      t('time.september'), t('time.october'), t('time.november'), t('time.december')
+    ];
+    return months[monthIndex];
+  };
+
+  const getDayName = (dayIndex: number) => {
+    const days = [
+      t('time.monday'), t('time.tuesday'), t('time.wednesday'), t('time.thursday'),
+      t('time.friday'), t('time.saturday'), t('time.sunday')
+    ];
+    return days[dayIndex];
+  };
+
+  const getDayShortName = (dayIndex: number) => {
+    const shortDays = [
+      t('time.mon'), t('time.tue'), t('time.wed'), t('time.thu'),
+      t('time.fri'), t('time.sat'), t('time.sun')
+    ];
+    return shortDays[dayIndex];
+  };
+
+  const formatDateRange = (startDate: Date, endDate: Date) => {
+    const startMonth = getMonthName(startDate.getMonth());
+    const endMonth = getMonthName(endDate.getMonth());
+    const startDay = startDate.getDate();
+    const endDay = endDate.getDate();
+    
+    // Format: "30 Tháng ba - 5 Tháng tư" for Vietnamese
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${startDay} - ${endDay} ${startMonth}`;
+    }
+    return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+  };
+
+  const formatEventDate = (date: Date) => {
+    const dayName = getDayName(date.getDay() === 0 ? 6 : date.getDay() - 1);
+    const monthName = getMonthName(date.getMonth());
+    const day = date.getDate();
+    const year = date.getFullYear();
+    
+    // Format: "Thứ hai, 15 Tháng một, 2024" for Vietnamese
+    return `${dayName}, ${day} ${monthName}, ${year}`;
+  };
+
+  const monthNames = Array.from({ length: 12 }, (_, i) => getMonthName(i));
+  const days = Array.from({ length: 7 }, (_, i) => getDayShortName(i));
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate();
@@ -196,13 +244,13 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AppHeader title="Calendar" navigation={navigation} />
+      <AppHeader title={t('schedule.familySchedule')} navigation={navigation} />
       <View style={styles.container}>
 
         <View style={styles.searchContainer}>
           <Search size={20} color="#999" style={styles.searchIcon} />
           <TextInput 
-            placeholder="Search events..." 
+            placeholder={t('schedule.searchEvents')} 
             placeholderTextColor="#999"
             style={styles.searchInput}
             value={searchQuery}
@@ -221,14 +269,14 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
             onPress={() => setViewMode('month')}
           >
             <Calendar size={16} color={viewMode === 'month' ? '#FFF' : ACCENT_COLOR} />
-            <Text style={[styles.toggleText, viewMode === 'month' && styles.toggleTextActive]}>Month</Text>
+            <Text style={[styles.toggleText, viewMode === 'month' && styles.toggleTextActive]}>{t('schedule.month')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.toggleButton, viewMode === 'week' && styles.toggleButtonActive]}
             onPress={() => setViewMode('week')}
           >
             <Calendar size={16} color={viewMode === 'week' ? '#FFF' : ACCENT_COLOR} />
-            <Text style={[styles.toggleText, viewMode === 'week' && styles.toggleTextActive]}>Week</Text>
+            <Text style={[styles.toggleText, viewMode === 'week' && styles.toggleTextActive]}>{t('schedule.week')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -297,7 +345,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                 </TouchableOpacity>
                 <View style={styles.monthSelector}>
                   <Text style={styles.monthText}>
-                    {monthNames[weekDates[0].getMonth()]} {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]} {weekDates[6].getDate()}
+                    {formatDateRange(weekDates[0], weekDates[6])}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={handleNextWeek}>
@@ -314,14 +362,14 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                     <View key={idx} style={styles.weekDayRow}>
                       <View style={styles.weekDayHeader}>
                         <View style={styles.weekDayInfo}>
-                          <Text style={styles.weekDayName}>{days[idx]}</Text>
+                          <Text style={styles.weekDayName}>{getDayShortName(idx)}</Text>
                           <View style={[styles.weekDateCircle, isToday && styles.weekDateCircleToday]}>
                             <Text style={[styles.weekDateNumber, isToday && styles.weekDateNumberToday]}>
                               {date.getDate()}
                             </Text>
                           </View>
                         </View>
-                        <Text style={styles.weekEventCount}>{dayEvents.length} events</Text>
+                        <Text style={styles.weekEventCount}>{dayEvents.length} {t('schedule.events')}</Text>
                       </View>
                       <View style={styles.weekEventsContainer}>
                         {dayEvents.length > 0 ? (
@@ -340,7 +388,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                             </TouchableOpacity>
                           ))
                         ) : (
-                          <Text style={styles.noEventsText}>No events</Text>
+                          <Text style={styles.noEventsText}>{t('schedule.noEvents')}</Text>
                         )}
                       </View>
                     </View>
@@ -404,14 +452,9 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                   <View style={styles.eventDetailRow}>
                     <Calendar size={20} color={ACCENT_COLOR} />
                     <View style={styles.eventDetailInfo}>
-                      <Text style={styles.eventDetailLabel}>Date</Text>
+                      <Text style={styles.eventDetailLabel}>{t('schedule.date')}</Text>
                       <Text style={styles.eventDetailValue}>
-                        {selectedEvent && parseEventDate(selectedEvent.startTime).toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
+                        {selectedEvent && formatEventDate(parseEventDate(selectedEvent.startTime))}
                       </Text>
                     </View>
                   </View>
@@ -419,7 +462,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                   <View style={styles.eventDetailRow}>
                     <Calendar size={20} color={ACCENT_COLOR} />
                     <View style={styles.eventDetailInfo}>
-                      <Text style={styles.eventDetailLabel}>Time</Text>
+                      <Text style={styles.eventDetailLabel}>{t('schedule.time')}</Text>
                       <Text style={styles.eventDetailValue}>
                         {selectedEvent && parseEventDate(selectedEvent.startTime).toLocaleTimeString('en-US', { 
                           hour: '2-digit', 
@@ -436,7 +479,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                     <View style={styles.eventDetailRow}>
                       <Menu size={20} color={ACCENT_COLOR} />
                       <View style={styles.eventDetailInfo}>
-                        <Text style={styles.eventDetailLabel}>Note</Text>
+                        <Text style={styles.eventDetailLabel}>{t('schedule.note')}</Text>
                         <Text style={styles.eventDetailValue}>{selectedEvent.description}</Text>
                       </View>
                     </View>
@@ -445,7 +488,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                   <View style={styles.eventDetailRow}>
                     <Users size={20} color={ACCENT_COLOR} />
                     <View style={styles.eventDetailInfo}>
-                      <Text style={styles.eventDetailLabel}>Created by</Text>
+                      <Text style={styles.eventDetailLabel}>{t('schedule.createdBy')}</Text>
                       <View style={styles.creatorInfo}>
                         {selectedEvent?.creator.avatarUrl ? (
                           <Image 
@@ -467,7 +510,7 @@ const FamilySchedule: React.FC<FamilyScheduleProps> = ({ navigation }) => {
                   style={styles.closeEventButton}
                   onPress={() => setShowEventDetail(false)}
                 >
-                  <Text style={styles.closeEventButtonText}>Close</Text>
+                  <Text style={styles.closeEventButtonText}>{t('common.close')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>

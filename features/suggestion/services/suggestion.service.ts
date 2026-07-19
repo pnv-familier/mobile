@@ -1,5 +1,6 @@
 import { apiClient } from '../../../api/api';
 import { SuggestionListItem, SuggestionDetail, SuggestionStatus } from '../types';
+import { UrgentSuggestion } from '../types/urgent';
 
 interface ConfirmSuggestionResponse {
   success: boolean;
@@ -30,7 +31,7 @@ export const suggestionService = {
     triggerContext: string
   ): Promise<ConfirmSuggestionResponse> => {
     try {
-      const type = detectType(metadata);
+      const type = metadata.type;
 
       const requestBody = {
         type,
@@ -52,17 +53,27 @@ export const suggestionService = {
       throw error;
     }
   },
+
+  getUrgentSuggestions: async (): Promise<UrgentSuggestion[]> => {
+    const response = await apiClient.get<{ message: string; data: UrgentSuggestion[] }>(
+      '/api/v1/suggestions/urgent'
+    );
+    return response.data.data;
+  },
+
+  markUrgentAsRead: async (id: string): Promise<void> => {
+    await apiClient.patch(`/api/v1/suggestions/urgent/${id}/read`);
+  },
+
+  markAllUrgentAsRead: async (): Promise<void> => {
+    await apiClient.patch('/api/v1/suggestions/urgent/read-all');
+  },
+
+  getUrgentSuggestionById: async (id: string): Promise<UrgentSuggestion> => {
+    const response = await apiClient.get<{ message: string; data: UrgentSuggestion }>(
+      `/api/v1/suggestions/urgent/${id}`
+    );
+    return response.data.data;
+  },
 };
 
-const detectType = (metadata: any): 'EVENT' | 'TASK' | 'OFFLINE' => {
-  if ('startTime' in metadata && 'endTime' in metadata) {
-    return 'EVENT';
-  }
-  if ('assigneeEmail' in metadata && 'title' in metadata) {
-    return 'TASK';
-  }
-  if ('action' in metadata) {
-    return 'OFFLINE';
-  }
-  throw new Error('Unknown metadata type');
-};

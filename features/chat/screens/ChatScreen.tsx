@@ -21,6 +21,7 @@ import SuggestionCard from '../components/SuggestionCard';
 import TypingIndicator from '../components/TypingIndicator';
 import { suggestionService } from '../../suggestion';
 import { FamilyMember } from '../types';
+import { useTranslation } from 'react-i18next';
 
 const PRIMARY_COLOR = '#FDF2E3';
 const ACCENT_COLOR = '#D4A056';
@@ -49,6 +50,7 @@ const SuggestionChips = React.memo(({ suggestions, onSelect }: { suggestions: st
 });
 
 export default function ChatScreen({ navigation }: { navigation: any }) {
+  const { t } = useTranslation();
   const [inputText, setInputText] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -86,7 +88,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('Error', error, [{ text: 'OK', onPress: clearError }]);
+      Alert.alert(t('common.error'), error, [{ text: 'OK', onPress: clearError }]);
     }
   }, [error]);
 
@@ -226,7 +228,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
       >
         <View style={styles.header}>
           <View style={{ width: 24 }} />
-          <Text style={styles.headerTitle}>AI Family Assistant</Text>
+          <Text style={styles.headerTitle}>{t('chat.familyChat')}</Text>
           <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
             <History size={24} color={ACCENT_COLOR} />
           </TouchableOpacity>
@@ -258,8 +260,8 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           ListHeaderComponent={() => (
             messages.length === 0 && !isLoadingMessages ? (
               <View style={styles.welcomeContainer}>
-                <Text style={styles.welcomeTitle}>Hello! I'm your Family Assistant.</Text>
-                <Text style={styles.welcomeSubtitle}>How can I help your family today?</Text>
+                <Text style={styles.welcomeTitle}>{t('chat.welcomeTitle')}</Text>
+                <Text style={styles.welcomeSubtitle}>{t('chat.welcomeSubtitle')}</Text>
               </View>
             ) : null
           )}
@@ -298,7 +300,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           </TouchableOpacity>
           <TextInput
             style={styles.input}
-            placeholder="Ask anything... (@ to mention)"
+            placeholder={t('chat.typeMessage')}
             value={inputText}
             onChangeText={setInputText}
             multiline
