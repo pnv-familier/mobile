@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import { useAuthStore } from '../features/auth/store/auth.store';
 import { apiClient } from '../api/api';
 import { useNotificationStore } from '../features/notification/store/notification.store';
+import { notificationService } from '../features/notification/services/notification.service';
 import { storage } from '../utils/storage';
 import { useUrgentSuggestionStore } from '../features/suggestion/store/urgentSuggestion.store';
 import { suggestionService } from '../features/suggestion/services/suggestion.service';
@@ -43,6 +44,20 @@ export function usePushNotification(navigation?: any) {
       const notificationId = notification.request.content.data?.id as string | undefined;
       const notifiedFlag = notification.request.content.data?.notified as boolean | undefined;
       const store = useNotificationStore.getState();
+      
+      // Refresh list from server to get full notification object
+      notificationService.getNotifications().then(data => {
+        store.setNotifications(data);
+        store.setUnreadCount(data.filter(n => n.status === 'UNREAD').length);
+      }).catch(() => {
+        // Fallback if fetch fails: just increment count
+        store.setUnreadCount(store.unreadCount + 1);
+      });
+
+      if (title) {
+        const now = new Date();
+        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        store.showBanner({ title, body: body || '', time });
       store.setUnreadCount(store.unreadCount + 1);
       
       if (title && notificationId) {

@@ -81,6 +81,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             />
           )}
           {showProfile && (
+            <TouchableOpacity accessibilityLabel='profile-options-btn' testID='profile-options-btn' onPress={() => setShowOptions(true)}>
+              <User size={24} color={ACCENT_COLOR} style={styles.headerIcon} />
+            </TouchableOpacity>
+          )}
+          {showMenu && (
             <TouchableOpacity 
               onPress={() => setShowOptions(true)}
               testID="menu-options-btn"

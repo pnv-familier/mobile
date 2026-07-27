@@ -73,7 +73,7 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ visible, o
   const setCurrentSuggestion = useUrgentSuggestionStore(s => s.setCurrentSuggestion);
 
   useEffect(() => {
-    if (visible && notifications.length === 0) fetchNotifications();
+    if (visible) fetchNotifications();
   }, [visible]);
 
   const handleNotificationPress = async (notification: Notification) => {

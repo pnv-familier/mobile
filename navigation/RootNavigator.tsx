@@ -70,12 +70,16 @@ export default function RootNavigator() {
     const banner = useNotificationStore(s => s.banner)
     const clearBanner = useNotificationStore(s => s.clearBanner)
 
+    const setNotifications = useNotificationStore(s => s.setNotifications)
+
     usePushNotification();
 
     useEffect(() => {
         if (user) {
             fetchMyFamily();
             notificationService.getNotifications()
+                .then(data => {
+                    setNotifications(data);
                 .then(async data => {
                     const unread = data.filter(n => n.status === 'UNREAD');
                     setUnreadCount(unread.length);
