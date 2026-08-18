@@ -8,6 +8,7 @@ import { VideoPlayer } from './VideoPlayer';
 import { CommentSection } from './CommentSection';
 import { formatInstantRelative } from '../../../utils/instantUtils';
 import { useTranslation } from 'react-i18next';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 
 interface PostCardProps {
   post: Post;
@@ -19,13 +20,18 @@ interface PostCardProps {
   defaultShowComments?: boolean;
 }
 
-const ACCENT_COLOR = '#D4A056';
 const MAX_PREVIEW_LENGTH = 150;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const IMAGE_MARGIN = 30;
-const IMAGE_GAP = 8;
 
-export default function PostCard({ post, currentUserId, onDelete, onUpdate, onReaction, reactionLoading, defaultShowComments = false }: PostCardProps) {
+export default function PostCard({
+  post,
+  currentUserId,
+  onDelete,
+  onUpdate,
+  onReaction,
+  reactionLoading,
+  defaultShowComments = false,
+}: PostCardProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
@@ -33,13 +39,13 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
   const [showComments, setShowComments] = useState(defaultShowComments);
 
   const videoUrl = post.videos && post.videos.length > 0 ? post.videos[0] : null;
-
   const isOwner = currentUserId === post.user_id;
 
   const needsExpansion = post.content.length > MAX_PREVIEW_LENGTH;
-  const displayContent = expanded || !needsExpansion 
-    ? post.content 
-    : post.content.substring(0, MAX_PREVIEW_LENGTH) + '...';
+  const displayContent =
+    expanded || !needsExpansion
+      ? post.content
+      : post.content.substring(0, MAX_PREVIEW_LENGTH) + '...';
 
   const handleDelete = () => {
     Alert.alert(
@@ -57,18 +63,19 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
             } catch (error) {
               Alert.alert(t('common.error'), t('social.failedToDeletePost'));
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   return (
     <View style={styles.postCard}>
+      {/* Header: Author + Timestamp + Menu */}
       <View style={styles.postHeader}>
         <View style={styles.avatarContainer}>
-          <Image 
-            source={{ uri: post.author_avatar || getDefaultAvatar(post.author_name) }} 
+          <Image
+            source={{ uri: post.author_avatar || getDefaultAvatar(post.author_name) }}
             style={styles.avatar}
             defaultSource={require('../../../assets/icon.png')}
           />
@@ -78,53 +85,63 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
           <Text style={styles.timestamp}>{formatInstantRelative(post.created_at, t)}</Text>
         </View>
         {isOwner && (
-          <TouchableOpacity accessibilityLabel='show-post-menu-icon' testID='show-post-menu-icon' onPress={() => setShowMenu(true)} style={styles.menuButton}>
-            <MoreVertical size={20} color="#666" />
+          <TouchableOpacity
+            accessibilityLabel="show-post-menu-icon"
+            testID="show-post-menu-icon"
+            onPress={() => setShowMenu(true)}
+            style={styles.menuButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <MoreVertical size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
 
+      {/* Post Text Content */}
       <Text style={styles.postContent}>{displayContent}</Text>
-      
+
       {needsExpansion && !expanded && (
         <TouchableOpacity onPress={() => setExpanded(true)}>
           <Text style={styles.seeMore}>{t('social.seeMore')}</Text>
         </TouchableOpacity>
       )}
 
+      {/* Video Content */}
       {videoUrl && (
         <View style={styles.videoContainer}>
           <VideoPlayer videoUrl={videoUrl} />
         </View>
       )}
 
+      {/* Image Content */}
       {post.images && post.images.length > 0 && (
         <View style={styles.imagesContainer}>
           {post.images.length === 1 ? (
-            <TouchableOpacity onPress={() => setFullScreenImage(post.images[0].image_url)}>
-              <Image 
-                source={{ uri: post.images[0].image_url }} 
+            <TouchableOpacity onPress={() => setFullScreenImage(post.images[0].image_url)} activeOpacity={0.9}>
+              <Image
+                source={{ uri: post.images[0].image_url }}
                 style={styles.singleImage}
                 resizeMode="cover"
               />
             </TouchableOpacity>
           ) : post.images.length === 2 ? (
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.doubleImageScroll}
               decelerationRate="fast"
-              snapToInterval={SCREEN_WIDTH - 60 - 12}
+              snapToInterval={SCREEN_WIDTH - 48}
               snapToAlignment="start"
             >
               {post.images.map((img, idx) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={idx}
                   onPress={() => setFullScreenImage(img.image_url)}
                   style={styles.doubleImageContainer}
+                  activeOpacity={0.9}
                 >
-                  <Image 
-                    source={{ uri: img.image_url }} 
+                  <Image
+                    source={{ uri: img.image_url }}
                     style={styles.doubleImage}
                     resizeMode="cover"
                   />
@@ -133,27 +150,27 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
             </ScrollView>
           ) : (
             <View style={styles.multiImageLayout}>
-              <TouchableOpacity 
-                style={styles.mainImageContainer} 
+              <TouchableOpacity
+                style={styles.mainImageContainer}
                 onPress={() => setFullScreenImage(post.images[0].image_url)}
+                activeOpacity={0.9}
               >
-                <Image 
-                  source={{ uri: post.images[0].image_url }} 
+                <Image
+                  source={{ uri: post.images[0].image_url }}
                   style={styles.mainImage}
                   resizeMode="cover"
                 />
               </TouchableOpacity>
-              <View 
-                style={styles.thumbnailScroll}
-              >
+              <View style={styles.thumbnailScroll}>
                 {post.images.slice(1).map((img, idx) => (
-                  <TouchableOpacity 
-                    key={idx} 
+                  <TouchableOpacity
+                    key={idx}
                     onPress={() => setFullScreenImage(img.image_url)}
                     style={styles.thumbnailContainer}
+                    activeOpacity={0.9}
                   >
-                    <Image 
-                      source={{ uri: img.image_url }} 
+                    <Image
+                      source={{ uri: img.image_url }}
                       style={styles.thumbnailImage}
                       resizeMode="cover"
                     />
@@ -165,59 +182,80 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
         </View>
       )}
 
+      {/* Footer: Reactions & Comments */}
       <View style={styles.postFooter}>
         <View style={styles.statsRow}>
-          <TouchableOpacity 
-            style={styles.stat} 
+          <TouchableOpacity
+            style={[styles.statButton, post.user_reacted && styles.statButtonActive]}
             onPress={() => onReaction?.(post.post_id)}
             disabled={reactionLoading}
             accessibilityLabel="btn_ReactionIcon"
             testID="btn_ReactionIcon"
+            activeOpacity={0.7}
           >
-            <Heart 
-              size={18} 
-              color={post.user_reacted ? ACCENT_COLOR : '#999'} 
-              fill={post.user_reacted ? ACCENT_COLOR : 'none'} 
+            <Heart
+              size={16}
+              color={post.user_reacted ? colors.love : colors.textMuted}
+              fill={post.user_reacted ? colors.love : 'none'}
             />
-            <Text style={[styles.statText, post.user_reacted && { color: ACCENT_COLOR, fontWeight: '700' }]}>
+            <Text
+              style={[
+                styles.statText,
+                post.user_reacted && { color: colors.love, fontWeight: '600' },
+              ]}
+            >
               {post.reaction_count}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.stat}
+
+          <TouchableOpacity
+            style={styles.statButton}
             onPress={() => setShowComments(!showComments)}
             accessibilityLabel="btn_CommentIcon"
             testID="btn_CommentIcon"
+            activeOpacity={0.7}
           >
-            <MessageCircle size={18} color={ACCENT_COLOR} />
+            <MessageCircle size={16} color={colors.textSecondary} />
             <Text style={styles.statText}>{post.comment_count}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Comment Section */}
       {showComments && (
-        <CommentSection
-          postId={post.post_id}
-          onCommentAdded={onUpdate}
-        />
+        <CommentSection postId={post.post_id} onCommentAdded={onUpdate} />
       )}
 
+      {/* Post Actions Menu Modal */}
       <Modal
         visible={showMenu}
         transparent={true}
         animationType="fade"
         onRequestClose={() => setShowMenu(false)}
       >
-        <TouchableOpacity style={styles.menuOverlay} onPress={() => setShowMenu(false)} activeOpacity={1}>
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          onPress={() => setShowMenu(false)}
+          activeOpacity={1}
+        >
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); handleDelete(); }}>
-              <Trash2 size={20} color="#FF6B6B" />
-              <Text style={[styles.menuText, { color: '#FF6B6B' }]}>{t('social.deletePost')}</Text>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setShowMenu(false);
+                handleDelete();
+              }}
+            >
+              <Trash2 size={18} color={colors.error} />
+              <Text style={[styles.menuText, { color: colors.error }]}>
+                {t('social.deletePost')}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
 
+      {/* Fullscreen Image Modal */}
       <Modal
         visible={fullScreenImage !== null}
         transparent={true}
@@ -225,15 +263,15 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
         onRequestClose={() => setFullScreenImage(null)}
       >
         <View style={styles.fullScreenContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setFullScreenImage(null)}
           >
-            <X size={30} color="white" />
+            <X size={26} color="#FFFFFF" />
           </TouchableOpacity>
           {fullScreenImage && (
-            <Image 
-              source={{ uri: fullScreenImage }} 
+            <Image
+              source={{ uri: fullScreenImage }}
               style={styles.fullScreenImage}
               resizeMode="contain"
             />
@@ -246,83 +284,87 @@ export default function PostCard({ post, currentUserId, onDelete, onUpdate, onRe
 
 const styles = StyleSheet.create({
   postCard: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm + 2,
   },
   avatarContainer: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: '#F0F0F0',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.surfaceSecondary,
     overflow: 'hidden',
-    marginRight: 10,
+    marginRight: spacing.sm + 2,
   },
   avatar: {
-    width: 45,
-    height: 45,
+    width: 38,
+    height: 38,
   },
   authorInfo: {
     flex: 1,
   },
   menuButton: {
-    padding: 5,
+    padding: spacing.xs,
   },
   authorName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    ...typography.bodySmallBold,
+    color: colors.textPrimary,
   },
   timestamp: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 1,
   },
   postContent: {
-    fontSize: 15,
-    color: '#333',
-    lineHeight: 22,
-    marginBottom: 8,
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: spacing.xs,
   },
   seeMore: {
-    color: ACCENT_COLOR,
-    fontWeight: '600',
-    marginBottom: 10,
+    ...typography.captionBold,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   videoContainer: {
-    marginTop: 10,
+    marginTop: spacing.sm,
+    borderRadius: radius.md,
+    overflow: 'hidden',
   },
   imagesContainer: {
-    marginTop: 10,
+    marginTop: spacing.sm,
   },
   singleImage: {
     width: '100%',
-    height: 250,
-    borderRadius: 10,
+    height: 230,
+    borderRadius: radius.md,
   },
   doubleImageScroll: {
     width: '100%',
   },
   doubleImageContainer: {
-    width: SCREEN_WIDTH - 60 - 20,
-    marginRight: 8,
+    width: SCREEN_WIDTH - 64,
+    marginRight: spacing.sm,
   },
   doubleImage: {
     width: '100%',
-    height: 250,
-    borderRadius: 10,
+    height: 230,
+    borderRadius: radius.md,
   },
   multiImageLayout: {
     flexDirection: 'row',
-    height: 250,
-    gap: 8,
+    height: 230,
+    gap: spacing.xs + 2,
   },
   mainImageContainer: {
     flex: 2,
@@ -330,11 +372,11 @@ const styles = StyleSheet.create({
   mainImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: radius.md,
   },
   thumbnailScroll: {
     flex: 1,
-    gap: 8,
+    gap: spacing.xs + 2,
   },
   thumbnailContainer: {
     flex: 1,
@@ -342,40 +384,46 @@ const styles = StyleSheet.create({
   thumbnailImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   postFooter: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: spacing.sm + 2,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: colors.borderLight,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 20,
+    gap: spacing.md,
   },
-  stat: {
+  statButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  statButtonActive: {
+    backgroundColor: colors.loveSoft,
   },
   statText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    ...typography.captionMedium,
+    color: colors.textSecondary,
   },
   fullScreenContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButton: {
     position: 'absolute',
     top: 50,
-    right: 20,
+    right: spacing.lg,
     zIndex: 10,
-    padding: 10,
+    padding: spacing.sm,
   },
   fullScreenImage: {
     width: '100%',
@@ -383,24 +431,24 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
   menuContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 8,
-    minWidth: 200,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.xs,
+    minWidth: 180,
+    ...shadows.lg,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    gap: 12,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   menuText: {
-    fontSize: 16,
-    color: '#333',
+    ...typography.bodySmallBold,
   },
 });

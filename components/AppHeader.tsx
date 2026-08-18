@@ -9,12 +9,13 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from 'react-native';
-import { Menu, Users, ChevronRight, Globe, LogOut } from 'lucide-react-native';
+import { Menu, Users, User, ChevronRight, Globe, LogOut } from 'lucide-react-native';
 import { NotificationBell } from '../features/notification/components/NotificationBell';
 import { NotificationPopup } from '../features/notification/components/NotificationPopup';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '../i18n';
 import { useLogout } from '../features/auth/hooks/useLogout';
+import { colors, spacing, radius, typography } from '../theme';
 
 const ACCENT_COLOR = '#D4A056';
 
@@ -24,6 +25,7 @@ interface AppHeaderProps {
   showNotification?: boolean;
   showProfile?: boolean;
   showMenu?: boolean;
+  onUserPress?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -32,6 +34,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   showNotification = true,
   showProfile = true,
   showMenu = true,
+  onUserPress,
 }) => {
   const { t, i18n } = useTranslation();
   const { logout } = useLogout();
@@ -67,10 +70,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.logoContainer}>
-            <Image source={require('../assets/icon.png')} style={styles.logoIcon} />
-            <Text style={styles.headerTitle}>{title}</Text>
-          </View>
+          <Text style={styles.headerTitle}>{title}</Text>
         </View>
         <View style={styles.headerRight}>
           {showNotification && (
@@ -81,17 +81,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             />
           )}
           {showProfile && (
-            <TouchableOpacity accessibilityLabel='profile-options-btn' testID='profile-options-btn' onPress={() => setShowOptions(true)}>
-              <User size={24} color={ACCENT_COLOR} style={styles.headerIcon} />
-            </TouchableOpacity>
-          )}
-          {showMenu && (
-            <TouchableOpacity 
-              onPress={() => setShowOptions(true)}
-              testID="menu-options-btn"
-              accessibilityLabel="menu-options-btn"
-            >
-              <Menu size={24} color={ACCENT_COLOR} />
+            <TouchableOpacity accessibilityLabel='profile-options-btn' testID='profile-options-btn' onPress={onUserPress || (() => setShowOptions(true))}>
+              <User size={22} color={ACCENT_COLOR} />
             </TouchableOpacity>
           )}
         </View>
@@ -224,36 +215,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 25,
-    paddingBottom: 15,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 1,
-  },
-  logoIcon: {
-    width: 40,
-    height: 40,
-  },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#000',
+    ...typography.heading2,
+    color: colors.textPrimary,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.md,
   },
-  headerIcon: {
-    marginRight: 15,
-  },
+  headerIcon: {},
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

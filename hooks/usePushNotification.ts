@@ -54,12 +54,6 @@ export function usePushNotification(navigation?: any) {
         store.setUnreadCount(store.unreadCount + 1);
       });
 
-      if (title) {
-        const now = new Date();
-        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        store.showBanner({ title, body: body || '', time });
-      store.setUnreadCount(store.unreadCount + 1);
-      
       if (title && notificationId) {
         let shouldShow = true;
         if (notifiedFlag !== undefined && notifiedFlag !== null) {

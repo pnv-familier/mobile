@@ -1,7 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, SafeAreaView, Modal, TouchableWithoutFeedback, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Home, Plus, X, Image as ImageIcon, Video as VideoIcon } from 'lucide-react-native';
+import { Home, ChevronRight, X, Image as ImageIcon, Video as VideoIcon, Plus } from 'lucide-react-native';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { usePosts } from '../hooks/usePosts';
 import { useCreatePost } from '../hooks/useCreatePost';
@@ -11,12 +24,17 @@ import { getDefaultAvatar } from '../utils/avatar';
 import { uploadImages, uploadVideo } from '../services/post.service';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNotificationStore } from '../../notification/store/notification.store';
-import { AppHeader } from '../../../components/AppHeader';
+import {
+  AppScreen,
+  AppHeader,
+  AppText,
+  AppButton,
+  AppLoader,
+  AppError,
+  EmptyState,
+} from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 import { useTranslation } from 'react-i18next';
-
-const PRIMARY_COLOR = '#FDF2E3';
-const ACCENT_COLOR = '#D4A056';
-
 
 export default function FeedScreen({ navigation, route }: { navigation: any; route: any }) {
   const { t } = useTranslation();
@@ -34,8 +52,8 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
   const { posts, loading, error, refetch, addNewPost, updatePostReaction, incrementCommentCount } = usePosts();
   const { create: createNewPost, loading: creating } = useCreatePost();
   const { members } = useFamilyMembers();
-  const openPostId = useNotificationStore(s => s.openPostId);
-  const setOpenPostId = useNotificationStore(s => s.setOpenPostId);
+  const openPostId = useNotificationStore((s) => s.openPostId);
+  const setOpenPostId = useNotificationStore((s) => s.setOpenPostId);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -88,9 +106,9 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
       });
 
       if (!result.canceled && result.assets.length > 0) {
-        const uris = result.assets.map(asset => asset.uri);
+        const uris = result.assets.map((asset) => asset.uri);
         if (mediaType === 'image') {
-          setSelectedMedia(prev => [...prev, ...uris]);
+          setSelectedMedia((prev) => [...prev, ...uris]);
         } else {
           setSelectedMedia(uris);
           setMediaType('image');
@@ -128,7 +146,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
   const handleRemoveMedia = (index?: number) => {
     if (index !== undefined) {
-      setSelectedMedia(prev => prev.filter((_, i) => i !== index));
+      setSelectedMedia((prev) => prev.filter((_, i) => i !== index));
     } else {
       setSelectedMedia([]);
       setMediaType(null);
@@ -142,8 +160,8 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         t('social.discardPostConfirm'),
         [
           { text: t('common.cancel'), style: 'cancel' },
-          { 
-            text: t('social.discard'), 
+          {
+            text: t('social.discard'),
             style: 'destructive',
             onPress: () => {
               setPostContent('');
@@ -151,8 +169,8 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
               setMediaType(null);
               setCreateError(null);
               setShowCreatePost(false);
-            }
-          }
+            },
+          },
         ]
       );
     } else {
@@ -162,14 +180,14 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
 
   const handleCreatePost = async () => {
     if (!postContent.trim() && selectedMedia.length === 0) return;
-    
+
     setShowCreatePost(false);
     setIsPosting(true);
-    
+
     try {
       setCreateError(null);
       let imageUrls: string[] = [];
-      
+
       if (selectedMedia.length > 0) {
         if (mediaType === 'video') {
           const videoFile = {
@@ -184,11 +202,11 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
             throw new Error('Failed to upload video. Please try a smaller video.');
           }
         } else {
-          const localFiles = selectedMedia.filter(uri => !uri.startsWith('http'));
-          const remoteUrls = selectedMedia.filter(uri => uri.startsWith('http'));
-          
+          const localFiles = selectedMedia.filter((uri) => !uri.startsWith('http'));
+          const remoteUrls = selectedMedia.filter((uri) => uri.startsWith('http'));
+
           if (localFiles.length > 0) {
-            const files = localFiles.map(uri => ({
+            const files = localFiles.map((uri) => ({
               uri,
               type: 'image/jpeg',
               fileName: 'image.jpg',
@@ -200,7 +218,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
           }
         }
       }
-      
+
       const finalContent = postContent.trim() || ' ';
       let videoUrls: string[] = [];
       if (mediaType === 'video') {
@@ -208,14 +226,15 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         imageUrls = [];
       }
       const newPost = await createNewPost(finalContent, imageUrls, videoUrls);
-      
+
       addNewPost(newPost);
-      
+
       setPostContent('');
       setSelectedMedia([]);
       setMediaType(null);
     } catch (err: any) {
-      const errorMsg = err?.message || err?.response?.data?.message || t('social.failedToCreatePost');
+      const errorMsg =
+        err?.message || err?.response?.data?.message || t('social.failedToCreatePost');
       setIsPosting(false);
       Alert.alert(t('common.error'), errorMsg);
       return;
@@ -224,87 +243,100 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
     }
   };
 
-
   return (
-    <SafeAreaView style={styles.container}>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
       <AppHeader title={t('social.socialMedia')} navigation={navigation} />
 
-
-      <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.familyCard}>
-          <View style={styles.familyIconBox}>
-            <Home size={28} color="#D4A056" />
+      <ScrollView
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Sleek Top Family Strip */}
+        <TouchableOpacity
+          style={styles.familyBar}
+          onPress={() => navigation.navigate('ViewListFamily')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.familyBarLeft}>
+            <View style={styles.familyIconDot}>
+              <Home size={14} color={colors.primary} />
+            </View>
+            <AppText variant="bodySmallBold" color="primary">
+              {t('family.myFamily')}
+            </AppText>
+            <AppText variant="caption" color="muted" style={styles.memberDot}>
+              • {members.length} {members.length === 1 ? t('family.member') : t('family.members')}
+            </AppText>
           </View>
-          <View style={{ flex: 1, marginLeft: 15 }}>
-            <Text style={styles.familyTitle}>{t('family.myFamily')}</Text>
-            <Text style={styles.familySub}>{members.length} {members.length === 1 ? t('family.member') : t('family.members')}</Text>
+          <View style={styles.viewBadge}>
+            <AppText variant="captionMedium" color="brand">
+              {t('family.view')}
+            </AppText>
+            <ChevronRight size={14} color={colors.primary} />
           </View>
+        </TouchableOpacity>
 
+        {/* Modern Quick Composer Box */}
+        <TouchableOpacity
+          style={styles.composerCard}
+          onPress={() => setShowCreatePost(true)}
+          activeOpacity={0.8}
+        >
+          <Image
+            source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
+            style={styles.composerAvatar}
+            defaultSource={require('../../../assets/icon.png')}
+          />
+          <View style={styles.composerInputPill}>
+            <AppText variant="bodySmall" color="muted">
+              {t('social.whatsOnYourMind')}
+            </AppText>
+          </View>
           <TouchableOpacity
-            onPress={() => navigation.navigate('ViewListFamily')}
+            style={styles.composerMediaBtn}
+            onPress={() => {
+              setShowCreatePost(true);
+            }}
           >
-            <Text style={styles.xemText}>{t('family.view')}</Text>
+            <ImageIcon size={18} color={colors.primary} />
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
 
-        {!loading && !error && posts.length > 0 && (
-          <View style={styles.fabContainer}>
-            <TouchableOpacity 
-              style={styles.fabButton} 
-              onPress={() => setShowCreatePost(true)}
-            >
-              <View style={styles.fabContent}>
-                <Text style={styles.fabText}>{t('social.createPost')}</Text>
-                <View style={styles.fabIconCircle}>
-                  <Plus size={20} color="white" />
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        {/* Posting Progress Indicator */}
         {isPosting && (
           <View style={styles.postingIndicator}>
-            <ActivityIndicator size="small" color={ACCENT_COLOR} />
-            <Text style={styles.postingText}>{t('social.posting')}</Text>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <AppText variant="captionMedium" color="brand" style={styles.postingText}>
+              {t('social.posting')}
+            </AppText>
           </View>
         )}
 
+        {/* Feed Content States */}
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={ACCENT_COLOR} />
-            {isPosting && <Text style={styles.loadingText}>Posting...</Text>}
-          </View>
+          <AppLoader message={isPosting ? 'Posting...' : undefined} style={styles.stateContainer} />
         ) : error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity 
-              style={styles.retryButton}
-              onPress={refetch}
-            >
-              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
-            </TouchableOpacity>
+          <View style={styles.stateWrapper}>
+            <AppError message={error} onRetry={refetch} retryTitle={t('common.retry')} />
           </View>
         ) : posts.length === 0 ? (
-          <View style={styles.noPostContainer}>
-            <Image
-              source={require('../../../assets/feed-home.png')}
-              style={styles.noPostImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.noPostTitle}>{t('social.noPostsYet')}</Text>
-            <Text style={styles.noPostSubtitle}>
-              {t('social.noPostsDesc')}
-            </Text>
-           
-            <TouchableOpacity style={styles.createPostButton} onPress={() => setShowCreatePost(true)}>
-              <Plus size={20} color="white" />
-              <Text style={styles.createPostButtonText}>{t('social.createFirstPost')}</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState
+            image={require('../../../assets/feed-home.png')}
+            title={t('social.noPostsYet')}
+            description={t('social.noPostsDesc')}
+            actionTitle={t('social.createFirstPost')}
+            onActionPress={() => setShowCreatePost(true)}
+            style={styles.emptyContainer}
+          />
         ) : (
           posts.map((post) => (
-            <View key={post.post_id} ref={ref => { postRefs.current[post.post_id] = ref; }}>
+            <View
+              key={post.post_id}
+              ref={(ref) => {
+                postRefs.current[post.post_id] = ref;
+              }}
+            >
               <PostCard
                 post={post}
                 currentUserId={user?.id}
@@ -319,7 +351,7 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
         )}
       </ScrollView>
 
-
+      {/* Create Post Modal */}
       <Modal
         visible={showCreatePost}
         transparent={true}
@@ -340,55 +372,56 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>{t('social.createPost')}</Text>
-                  <TouchableOpacity onPress={handleCloseModal}>
-                    <X size={24} color="#333" />
+                  <AppText variant="heading3" color="primary">
+                    {t('social.createPost')}
+                  </AppText>
+                  <TouchableOpacity
+                    onPress={handleCloseModal}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <X size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
-               
-                <View style={styles.modalBody}>
-                  <View style={styles.avatarContainer}>
-                    <Image
-                      source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
-                      style={styles.modalAvatar}
-                      defaultSource={require('../../../assets/icon.png')}
-                    />
-                  </View>
-                  <Text style={styles.modalUserName}>{user?.fullName || 'User'}</Text>
-                </View>
 
+                <View style={styles.modalBody}>
+                  <Image
+                    source={{ uri: user?.avatarUrl || getDefaultAvatar(user?.fullName) }}
+                    style={styles.modalAvatar}
+                    defaultSource={require('../../../assets/icon.png')}
+                  />
+                  <AppText variant="bodySmallBold" color="primary">
+                    {user?.fullName || 'User'}
+                  </AppText>
+                </View>
 
                 <TextInput
                   style={styles.modalInput}
                   placeholder={t('social.whatsOnYourMind')}
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textPlaceholder}
                   multiline
                   value={postContent}
                   onChangeText={setPostContent}
+                  autoFocus
                 />
 
                 {selectedMedia.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScrollContainer}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.mediaScrollContainer}
+                  >
                     {selectedMedia.map((uri, index) => (
                       <View key={index} style={styles.mediaPreviewContainer}>
-                        {mediaType === 'video' ? (
-                          <Image 
-                            source={{ uri }} 
-                            style={styles.mediaPreview}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <Image 
-                            source={{ uri }} 
-                            style={styles.mediaPreview}
-                            resizeMode="cover"
-                          />
-                        )}
-                        <TouchableOpacity 
-                          style={styles.removeMediaButton} 
+                        <Image
+                          source={{ uri }}
+                          style={styles.mediaPreview}
+                          resizeMode="cover"
+                        />
+                        <TouchableOpacity
+                          style={styles.removeMediaButton}
                           onPress={() => handleRemoveMedia(index)}
                         >
-                          <X size={16} color="white" />
+                          <X size={12} color={colors.textLight} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -396,208 +429,151 @@ export default function FeedScreen({ navigation, route }: { navigation: any; rou
                 )}
 
                 {createError && (
-                  <Text style={styles.errorMessage}>{createError}</Text>
+                  <AppText variant="caption" color="error" style={styles.errorMessage}>
+                    {createError}
+                  </AppText>
                 )}
 
                 <View style={styles.divider} />
-               
+
                 <View style={styles.modalFooter}>
-                  <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
-                    <ImageIcon size={22} color={ACCENT_COLOR} />
-                    <Text style={styles.footerActionText}>{t('social.photo')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
-                    <VideoIcon size={22} color={ACCENT_COLOR} />
-                    <Text style={styles.footerActionText}>{t('social.video')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[
-                      styles.postSubmitButton, 
-                      (!postContent.trim() && selectedMedia.length === 0) && styles.postSubmitButtonDisabled
-                    ]}
+                  <View style={styles.mediaActionsRow}>
+                    <TouchableOpacity style={styles.footerAction} onPress={handleSelectImage}>
+                      <ImageIcon size={18} color={colors.primary} />
+                      <AppText variant="captionMedium" color="primary" style={styles.footerActionText}>
+                        {t('social.photo')}
+                      </AppText>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.footerAction} onPress={handleSelectVideo}>
+                      <VideoIcon size={18} color={colors.primary} />
+                      <AppText variant="captionMedium" color="primary" style={styles.footerActionText}>
+                        {t('social.video')}
+                      </AppText>
+                    </TouchableOpacity>
+                  </View>
+                  <AppButton
+                    title={t('social.post')}
+                    size="sm"
                     onPress={handleCreatePost}
                     disabled={!postContent.trim() && selectedMedia.length === 0}
-                  >
-                    <Text style={styles.postSubmitButtonText}>{t('social.post')}</Text>
-                  </TouchableOpacity>
+                    style={styles.postSubmitButton}
+                  />
                 </View>
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: PRIMARY_COLOR
-  },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
+  },
+  familyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  familyBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  familyIconDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  memberDot: {
+    marginLeft: spacing.xs,
+  },
+  viewBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  composerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  composerAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  composerInputPill: {
+    flex: 1,
+    marginHorizontal: spacing.sm,
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.full,
+  },
+  composerMediaBtn: {
+    padding: spacing.xs,
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySoft,
   },
   postingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF',
-    marginHorizontal: 15,
-    marginBottom: 15,
-    paddingVertical: 12,
-    borderRadius: 15,
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: ACCENT_COLOR,
+    borderColor: colors.border,
   },
   postingText: {
-    marginLeft: 10,
-    fontSize: 14,
-    color: ACCENT_COLOR,
-    fontWeight: '600',
+    marginLeft: spacing.sm,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 50,
+  stateContainer: {
+    paddingVertical: spacing.xxl,
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: ACCENT_COLOR,
-    fontWeight: '600',
+  stateWrapper: {
+    marginHorizontal: spacing.md,
   },
-  errorContainer: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 15,
-    padding: 20,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  retryButton: {
-    backgroundColor: ACCENT_COLOR,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  familyCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    margin: 15,
-    padding: 15,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
-  fabContainer: {
-    alignItems: 'flex-end',
-    marginHorizontal: 15,
-    marginBottom: 15,
-  },
-  fabButton: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  fabContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 25,
-    paddingLeft: 14,
-  },
-  fabIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: ACCENT_COLOR,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fabText: {
-    marginRight: 10,
-    fontSize: 14,
-    fontWeight: '600',
-    color: ACCENT_COLOR,
-  },
-  familyIconBox: {
-    backgroundColor: '#FDF2E3',
-    padding: 10,
-    borderRadius: 10
-  },
-  familyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#D4A056'
-  },
-  familySub: {
-    color: '#999',
-    fontSize: 12
-  },
-  xemText: {
-    color: '#D4A056',
-    fontWeight: '500'
-  },
-  noPostContainer: {
-    backgroundColor: '#FFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderRadius: 15,
-    marginTop: 5,
-  },
-  noPostImage: {
-    width: 180,
-    height: 180,
-    marginBottom: 15,
-  },
-  noPostTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  noPostSubtitle: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 15,
-  },
-  createPostButton: {
-    flexDirection: 'row',
-    backgroundColor: ACCENT_COLOR,
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '80%',
-  },
-  createPostButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
+  emptyContainer: {
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingVertical: spacing.xl,
+    marginTop: spacing.xs,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: colors.overlay,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -612,116 +588,89 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   createPostModalContent: {
-    width: '90%',
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    padding: 20,
+    width: '92%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.xxl,
+    padding: spacing.lg,
     maxHeight: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    ...shadows.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#D4A056',
+    marginBottom: spacing.md,
   },
   modalBody: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-  },
-  avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    overflow: 'hidden',
-    marginRight: 12,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   modalAvatar: {
-    width: 40,
-    height: 40,
-  },
-  modalUserName: {
-    fontWeight: '600',
-    fontSize: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surfaceSecondary,
   },
   modalInput: {
+    ...typography.bodySmall,
+    color: colors.textPrimary,
     textAlignVertical: 'top',
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 15,
-    paddingVertical: 8,
+    minHeight: 90,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   divider: {
     height: 1,
-    backgroundColor: '#EEE',
-    marginBottom: 15,
+    backgroundColor: colors.borderLight,
+    marginBottom: spacing.sm,
   },
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  mediaActionsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
   footerAction: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.xs,
   },
   footerActionText: {
-    marginLeft: 8,
-    fontWeight: '500',
-    color: '#333',
+    marginLeft: 2,
   },
   postSubmitButton: {
-    backgroundColor: ACCENT_COLOR,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  postSubmitButtonDisabled: {
-    opacity: 0.5,
-  },
-  postSubmitButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+    minWidth: 80,
   },
   mediaScrollContainer: {
-    marginBottom: 15,
+    marginBottom: spacing.sm,
   },
   mediaPreviewContainer: {
     position: 'relative',
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   mediaPreview: {
-    width: 150,
-    height: 150,
-    borderRadius: 10,
-    backgroundColor: '#F0F0F0',
+    width: 120,
+    height: 120,
+    borderRadius: radius.md,
+    backgroundColor: colors.borderLight,
   },
   removeMediaButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: colors.overlay,
+    borderRadius: radius.full,
+    width: 22,
+    height: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   errorMessage: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    marginBottom: 10,
+    marginBottom: spacing.xs,
   },
 });
-
