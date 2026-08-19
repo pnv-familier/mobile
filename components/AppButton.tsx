@@ -122,39 +122,44 @@ const styles = StyleSheet.create({
 
   // Sizes
   size_sm: {
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
-    minHeight: 36,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    minHeight: 34,
+    borderRadius: radius.md,
   },
   size_md: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    minHeight: 48,
+    paddingVertical: spacing.xs + 3,
+    paddingHorizontal: spacing.md,
+    minHeight: 40,
+    borderRadius: radius.lg,
   },
   size_lg: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xxl,
-    minHeight: 54,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    minHeight: 46,
+    borderRadius: radius.lg,
   },
 
   // Text Sizes
   textSize_sm: {
-    ...typography.bodySmallBold,
+    ...typography.captionBold,
   },
   textSize_md: {
-    ...typography.bodyBold,
+    ...typography.bodySmallBold,
   },
   textSize_lg: {
-    ...typography.heading3,
+    ...typography.bodyBold,
   },
 
   // Variants
   variant_primary: {
     backgroundColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
   },
   variant_secondary: {
     backgroundColor: colors.surfaceSecondary,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
   },
   variant_outline: {
@@ -164,9 +169,13 @@ const styles = StyleSheet.create({
   },
   variant_ghost: {
     backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   variant_danger: {
     backgroundColor: colors.error,
+    borderWidth: 1.5,
+    borderColor: colors.error,
   },
 
   // Variant text styles
