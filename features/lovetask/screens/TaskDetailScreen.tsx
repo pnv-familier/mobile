@@ -2,27 +2,28 @@ import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Image,
-  ActivityIndicator,
   Alert,
   Modal,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { CheckCircle2, Users, ChevronRight, User } from 'lucide-react-native';
+import { CheckCircle2, Users, ChevronRight, User, Heart, Sparkles, Share2 } from 'lucide-react-native';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { CreatePostModal } from '../../social/components/CreatePostModal';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useLogout } from '../../auth/hooks/useLogout';
-import AppButton from '../../../components/AppButton';
-import { AppHeader } from '../../../components/AppHeader';
-
-const BACKGROUND_COLOR = '#FDF2E3';
-const ACCENT_COLOR = '#D69E66';
-const TEXT_COLOR = '#4A3428';
+import {
+  AppScreen,
+  AppHeader,
+  AppText,
+  AppButton,
+  AppLoader,
+  AppError,
+} from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
+import { useTranslation } from 'react-i18next';
 
 interface TaskDetailScreenProps {
   navigation: any;
@@ -30,16 +31,21 @@ interface TaskDetailScreenProps {
 }
 
 const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const { taskId } = route.params;
   const { task, loading, error, shareTask, completeTask, refetch } = useTaskDetail(taskId);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const user = useAuthStore((state) => state.data);
   const { logout } = useLogout();
 
   const [postContent, setPostContent] = useState('');
-  const [postImages, setPostImages] = useState<string[]>([]);
+
+  const prefilledContent = task
+    ? `💕 I just completed a love task from ${task.sender.fullName}: ${task.title}`
+    : '';
 
   const handleShareToFamily = () => {
     setPostContent(prefilledContent);
@@ -50,10 +56,10 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
     setIsSharing(true);
     try {
       await shareTask(finalContent, imageUrls);
-      Alert.alert('Success', 'Task shared to family space!');
+      Alert.alert(t('common.success'), 'Task shared to family space!');
       await refetch();
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to update task status');
+      Alert.alert(t('common.error'), err?.message || 'Failed to update task status');
     } finally {
       setIsSharing(false);
     }
@@ -61,19 +67,22 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
 
   const handleCompleteTask = () => {
     Alert.alert(
-      'Complete Task',
+      t('loveTasks.markAsComplete'),
       'Are you sure you want to mark this task as completed?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Complete',
+          text: t('loveTasks.completed'),
           onPress: async () => {
+            setIsCompleting(true);
             try {
               await completeTask();
-              Alert.alert('Success', 'Task completed!');
+              Alert.alert(t('common.success'), 'Task completed!');
               await refetch();
             } catch (err: any) {
-              Alert.alert('Error', err?.message || 'Failed to complete task');
+              Alert.alert(t('common.error'), err?.message || 'Failed to complete task');
+            } finally {
+              setIsCompleting(false);
             }
           },
         },
@@ -81,145 +90,200 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
     );
   };
 
-  // AC024.11: Check if task is assigned to current user
+  // Check if task is assigned to current user
   const isAssignedToUser = task?.assignee?.userId === user?.id;
-  
-  // AC024.1, AC024.12: Show Share button only if PENDING and assigned to user
+
+  // Show Share button only if PENDING and assigned to user
   const showShareButton = task?.status === 'PENDING' && isAssignedToUser;
-  
-  // AC024.10, AC024.12: Show Complete button only if SHARED and assigned to user
+
+  // Show Complete button only if SHARED and assigned to user
   const showCompleteButton = task?.status === 'SHARED' && isAssignedToUser;
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <AppHeader title="Love Task Details" navigation={navigation} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={ACCENT_COLOR} />
-        </View>
-      </SafeAreaView>
+      <AppScreen edges={['top']} backgroundColor={colors.background}>
+        <AppHeader title={t('loveTasks.loveTasks')} navigation={navigation} />
+        <AppLoader style={styles.centerContainer} />
+      </AppScreen>
     );
   }
 
   if (error || !task) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <AppHeader title="Love Task Details" navigation={navigation} />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error || 'Task not found'}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+      <AppScreen edges={['top']} backgroundColor={colors.background}>
+        <AppHeader title={t('loveTasks.loveTasks')} navigation={navigation} />
+        <View style={styles.centerContainer}>
+          <AppError
+            message={error || 'Task not found'}
+            onRetry={refetch}
+            retryTitle={t('common.retry')}
+          />
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
-  const prefilledContent = `💕 I just completed a love task from ${task.sender.fullName}: ${task.title}`;
+  const getStatusBadge = () => {
+    switch (task.status) {
+      case 'COMPLETED':
+        return {
+          bg: colors.successSoft,
+          text: colors.successText,
+          label: t('loveTasks.completed'),
+          icon: <CheckCircle2 size={13} color={colors.successText} style={styles.badgeIcon} />,
+        };
+      case 'SHARED':
+        return {
+          bg: colors.loveSoft,
+          text: colors.loveText,
+          label: t('loveTasks.shared'),
+          icon: <Share2 size={13} color={colors.loveText} style={styles.badgeIcon} />,
+        };
+      case 'PENDING':
+      default:
+        return {
+          bg: colors.warningSoft,
+          text: colors.warningText,
+          label: t('loveTasks.pending'),
+          icon: <Sparkles size={13} color={colors.warningText} style={styles.badgeIcon} />,
+        };
+    }
+  };
+
+  const statusBadge = getStatusBadge();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <AppHeader title="Love Task Details" navigation={navigation} onUserPress={() => setShowOptions(true)} />
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <AppHeader
+        title={t('loveTasks.loveTasks')}
+        navigation={navigation}
+        onUserPress={() => setShowOptions(true)}
+      />
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Profile Match Card */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Profile Connection Match Card */}
         <View style={styles.matchCard}>
-          <View style={styles.profileInfo}>
+          {/* Sender Column */}
+          <View style={styles.profileColumn}>
             {task.sender.avatarUrl ? (
               <Image source={{ uri: task.sender.avatarUrl }} style={styles.avatarLarge} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <User size={24} color="#999" />
+                <User size={20} color={colors.textMuted} />
               </View>
             )}
-            <Text style={styles.roleLabel}>From:</Text>
-            <Text style={styles.roleName}>{task.sender.fullName}</Text>
+            <AppText variant="tiny" color="muted">
+              {t('loveTasks.from')}
+            </AppText>
+            <AppText variant="captionBold" color="primary" numberOfLines={1}>
+              {task.sender.fullName}
+            </AppText>
           </View>
 
-          <Text style={styles.heartIcon}>💖</Text>
+          {/* Connected Heart Icon */}
+          <View style={styles.heartConnector}>
+            <Heart size={24} color={colors.love} fill={colors.love} />
+          </View>
 
-          <View style={styles.profileInfo}>
+          {/* Assignee / Me Column */}
+          <View style={styles.profileColumn}>
             {user?.avatarUrl ? (
               <Image source={{ uri: user.avatarUrl }} style={styles.avatarLarge} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <User size={24} color="#999" />
+                <User size={20} color={colors.textMuted} />
               </View>
             )}
-            <Text style={styles.roleLabel}>For:</Text>
-            <Text style={styles.roleName}>Me</Text>
+            <AppText variant="tiny" color="muted">
+              {t('loveTasks.to')}
+            </AppText>
+            <AppText variant="captionBold" color="primary" numberOfLines={1}>
+              {task.assignee?.fullName || user?.fullName || 'Me'}
+            </AppText>
           </View>
         </View>
 
         {/* Task Detail Card */}
         <View style={styles.mainCard}>
-          <Text style={styles.taskTitle}>{task.title}</Text>
+          <View style={styles.mainCardHeader}>
+            <AppText variant="heading3" color="primary" style={styles.taskTitle}>
+              {task.title}
+            </AppText>
+            <View style={[styles.statusBadge, { backgroundColor: statusBadge.bg }]}>
+              {statusBadge.icon}
+              <AppText variant="tiny" style={[styles.statusText, { color: statusBadge.text }]}>
+                {statusBadge.label}
+              </AppText>
+            </View>
+          </View>
+
           <View style={styles.divider} />
-          <Text style={styles.taskDesc}>{task.description}</Text>
-          
-          {task.status === 'COMPLETED' && (
-            <View style={styles.completeBadge}>
-              <CheckCircle2 size={16} color="#4CAF50" />
-              <Text style={styles.completeText}>Complete</Text>
-            </View>
-          )}
-          
-          {task.status === 'SHARED' && (
-            <View style={[styles.completeBadge, { backgroundColor: '#FCE4EC' }]}>
-              <Text style={[styles.completeText, { color: '#C2185B' }]}>Shared</Text>
-            </View>
-          )}
-          
-          {task.status === 'PENDING' && (
-            <View style={[styles.completeBadge, { backgroundColor: '#FFF3E0' }]}>
-              <Text style={[styles.completeText, { color: '#EF6C00' }]}>Pending</Text>
-            </View>
-          )}
+
+          <AppText variant="bodySmall" color="secondary" style={styles.taskDesc}>
+            {task.description}
+          </AppText>
         </View>
 
-        {/* Love Message Section */}
+        {/* Love Message Section (if Completed) */}
         {task.status === 'COMPLETED' && task.loveMessage && (
           <View style={styles.messageCard}>
             <View style={styles.messageHeader}>
-              <Text>💗</Text>
-              <Text style={styles.messageTitle}>Love Message from {task.sender.fullName}</Text>
+              <Heart size={16} color={colors.love} fill={colors.love} />
+              <AppText variant="captionBold" color="primary">
+                {t('loveTasks.loveMessage')} {t('loveTasks.from')} {task.sender.fullName}
+              </AppText>
             </View>
-            <Text style={styles.messageBody}>{task.loveMessage}</Text>
+            <AppText variant="bodySmall" color="secondary" style={styles.messageBody}>
+              "{task.loveMessage}"
+            </AppText>
           </View>
         )}
 
         {/* Reminder for Pending Tasks */}
         {task.status === 'PENDING' && isAssignedToUser && (
           <View style={styles.reminderCard}>
-            <Text style={styles.reminderText}>
+            <AppText variant="captionMedium" color="warning" align="center">
               💡 Share this task to the family space before completing it!
-            </Text>
+            </AppText>
           </View>
-        )}
-
-        {/* Action Buttons */}
-        {showShareButton && (
-          <TouchableOpacity
-            style={[styles.actionButton, isSharing && styles.actionButtonDisabled]}
-            onPress={handleShareToFamily}
-            disabled={isSharing}
-          >
-            {isSharing ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.actionButtonText}>Share To Family Space</Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {showCompleteButton && (
-          <TouchableOpacity style={styles.completeButton} onPress={handleCompleteTask}>
-            <CheckCircle2 size={24} color="white" />
-            <Text style={[styles.completeButtonText, { marginLeft: 10 }]}>Complete Love Task</Text>
-          </TouchableOpacity>
         )}
       </ScrollView>
 
+      {/* Fixed Bottom Action CTA */}
+      {(showShareButton || showCompleteButton) && (
+        <View style={styles.bottomFooter}>
+          {showShareButton && (
+            <AppButton
+              title="Share to Family"
+              variant="primary"
+              size="md"
+              icon={<Share2 size={16} color={colors.textLight} />}
+              onPress={handleShareToFamily}
+              loading={isSharing}
+              disabled={isSharing}
+              style={styles.actionBtn}
+            />
+          )}
+
+          {showCompleteButton && (
+            <AppButton
+              title={t('loveTasks.markAsComplete')}
+              variant="primary"
+              size="md"
+              icon={<CheckCircle2 size={18} color={colors.textLight} />}
+              onPress={handleCompleteTask}
+              loading={isCompleting}
+              disabled={isCompleting}
+              style={styles.completeBtn}
+            />
+          )}
+        </View>
+      )}
+
+      {/* Social Post Modal for sharing love task to family space */}
       {showCreatePost && (
         <CreatePostModal
           visible={showCreatePost}
@@ -231,6 +295,7 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
         />
       )}
 
+      {/* Options Modal */}
       <Modal
         visible={showOptions}
         transparent={true}
@@ -242,7 +307,9 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
             <TouchableWithoutFeedback>
               <View style={styles.optionSheet}>
                 <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>Family Options</Text>
+                <AppText variant="captionBold" color="muted" align="center" style={styles.sheetTitle}>
+                  Family Options
+                </AppText>
 
                 <TouchableOpacity
                   style={styles.optionItem}
@@ -250,238 +317,223 @@ const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ navigation, route }
                     setShowOptions(false);
                     navigation.navigate('ViewListFamily');
                   }}
+                  activeOpacity={0.7}
                 >
                   <View style={styles.optionIconContainer}>
-                    <Users size={20} color={ACCENT_COLOR} />
+                    <Users size={18} color={colors.primary} />
                   </View>
-                  <Text style={styles.optionText}>View Member List</Text>
-                  <ChevronRight size={20} color="#CCC" />
+                  <AppText variant="bodySmallBold" color="primary" style={styles.optionText}>
+                    View Member List
+                  </AppText>
+                  <ChevronRight size={18} color={colors.textMuted} />
                 </TouchableOpacity>
-                <AppButton title="Logout" onPress={logout} style={{ backgroundColor: '#D4A056' }} />
+
+                <AppButton
+                  title="Logout"
+                  variant="outline"
+                  size="sm"
+                  onPress={logout}
+                  style={styles.logoutBtn}
+                />
 
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={styles.closeOptionsButton}
                   onPress={() => setShowOptions(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Close</Text>
+                  <AppText variant="captionBold" color="muted">
+                    {t('common.close')}
+                  </AppText>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  loadingContainer: {
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: spacing.lg,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxxl,
   },
-  errorText: {
-    textAlign: 'center',
-    color: '#E53935',
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: ACCENT_COLOR,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-  retryButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-  container: { padding: 20, paddingBottom: 40 },
   matchCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  profileColumn: {
+    alignItems: 'center',
+    minWidth: 80,
+    gap: 2,
+  },
+  avatarLarge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginBottom: 2,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginBottom: 2,
+    backgroundColor: colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heartConnector: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.loveSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mainCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  mainCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    gap: spacing.sm,
   },
-  profileInfo: { alignItems: 'center' },
-  avatarLarge: { width: 50, height: 50, borderRadius: 25, marginBottom: 5 },
-  avatarPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: 5,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
+  taskTitle: {
+    flex: 1,
   },
-  roleLabel: { fontSize: 10, color: '#888' },
-  roleName: { fontSize: 12, fontWeight: 'bold', color: TEXT_COLOR },
-  heartIcon: { fontSize: 30 },
-  mainCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 25,
-    borderWidth: 1,
-    borderColor: '#FFDAB9',
-  },
-  taskTitle: { fontSize: 18, fontWeight: 'bold', color: ACCENT_COLOR },
-  divider: {
-    height: 1,
-    backgroundColor: '#FFDAB9',
-    marginVertical: 12,
-  },
-  taskDesc: { color: '#666', lineHeight: 20, marginBottom: 15 },
-  completeBadge: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
   },
-  completeText: {
-    color: '#4CAF50',
-    marginLeft: 5,
-    fontSize: 13,
-    fontWeight: '500',
+  badgeIcon: {
+    marginRight: 3,
+  },
+  statusText: {
+    fontWeight: '700',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.sm,
+  },
+  taskDesc: {
+    lineHeight: 20,
   },
   messageCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginTop: spacing.md,
     borderWidth: 1,
-    borderColor: '#FFDAB9',
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   messageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  messageTitle: {
-    color: ACCENT_COLOR,
-    fontWeight: 'bold',
-    marginLeft: 8,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   messageBody: {
-    color: ACCENT_COLOR,
-    opacity: 0.8,
     fontStyle: 'italic',
+    lineHeight: 18,
   },
   reminderCard: {
-    backgroundColor: '#FFF3E0',
-    borderRadius: 15,
-    padding: 15,
-    marginTop: 20,
+    backgroundColor: colors.warningSoft,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginTop: spacing.md,
   },
-  reminderText: {
-    color: '#EF6C00',
-    textAlign: 'center',
-    fontSize: 14,
+  bottomFooter: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    ...shadows.sm,
   },
-  actionButton: {
-    backgroundColor: ACCENT_COLOR,
-    paddingVertical: 16,
-    borderRadius: 20,
-    alignItems: 'center',
-    marginTop: 25,
+  actionBtn: {
+    width: '100%',
   },
-  actionButtonDisabled: {
-    opacity: 0.6,
-  },
-  actionButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  completeButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    borderRadius: 20,
-    alignItems: 'center',
-    marginTop: 25,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  completeButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  completeBtn: {
+    width: '100%',
+    backgroundColor: colors.success,
+    borderColor: colors.success,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
   },
   optionSheet: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    padding: 20,
-    paddingBottom: 40,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl,
     width: '100%',
-    marginTop: 'auto',
+    ...shadows.lg,
   },
   sheetHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#EEE',
-    borderRadius: 3,
+    width: 36,
+    height: 4,
+    backgroundColor: colors.borderMedium,
+    borderRadius: radius.full,
     alignSelf: 'center',
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   sheetTitle: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: '600',
+    marginBottom: spacing.md,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#FDF2E3',
-    borderRadius: 15,
-    marginBottom: 15,
+    padding: spacing.md,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
   },
   optionIconContainer: {
-    padding: 8,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    marginRight: 15,
+    padding: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    marginRight: spacing.md,
   },
   optionText: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
   },
-  cancelButton: {
-    marginTop: 15,
-    padding: 15,
+  logoutBtn: {
+    marginTop: spacing.xs,
+  },
+  closeOptionsButton: {
+    marginTop: spacing.md,
     alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#999',
-    fontWeight: '600',
+    paddingVertical: spacing.xs,
   },
 });
 
