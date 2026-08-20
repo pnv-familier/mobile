@@ -432,28 +432,28 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
               ))}
             </View>
           )}
-
-          {/* Action Buttons: Cancel (Outline) vs Save (Primary) */}
-          <View style={styles.buttonRow}>
-            <AppButton
-              title={t('common.cancel')}
-              variant="outline"
-              size="md"
-              onPress={handleCancel}
-              disabled={loading}
-              style={styles.actionBtn}
-            />
-            <AppButton
-              title={t('common.save')}
-              variant="primary"
-              size="md"
-              onPress={handleSave}
-              loading={loading}
-              disabled={loading}
-              style={styles.actionBtn}
-            />
-          </View>
         </ScrollView>
+
+        {/* Pinned Bottom Action Buttons */}
+        <View style={styles.bottomFooter}>
+          <AppButton
+            title={t('common.cancel')}
+            variant="outline"
+            size="sm"
+            onPress={handleCancel}
+            disabled={loading}
+            style={styles.actionBtn}
+          />
+          <AppButton
+            title={t('common.save')}
+            variant="primary"
+            size="sm"
+            onPress={handleSave}
+            loading={loading}
+            disabled={loading}
+            style={styles.actionBtn}
+          />
+        </View>
       </KeyboardAvoidingView>
 
       {/* Participants Picker Modal */}
@@ -739,11 +739,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 2,
   },
-  buttonRow: {
+  bottomFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: spacing.lg,
     gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    ...shadows.sm,
   },
   actionBtn: {
     flex: 1,
