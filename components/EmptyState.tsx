@@ -31,11 +31,11 @@ export default function EmptyState({
       ) : icon ? (
         <View style={styles.iconContainer}>{icon}</View>
       ) : null}
-      <AppText variant="heading2" color="brand" align="center" style={styles.title}>
+      <AppText variant="bodyBold" color="brand" align="center" style={styles.title}>
         {title}
       </AppText>
       {description && (
-        <AppText variant="bodySmall" color="secondary" align="center" style={styles.description}>
+        <AppText variant="caption" color="secondary" align="center" style={styles.description}>
           {description}
         </AppText>
       )}
@@ -44,7 +44,7 @@ export default function EmptyState({
           title={actionTitle}
           onPress={onActionPress}
           variant="primary"
-          size="md"
+          size="sm"
           style={styles.actionButton}
         />
       )}
@@ -56,29 +56,29 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xxxl,
-    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
   image: {
-    width: 140,
-    height: 140,
-    marginBottom: spacing.lg,
+    width: 84,
+    height: 84,
+    marginBottom: spacing.md,
     opacity: 0.85,
   },
   iconContainer: {
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.md,
     borderRadius: 999,
     backgroundColor: colors.primarySoft,
   },
   title: {
-    marginBottom: spacing.sm,
+    marginBottom: 4,
   },
   description: {
-    marginBottom: spacing.xl,
-    maxWidth: 280,
+    marginBottom: spacing.md,
+    maxWidth: 240,
   },
   actionButton: {
-    minWidth: 160,
+    minWidth: 130,
   },
 });

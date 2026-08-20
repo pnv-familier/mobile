@@ -2,21 +2,23 @@ import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import { User, Plus, CheckCircle2, Heart } from 'lucide-react-native';
 import { useLoveTasks } from '../hooks/useLoveTasks';
 import { useFocusEffect } from '@react-navigation/native';
-import { AppHeader } from '../../../components/AppHeader';
+import {
+  AppScreen,
+  AppHeader,
+  AppText,
+  AppLoader,
+  AppError,
+  EmptyState,
+} from '../../../components';
+import { colors, spacing, radius, shadows } from '../../../theme';
 import { useTranslation } from 'react-i18next';
-
-const BACKGROUND_COLOR = '#FDF2E3';
-const ACCENT_COLOR = '#D69E66';
 
 interface LoveTasksScreenProps {
   navigation: any;
@@ -33,29 +35,32 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
     }, [activeTab])
   );
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return { bg: '#C8E6C9', text: '#2E7D32' };
+        return {
+          bg: colors.successSoft,
+          text: colors.successText,
+          label: t('loveTasks.completed'),
+        };
       case 'PENDING':
-        return { bg: '#FFF3E0', text: '#EF6C00' };
+        return {
+          bg: colors.warningSoft,
+          text: colors.warningText,
+          label: t('loveTasks.pending'),
+        };
       case 'SHARED':
-        return { bg: '#FCE4EC', text: '#C2185B' };
+        return {
+          bg: colors.loveSoft,
+          text: colors.loveText,
+          label: t('loveTasks.shared'),
+        };
       default:
-        return { bg: '#F5F5F5', text: '#666' };
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return t('loveTasks.completed');
-      case 'PENDING':
-        return t('loveTasks.pending');
-      case 'SHARED':
-        return t('loveTasks.shared');
-      default:
-        return status;
+        return {
+          bg: colors.surfaceSecondary,
+          text: colors.textSecondary,
+          label: status,
+        };
     }
   };
 
@@ -68,257 +73,317 @@ const LoveTasksScreen: React.FC<LoveTasksScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
       <AppHeader title={t('loveTasks.loveTasks')} navigation={navigation} />
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Banner Card with Integrated Segmented Tab Control */}
         <View style={styles.bannerCard}>
-          <View style={styles.bannerContent}>
-            <Heart color="#E91E63" size={40} fill="#E91E63" />
+          <View style={styles.bannerHeader}>
+            <View style={styles.bannerIconBadge}>
+              <Heart color={colors.love} size={22} fill={colors.love} />
+            </View>
             <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>{t('loveTasks.loveTasks')}</Text>
-              <Text style={styles.bannerSubTitle}>{t('loveTasks.loveTasksDesc')}</Text>
+              <AppText variant="bodyBold" color="primary">
+                {t('loveTasks.loveTasks')}
+              </AppText>
+              <AppText variant="caption" color="secondary" numberOfLines={1}>
+                {t('loveTasks.loveTasksDesc')}
+              </AppText>
             </View>
           </View>
 
           <View style={styles.tabContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tabButton, activeTab === 'received' && styles.tabActive]}
               onPress={() => setActiveTab('received')}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, activeTab === 'received' && styles.tabTextActive]}>
+              <AppText
+                variant="captionBold"
+                color={activeTab === 'received' ? 'white' : 'secondary'}
+              >
                 {t('loveTasks.received')} ({receivedCount})
-              </Text>
+              </AppText>
             </TouchableOpacity>
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.tabButton, activeTab === 'created' && styles.tabActive]}
               onPress={() => setActiveTab('created')}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, activeTab === 'created' && styles.tabTextActive]}>
+              <AppText
+                variant="captionBold"
+                color={activeTab === 'created' ? 'white' : 'secondary'}
+              >
                 {t('loveTasks.created')} ({createdCount})
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.taskListContainer}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={ACCENT_COLOR} />
-            </View>
-          ) : error ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-                <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : tasks.length > 0 ? (
-            tasks.map((task) => {
-              const statusColors = getStatusColor(task.status);
-              return (
-                <TouchableOpacity 
-                  key={task.taskId} 
-                  style={styles.taskCard}
-                  onPress={() => handleTaskPress(task.taskId)}
-                >
-                  <View style={styles.taskHeader}>
-                    <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}> 
-                      {task.status === 'COMPLETED' && (
-                        <CheckCircle2 size={14} color={statusColors.text} style={styles.statusIcon} />
-                      )}
-                      <Text style={[styles.statusText, { color: statusColors.text }]}>
-                        {getStatusText(task.status)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.taskBody}>
-                    {task.sender.avatarUrl ? (
-                      <Image source={{ uri: task.sender.avatarUrl }} style={styles.avatar} />
-                    ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <User size={20} color="#999" />
-                      </View>
+        {/* Task List Feed / States */}
+        {loading ? (
+          <AppLoader style={styles.loaderContainer} />
+        ) : error ? (
+          <View style={styles.stateWrapper}>
+            <AppError message={error} onRetry={refetch} retryTitle={t('common.retry')} />
+          </View>
+        ) : tasks.length === 0 ? (
+          <EmptyState
+            image={require('../../../assets/love-task.png')}
+            title={
+              activeTab === 'received'
+                ? t('loveTasks.noTasksReceived')
+                : t('loveTasks.noTasksCreated')
+            }
+            description={t('loveTasks.loveTasksDesc')}
+            actionTitle={t('loveTasks.createLoveTask')}
+            onActionPress={handleCreateTask}
+            style={styles.emptyCard}
+          />
+        ) : (
+          tasks.map((task) => {
+            const statusConfig = getStatusConfig(task.status);
+            return (
+              <TouchableOpacity
+                key={task.taskId}
+                style={styles.taskCard}
+                onPress={() => handleTaskPress(task.taskId)}
+                activeOpacity={0.7}
+              >
+                {/* Task Title & Status Header */}
+                <View style={styles.taskHeader}>
+                  <AppText
+                    variant="bodySmallBold"
+                    color="primary"
+                    numberOfLines={1}
+                    style={styles.taskTitle}
+                  >
+                    {task.title}
+                  </AppText>
+                  <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                    {task.status === 'COMPLETED' && (
+                      <CheckCircle2 size={12} color={statusConfig.text} style={styles.statusIcon} />
                     )}
-                    <View style={styles.taskMainContent}>
-                      <Text style={styles.description} numberOfLines={1}>{task.description}</Text>
-                      <Text style={styles.fromText}>{t('loveTasks.from')}: {task.sender.fullName}</Text>
-                    </View>
+                    <AppText
+                      variant="tiny"
+                      style={[styles.statusText, { color: statusConfig.text }]}
+                    >
+                      {statusConfig.label}
+                    </AppText>
                   </View>
+                </View>
 
-                  {task.status === 'COMPLETED' && task.loveMessage && (
-                    <View style={styles.loveMessageContainer}>
-                      <Heart size={16} color="#E91E63" fill="#E91E63" />
-                      <Text style={styles.loveMessageText}>{task.loveMessage}</Text>
+                {/* Task Sender Info & Description */}
+                <View style={styles.taskBody}>
+                  {task.sender.avatarUrl ? (
+                    <Image source={{ uri: task.sender.avatarUrl }} style={styles.avatar} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <User size={16} color={colors.textMuted} />
                     </View>
                   )}
-                </TouchableOpacity>
-              );
-            })
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Image 
-                source={require('../../../assets/love-task.png')} 
-                style={styles.emptyIcon}
-              />
-              <Text style={styles.emptyText}>
-                {activeTab === 'received' 
-                  ? t('loveTasks.noTasksReceived')
-                  : t('loveTasks.noTasksCreated')}
-              </Text>
-            </View>
-          )}
-        </View>
+                  <View style={styles.taskMainContent}>
+                    <AppText
+                      variant="bodySmall"
+                      color="secondary"
+                      numberOfLines={2}
+                      style={styles.description}
+                    >
+                      {task.description}
+                    </AppText>
+                    <AppText variant="tiny" color="muted" style={styles.fromText}>
+                      {t('loveTasks.from')}: {task.sender.fullName}
+                    </AppText>
+                  </View>
+                </View>
+
+                {/* Optional Love Message when Completed */}
+                {task.status === 'COMPLETED' && task.loveMessage && (
+                  <View style={styles.loveMessageContainer}>
+                    <Heart size={14} color={colors.love} fill={colors.love} />
+                    <AppText variant="tiny" color="primary" style={styles.loveMessageText}>
+                      {task.loveMessage}
+                    </AppText>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })
+        )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={handleCreateTask}>
-        <Plus color="white" size={28} />
+      {/* Floating Action Button (FAB) for Creating Love Task */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={handleCreateTask}
+        activeOpacity={0.85}
+        accessibilityLabel="add-love-task-fab"
+        testID="add-love-task-fab"
+      >
+        <Plus color={colors.textLight} size={24} />
       </TouchableOpacity>
-    </SafeAreaView>
+    </AppScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  container: { padding: 16, paddingBottom: 100 },
-  bannerCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#F5D6B5',
-    marginBottom: 20,
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxxl + spacing.xl,
   },
-  bannerContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  bannerTextContainer: { marginLeft: 12 },
-  bannerTitle: { fontSize: 18, color: ACCENT_COLOR, fontWeight: '600' },
-  bannerSubTitle: { fontSize: 13, color: ACCENT_COLOR, opacity: 0.8 },
-  tabContainer: { flexDirection: 'row' },
+  bannerCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    marginBottom: spacing.md,
+    ...shadows.sm,
+  },
+  bannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  bannerIconBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.loveSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  bannerTextContainer: {
+    flex: 1,
+    gap: 1,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.full,
+    padding: 3,
+  },
   tabButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: ACCENT_COLOR,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
     alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  tabActive: { backgroundColor: ACCENT_COLOR },
-  tabText: { color: ACCENT_COLOR, fontWeight: 'bold' },
-  tabTextActive: { color: '#FFF' },
-  taskListContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 15,
-    minHeight: 400,
-    padding: 12,
-  },
-  loadingContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
+  },
+  tabActive: {
+    backgroundColor: colors.primary,
+    ...shadows.sm,
+  },
+  loaderContainer: {
+    paddingVertical: spacing.xxl,
+  },
+  stateWrapper: {
+    marginVertical: spacing.md,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingVertical: spacing.xl,
+    ...shadows.sm,
   },
   taskCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.sm + 2,
     borderWidth: 1,
-    borderColor: '#F5D6B5',
-    borderRadius: 15,
-    padding: 12,
-    marginBottom: 16,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   taskHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingBottom: spacing.xs + 2,
+    marginBottom: spacing.xs + 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5D6B5',
-    paddingBottom: 8,
-    marginBottom: 10,
+    borderBottomColor: colors.borderLight,
   },
-  taskTitle: { fontSize: 15, fontWeight: 'bold', color: ACCENT_COLOR, flex: 1, marginRight: 8 },
+  taskTitle: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
   },
-  statusIcon: { marginRight: 4 },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
-  taskBody: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 45, height: 45, borderRadius: 22.5, marginRight: 12 },
+  statusIcon: {
+    marginRight: 3,
+  },
+  statusText: {
+    fontWeight: '700',
+  },
+  taskBody: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: spacing.sm,
+    backgroundColor: colors.surfaceSecondary,
+  },
   avatarPlaceholder: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    marginRight: 12,
-    backgroundColor: '#F0F0F0',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: spacing.sm,
+    backgroundColor: colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  taskMainContent: { flex: 1 },
-  description: { fontSize: 14, color: '#777', lineHeight: 20 },
-  fromText: { fontSize: 12, color: '#AAA', marginTop: 4 },
+  taskMainContent: {
+    flex: 1,
+  },
+  description: {
+    lineHeight: 18,
+  },
+  fromText: {
+    marginTop: 2,
+  },
   loveMessageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF8E1',
-    padding: 8,
-    borderRadius: 10,
-    marginTop: 10,
+    backgroundColor: colors.surfaceSecondary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    marginTop: spacing.sm,
+    gap: spacing.xs,
   },
-  loveMessageText: { fontSize: 12, color: ACCENT_COLOR, flex: 1, fontStyle: 'italic', marginLeft: 8 },
-  emptyContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    paddingVertical: 80 
-  },
-  emptyIcon: {
-    width: 120,
-    height: 120,
-    opacity: 0.6,
-  },
-  emptyText: { 
-    textAlign: 'center', 
-    color: ACCENT_COLOR, 
-    fontWeight: '600', 
-    marginTop: 24, 
-    fontSize: 16, 
-    paddingHorizontal: 40 
-  },
-  errorText: {
-    textAlign: 'center',
-    color: '#E53935',
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: ACCENT_COLOR,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-  retryButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+  loveMessageText: {
+    fontStyle: 'italic',
+    flex: 1,
   },
   fab: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
-    backgroundColor: ACCENT_COLOR,
-    width: 54,
-    height: 54,
-    borderRadius: 28,
+    bottom: spacing.lg,
+    right: spacing.md,
+    backgroundColor: colors.primary,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    ...shadows.md,
   },
 });
 
