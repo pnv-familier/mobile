@@ -18,9 +18,10 @@ import {
 import type { RootNavigationProp } from '../../../navigation/types';
 import { useFamilyMembers } from '../hooks/useFamilyMembers';
 import { useFamilyStore } from '../store/family.store';
+import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
 import { AppScreen, AppHeader, AppText } from '../../../components';
-import { colors, spacing, radius, typography, shadows } from '../../../theme';
+import { colors, spacing, radius, shadows } from '../../../theme';
 
 interface ViewListFamilyScreenProps {
   navigation: RootNavigationProp;
@@ -29,6 +30,7 @@ interface ViewListFamilyScreenProps {
 export default function ViewListFamilyScreen({
   navigation,
 }: ViewListFamilyScreenProps) {
+  const { t } = useTranslation();
   const [familyAvatar] = useState<string | null>(
     'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400'
   );
@@ -52,7 +54,7 @@ export default function ViewListFamilyScreen({
   return (
     <AppScreen edges={['top']} backgroundColor={colors.background}>
       <AppHeader
-        title="Family members"
+        title={t('family.familyMembers')}
         navigation={navigation}
         showBack={true}
         showNotification={false}
@@ -76,7 +78,7 @@ export default function ViewListFamilyScreen({
 
             <TouchableOpacity
               style={styles.cameraBtn}
-              onPress={() => console.log('Change family avatar')}
+              onPress={() => {}}
               activeOpacity={0.8}
             >
               <Camera size={14} color={colors.textLight} />
@@ -84,7 +86,7 @@ export default function ViewListFamilyScreen({
           </View>
 
           <AppText variant="heading2" color="brand" align="center" style={styles.familyName}>
-            {familyData?.name || 'Family'}
+            {familyData?.name || t('family.myFamily')}
           </AppText>
 
           {familyData?.inviteCode && (
@@ -92,7 +94,7 @@ export default function ViewListFamilyScreen({
               style={styles.inviteCodeRow}
               onPress={async () => {
                 await Clipboard.setStringAsync(familyData.inviteCode);
-                Alert.alert('Copied!', 'Invite code copied to clipboard.');
+                Alert.alert(t('family.codeCopied'), t('family.codeCopiedDesc'));
               }}
               activeOpacity={0.7}
             >
@@ -107,7 +109,7 @@ export default function ViewListFamilyScreen({
             <View style={styles.metaBadge}>
               <Users size={13} color={colors.textSecondary} />
               <AppText variant="caption" color="secondary">
-                {members?.length || 0} members
+                {members?.length || 0} {t('family.members')}
               </AppText>
             </View>
 
@@ -115,7 +117,7 @@ export default function ViewListFamilyScreen({
               <View style={styles.metaBadge}>
                 <Calendar size={13} color={colors.textSecondary} />
                 <AppText variant="caption" color="secondary">
-                  Since {formattedDate}
+                  {t('family.since')} {formattedDate}
                 </AppText>
               </View>
             )}
@@ -125,7 +127,7 @@ export default function ViewListFamilyScreen({
         {/* Member Section Header */}
         <View style={styles.sectionHeader}>
           <AppText variant="bodySmallBold" color="primary">
-            Members ({members?.length || 0})
+            {t('family.familyMembers')} ({members?.length || 0})
           </AppText>
         </View>
 

@@ -96,12 +96,13 @@
     "join": "Join",
     "shareCode": "Share Code",
     "copyCode": "Copy Code",
-    "codeCopied": "Code copied",
-    "inviteLater": "Invite Later",
     "familyNameRequired": "Family name is required",
     "familyCodeRequired": "Family code is required",
     "createFamilyFailed": "Failed to create family",
-    "joinFamilyFailed": "Failed to join family"
+    "joinFamilyFailed": "Failed to join family",
+    "familyMembers": "Family members",
+    "since": "Since",
+    "codeCopiedDesc": "Invite code copied to clipboard."
   },
   "social": {
     "socialMedia": "Social Media",

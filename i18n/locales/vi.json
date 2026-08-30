@@ -96,12 +96,13 @@
     "join": "Tham gia",
     "shareCode": "Chia sẻ mã",
     "copyCode": "Sao chép mã",
-    "codeCopied": "Đã sao chép mã",
-    "inviteLater": "Mời sau",
     "familyNameRequired": "Tên gia đình là bắt buộc",
     "familyCodeRequired": "Mã gia đình là bắt buộc",
     "createFamilyFailed": "Tạo gia đình thất bại",
-    "joinFamilyFailed": "Tham gia gia đình thất bại"
+    "joinFamilyFailed": "Tham gia gia đình thất bại",
+    "familyMembers": "Thành viên gia đình",
+    "since": "Từ",
+    "codeCopiedDesc": "Mã lời mời đã được sao chép vào khay nhớ tạm."
   },
   "social": {
     "socialMedia": "Mạng xã hội",
