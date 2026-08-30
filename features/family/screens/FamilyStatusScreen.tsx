@@ -1,164 +1,173 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  ScrollView 
+import {
+  View,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Users, UserPlus, ChevronRight, LogOut } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FamilyParamsList } from '../types';
 import { useLogout } from '../../auth/hooks/useLogout';
 import { useTranslation } from 'react-i18next';
+import { AppScreen, AppText, AppButton } from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 
 type Props = NativeStackScreenProps<FamilyParamsList, 'FamilyStatus'>;
 
 export default function FamilyStatusScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { logout } = useLogout();
-  return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={logout}
-      >
-        <Ionicons name="chevron-back" size={28} color="#D48141" />
-      </TouchableOpacity>
 
-      <ScrollView 
+  const handleLogout = () => {
+    Alert.alert(t('common.confirm'), t('settings.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.logout'),
+        style: 'destructive',
+        onPress: logout,
+      },
+    ]);
+  };
+
+  return (
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../../assets/icon.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-
+        {/* Illustration */}
         <Image
-          source={require('../../../assets/family_illustration.png')} 
+          source={require('../../../assets/family_illustration.png')}
           style={styles.illustration}
           resizeMode="contain"
         />
 
-        <Text style={styles.title}>{t('family.familyStatus')}</Text>
-        <Text style={styles.subtitle}>
+        {/* Title & Subtitle */}
+        <AppText variant="heading1" color="brand" align="center">
+          {t('family.familyStatus')}
+        </AppText>
+        <AppText
+          variant="bodySmall"
+          color="secondary"
+          align="center"
+          style={styles.subtitle}
+        >
           {t('family.chooseOption')}
-        </Text>
+        </AppText>
 
-        <TouchableOpacity 
+        {/* Option Card: Join Family */}
+        <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate('JoinFamily')}
+          activeOpacity={0.7}
         >
           <View style={styles.iconBox}>
-            <Ionicons name="people-outline" size={32} color="#D48141" />
+            <Users size={22} color={colors.primary} />
           </View>
           <View style={styles.cardTextContainer}>
-            <Text style={styles.cardTitle}>{t('family.joinFamily')}</Text>
-            <Text style={styles.cardDesc}>{t('family.joinFamilyDesc')}</Text>
+            <AppText variant="bodySmallBold" color="primary">
+              {t('family.joinFamily')}
+            </AppText>
+            <AppText variant="caption" color="secondary" style={styles.cardDesc}>
+              {t('family.joinFamilyDesc')}
+            </AppText>
           </View>
+          <ChevronRight size={18} color={colors.textMuted} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        {/* Option Card: Create Family */}
+        <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate('CreateFamily')}
+          activeOpacity={0.7}
         >
           <View style={styles.iconBox}>
-            <MaterialIcons name="person-add-alt" size={32} color="#D48141" />
+            <UserPlus size={22} color={colors.primary} />
           </View>
           <View style={styles.cardTextContainer}>
-            <Text style={styles.cardTitle}>{t('family.createFamily')}</Text>
-            <Text style={styles.cardDesc}>{t('family.createFamilyDesc')}</Text>
+            <AppText variant="bodySmallBold" color="primary">
+              {t('family.createFamily')}
+            </AppText>
+            <AppText variant="caption" color="secondary" style={styles.cardDesc}>
+              {t('family.createFamilyDesc')}
+            </AppText>
           </View>
+          <ChevronRight size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {/* Logout Action */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <LogOut size={16} color={colors.textMuted} style={styles.logoutIcon} />
+          <AppText variant="captionBold" color="muted">
+            {t('common.logout')}
+          </AppText>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF5E6',
-  },
-  backButton: {
-    paddingHorizontal: 15,
-    paddingTop: 30,
-    zIndex: 1,
-  },
   scrollContent: {
     alignItems: 'center',
-    paddingHorizontal: 25,
-    paddingBottom: 30, 
-  },
-  logoContainer: {
-    alignItems: 'center',
-  },
-  logo: {
-    width: 150,
-    height: 150,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxxl,
   },
   illustration: {
     width: '100%',
-    height: 200,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#D48141',
-    marginBottom: 10,
+    height: 180,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#D48141',
-    fontWeight: '600',
-    lineHeight: 22,
-    marginBottom: 25,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xl,
+    maxWidth: 280,
   },
   card: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     width: '100%',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.xl,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   iconBox: {
-    width: 50,
-    height: 50,
-    backgroundColor: '#FFF5E6',
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: spacing.md,
   },
   cardTextContainer: {
     flex: 1,
   },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#D48141',
-  },
   cardDesc: {
-    fontSize: 12,
-    color: '#D48141',
-    fontStyle: 'italic',
-    opacity: 0.7,
     marginTop: 2,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xl,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  logoutIcon: {
+    marginRight: spacing.xs,
   },
 });
