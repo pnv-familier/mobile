@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   TextInput,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Alert,
-  FlatList
+  FlatList,
 } from 'react-native';
-import { Send, History, ChevronLeft, Mic } from 'lucide-react-native';
+import { Send, History, Mic } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChatStore } from '../store/chat.store';
 import ChatSidebar from '../components/ChatSidebar';
 import MessageBubble from '../components/MessageBubble';
@@ -22,35 +21,46 @@ import TypingIndicator from '../components/TypingIndicator';
 import { suggestionService } from '../../suggestion';
 import { FamilyMember } from '../types';
 import { useTranslation } from 'react-i18next';
+import { AppScreen, AppText } from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 
-const PRIMARY_COLOR = '#FDF2E3';
-const ACCENT_COLOR = '#D4A056';
-
-const SuggestionChips = React.memo(({ suggestions, onSelect }: { suggestions: string[], onSelect: (s: string) => void }) => {
-  if (!suggestions || suggestions.length === 0) return null;
-  return (
-    <View style={styles.suggestionsWrapper}>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        contentContainerStyle={styles.suggestionsContent}
-      >
-        {suggestions.map((suggestion, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.suggestionChip} 
-            onPress={() => onSelect(suggestion)}
-          >
-            <Text style={styles.suggestionText}>{suggestion}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-});
+const SuggestionChips = React.memo(
+  ({
+    suggestions,
+    onSelect,
+  }: {
+    suggestions: string[];
+    onSelect: (s: string) => void;
+  }) => {
+    if (!suggestions || suggestions.length === 0) return null;
+    return (
+      <View style={styles.suggestionsWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.suggestionsContent}
+        >
+          {suggestions.map((suggestion, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.suggestionChip}
+              onPress={() => onSelect(suggestion)}
+              activeOpacity={0.7}
+            >
+              <AppText variant="captionMedium" color="brand">
+                {suggestion}
+              </AppText>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+);
 
 export default function ChatScreen({ navigation }: { navigation: any }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -58,20 +68,20 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   const [mentionSearchText, setMentionSearchText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const scrollTimeoutRef = useRef<any>(null);
-  
-  const { 
-    messages, 
-    sendMessage, 
-    isLoadingMessages, 
-    isStreaming, 
+
+  const {
+    messages,
+    sendMessage,
+    isLoadingMessages,
+    isStreaming,
     activeStreamingId,
-    error, 
+    error,
     clearError,
     clearSuggestions,
     pendingSuggestion,
     setPendingSuggestion,
     currentSessionId,
-    lastUserMessage
+    lastUserMessage,
   } = useChatStore();
 
   useEffect(() => {
@@ -79,10 +89,10 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
       useChatStore.setState({
         currentSessionId: null,
         messages: [],
-        error: null
+        error: null,
       });
     });
-    
+
     return unsubscribe;
   }, [navigation]);
 
@@ -92,7 +102,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [error]);
 
-  const lastAiMessageContent = messages.find(m => m.id === activeStreamingId)?.content;
+  const lastAiMessageContent = messages.find((m) => m.id === activeStreamingId)?.content;
 
   useEffect(() => {
     if (isStreaming && lastAiMessageContent) {
@@ -127,7 +137,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     const lastChar = inputText[inputText.length - 1];
     const lastAtIndex = inputText.lastIndexOf('@');
     const atCount = (inputText.match(/@/g) || []).length;
-    
+
     // If @ is deleted, hide dropdown and reset mentioned user
     if (!inputText.includes('@')) {
       setShowMentionDropdown(false);
@@ -137,7 +147,7 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
       }
       return;
     }
-    
+
     // Only show dropdown if: typing @, and only 1 @
     if (lastChar === '@' && lastAtIndex !== -1 && atCount === 1) {
       setShowMentionDropdown(true);
@@ -153,11 +163,9 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
     }
   }, [inputText]);
 
-
-
   const handleSend = async () => {
     if (inputText.trim() === '' || isStreaming) return;
-    
+
     const messageContent = inputText.trim();
     setInputText('');
     setShowMentionDropdown(false);
@@ -168,33 +176,32 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
 
   const handleSelectSuggestion = (suggestion: string) => {
     setInputText(suggestion);
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.isAi && lastMessage.suggestions?.length) {
-      clearSuggestions(lastMessage.id);
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.isAi && lastMsg.suggestions?.length) {
+      clearSuggestions(lastMsg.id);
     }
   };
 
   const handleConfirmSuggestion = async () => {
     if (!pendingSuggestion || !currentSessionId || !lastUserMessage) return;
-    
+
     try {
       const response = await suggestionService.confirmSuggestion(
         pendingSuggestion,
         currentSessionId,
         lastUserMessage
       );
-      
+
       // Close modal first
       setPendingSuggestion(null);
-      
+
       // Navigate to suggestion detail if success
       if (response.success && response.suggestionId) {
         navigation.navigate('Suggestions', {
           screen: 'SuggestionDetail',
-          params: { id: response.suggestionId }
+          params: { id: response.suggestionId },
         });
       } else {
-        // Show error if backend returns success: false
         Alert.alert('Error', response.message || 'Failed to confirm suggestion');
       }
     } catch (err: any) {
@@ -217,26 +224,44 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
   };
 
   const lastMessage = messages[messages.length - 1];
-  const showSuggestions = lastMessage && lastMessage.isAi && !isStreaming && lastMessage.suggestions && lastMessage.suggestions.length > 0;
+  const showSuggestions =
+    lastMessage &&
+    lastMessage.isAi &&
+    !isStreaming &&
+    lastMessage.suggestions &&
+    lastMessage.suggestions.length > 0;
+
+  // Compute dynamic keyboard offset based on platform and tab bar
+  const keyboardOffset = Platform.OS === 'ios' ? 80 : 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <AppScreen edges={['top']} backgroundColor={colors.surface}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={keyboardOffset}
+        style={styles.keyboardRoot}
       >
+        {/* Modern Header */}
         <View style={styles.header}>
-          <View style={{ width: 24 }} />
-          <Text style={styles.headerTitle}>{t('chat.familyChat')}</Text>
-          <TouchableOpacity onPress={() => setIsSidebarVisible(true)}>
-            <History size={24} color={ACCENT_COLOR} />
+          <View style={styles.headerSpacer} />
+          <AppText variant="heading3" color="primary" style={styles.headerTitle}>
+            {t('chat.familyChat')}
+          </AppText>
+          <TouchableOpacity
+            onPress={() => setIsSidebarVisible(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.historyButton}
+          >
+            <History size={22} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
+        {/* Message List */}
         <FlatList
           ref={flatListRef}
-          data={messages.filter(m => !(m.isAi && m.content === '' && m.id === activeStreamingId))}
+          data={messages.filter(
+            (m) => !(m.isAi && m.content === '' && m.id === activeStreamingId)
+          )}
           keyExtractor={(item, index) => `${item.id}-${index}`}
           onContentSizeChange={() => {
             if (isStreaming || messages.length > 0) {
@@ -244,8 +269,8 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
             }
           }}
           renderItem={({ item }) => (
-            <MessageBubble 
-              message={item} 
+            <MessageBubble
+              message={item}
               isStreaming={isStreaming && item.id === activeStreamingId}
             />
           )}
@@ -257,14 +282,18 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={5}
-          ListHeaderComponent={() => (
+          ListHeaderComponent={() =>
             messages.length === 0 && !isLoadingMessages ? (
               <View style={styles.welcomeContainer}>
-                <Text style={styles.welcomeTitle}>{t('chat.welcomeTitle')}</Text>
-                <Text style={styles.welcomeSubtitle}>{t('chat.welcomeSubtitle')}</Text>
+                <AppText variant="heading2" color="brand" align="center" style={styles.welcomeTitle}>
+                  {t('chat.welcomeTitle')}
+                </AppText>
+                <AppText variant="bodySmall" color="secondary" align="center" style={styles.welcomeSubtitle}>
+                  {t('chat.welcomeSubtitle')}
+                </AppText>
               </View>
             ) : null
-          )}
+          }
           ListFooterComponent={() => (
             <View style={styles.footerComponent}>
               {isStreaming && (
@@ -273,15 +302,16 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
                 </View>
               )}
               {showSuggestions && (
-                <SuggestionChips 
-                  suggestions={lastMessage.suggestions!} 
-                  onSelect={handleSelectSuggestion} 
+                <SuggestionChips
+                  suggestions={lastMessage.suggestions!}
+                  onSelect={handleSelectSuggestion}
                 />
               )}
             </View>
           )}
         />
 
+        {/* Mention Auto-complete Dropdown */}
         {showMentionDropdown && (
           <MentionDropdown
             visible={showMentionDropdown}
@@ -291,35 +321,42 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
           />
         )}
 
+        {/* Modern Chat Composer Input Bar */}
         <View style={styles.inputContainer}>
           <TouchableOpacity
             style={styles.voiceButton}
             disabled={isStreaming}
+            activeOpacity={0.7}
           >
-            <Mic size={20} color={isStreaming ? '#CCC' : '#D4A056'} />
+            <Mic size={20} color={isStreaming ? colors.textMuted : colors.primary} />
           </TouchableOpacity>
+
           <TextInput
             style={styles.input}
             placeholder={t('chat.typeMessage')}
+            placeholderTextColor={colors.textPlaceholder}
             value={inputText}
             onChangeText={setInputText}
             multiline
             maxLength={1000}
             editable={!isStreaming}
           />
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[
-                styles.sendButton, 
-                (!inputText.trim() || isStreaming) && styles.sendButtonDisabled
-            ]} 
+              styles.sendButton,
+              (!inputText.trim() || isStreaming) && styles.sendButtonDisabled,
+            ]}
             onPress={handleSend}
             disabled={!inputText.trim() || isStreaming}
+            activeOpacity={0.8}
           >
-            <Send size={20} color="#FFF" />
+            <Send size={18} color={colors.textLight} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
+      {/* Suggestion Card Confirmation Sheet */}
       <SuggestionCard
         visible={!!pendingSuggestion}
         metadata={pendingSuggestion}
@@ -327,133 +364,123 @@ export default function ChatScreen({ navigation }: { navigation: any }) {
         onIgnore={() => setPendingSuggestion(null)}
       />
 
-      <ChatSidebar 
-        isVisible={isSidebarVisible} 
-        onClose={() => setIsSidebarVisible(false)} 
+      {/* History Sidebar Drawer */}
+      <ChatSidebar
+        isVisible={isSidebarVisible}
+        onClose={() => setIsSidebarVisible(false)}
       />
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardRoot: {
     flex: 1,
-    backgroundColor: '#FFF',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: colors.borderLight,
+  },
+  headerSpacer: {
+    width: 24,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
     flex: 1,
     textAlign: 'center',
+  },
+  historyButton: {
+    padding: spacing.xs,
   },
   messageList: {
     flex: 1,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: colors.background,
   },
   messageListContent: {
-    padding: 15,
-    paddingBottom: 20,
+    padding: spacing.md,
+    paddingBottom: spacing.lg,
     flexGrow: 1,
   },
   welcomeContainer: {
-    marginTop: 50,
+    marginTop: spacing.xxxl,
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: spacing.xl,
   },
   welcomeTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#D4A056',
-    marginBottom: 10,
+    marginBottom: spacing.xs,
   },
   welcomeSubtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#8D5B39',
+    maxWidth: 280,
   },
   footerComponent: {
-    paddingBottom: 10,
+    paddingBottom: spacing.xs,
   },
   typingIndicatorFooter: {
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   suggestionsWrapper: {
-    marginTop: 5,
-    marginBottom: 10,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   suggestionsContent: {
-    paddingHorizontal: 5,
-    gap: 10,
+    paddingHorizontal: spacing.xs,
+    gap: spacing.sm,
     flexDirection: 'row',
   },
   suggestionChip: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: ACCENT_COLOR,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    marginRight: 8,
-  },
-  suggestionText: {
-    color: ACCENT_COLOR,
-    fontSize: 14,
-    fontWeight: '500',
+    borderColor: colors.borderMedium,
+    ...shadows.sm,
+    marginRight: spacing.xs,
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#FFF',
     alignItems: 'flex-end',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    gap: 10,
+    borderTopColor: colors.borderLight,
+    gap: spacing.sm,
   },
   voiceButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 22,
-    backgroundColor: '#F5F5F5',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.surfaceSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   input: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 10,
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
     maxHeight: 100,
-    fontSize: 14,
-    color: '#333',
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 22,
-    backgroundColor: ACCENT_COLOR,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#CCC',
+    backgroundColor: colors.textPlaceholder,
+    opacity: 0.5,
   },
 });

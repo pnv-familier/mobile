@@ -78,9 +78,8 @@ export default function RootNavigator() {
         if (user) {
             fetchMyFamily();
             notificationService.getNotifications()
-                .then(data => {
-                    setNotifications(data);
                 .then(async data => {
+                    setNotifications(data);
                     const unread = data.filter(n => n.status === 'UNREAD');
                     setUnreadCount(unread.length);
                     

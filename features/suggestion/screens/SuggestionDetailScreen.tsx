@@ -2,27 +2,46 @@ import React from 'react';
 import {
   StyleSheet,
   View,
-  Text,
-  TouchableOpacity,
   ScrollView,
-  SafeAreaView,
-  Image,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Heart, Calendar, Lightbulb, FileText, Sparkles, Target } from 'lucide-react-native';
+import { Heart, Calendar, Lightbulb, FileText, Sparkles } from 'lucide-react-native';
 import { useSuggestionDetail } from '../hooks/useSuggestionDetail';
 import { SuggestionType, EventPayload, TaskPayload } from '../types';
 import { useTranslation } from 'react-i18next';
 import { formatRelativeTime } from '../../../utils/dateFormat';
+import {
+  AppScreen,
+  AppHeader,
+  AppText,
+  AppButton,
+  AppLoader,
+  AppError,
+} from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 
-const BACKGROUND_COLOR = '#FDF2E3';
-const ACCENT_COLOR = '#D69E66';
-
-const TYPE_CONFIG: Record<SuggestionType, { icon: any; label: string; color: string }> = {
-  TASK: { icon: Heart, label: 'Love Task', color: '#E91E63' },
-  EVENT: { icon: Calendar, label: 'Event', color: '#2196F3' },
-  OFFLINE: { icon: Lightbulb, label: 'Offline', color: '#FF9800' },
+const TYPE_CONFIG: Record<
+  SuggestionType,
+  { icon: any; labelKey: string; color: string; bg: string }
+> = {
+  TASK: {
+    icon: Heart,
+    labelKey: 'loveTasks.loveTasks',
+    color: colors.love,
+    bg: colors.loveSoft,
+  },
+  EVENT: {
+    icon: Calendar,
+    labelKey: 'schedule.events',
+    color: colors.info,
+    bg: colors.infoSoft,
+  },
+  OFFLINE: {
+    icon: Lightbulb,
+    labelKey: 'suggestions.offline',
+    color: colors.warning,
+    bg: colors.warningSoft,
+  },
 };
 
 interface SuggestionDetailScreenProps {
@@ -31,34 +50,35 @@ interface SuggestionDetailScreenProps {
 }
 
 const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigation, route }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { id } = route.params;
   const { suggestion, loading, error, refetch, acceptSuggestion } = useSuggestionDetail(id);
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={ACCENT_COLOR} />
-        </View>
-      </SafeAreaView>
+      <AppScreen edges={['top']} backgroundColor={colors.background}>
+        <AppHeader title={t('suggestions.suggestionDetail')} navigation={navigation} />
+        <AppLoader style={styles.centered} />
+      </AppScreen>
     );
   }
 
   if (error || !suggestion) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <AppScreen edges={['top']} backgroundColor={colors.background}>
+        <AppHeader title={t('suggestions.suggestionDetail')} navigation={navigation} />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error || t('suggestions.suggestionNotFound')}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={refetch}>
-            <Text style={styles.retryText}>{t('common.retry')}</Text>
-          </TouchableOpacity>
+          <AppError
+            message={error || t('suggestions.suggestionNotFound')}
+            onRetry={refetch}
+            retryTitle={t('common.retry')}
+          />
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
-  const config = TYPE_CONFIG[suggestion.type];
+  const config = TYPE_CONFIG[suggestion.type] || TYPE_CONFIG.OFFLINE;
   const IconComponent = config.icon;
   const isDone = suggestion.status === 'ACCEPTED';
 
@@ -94,149 +114,196 @@ const SuggestionDetailScreen: React.FC<SuggestionDetailScreenProps> = ({ navigat
     });
   };
 
+  const hasAction = !isDone && (suggestion.type === 'TASK' || suggestion.type === 'EVENT');
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
-          <Text style={styles.headerTitle}>{t('suggestions.suggestionDetail')}</Text>
-        </View>
-      </View>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <AppHeader title={t('suggestions.suggestionDetail')} navigation={navigation} />
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Title Card */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Title & Type Hero Card */}
         <View style={styles.titleCard}>
-          <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
-            <IconComponent size={28} color={config.color} />
+          <View style={[styles.iconContainer, { backgroundColor: config.bg }]}>
+            <IconComponent size={22} color={config.color} />
           </View>
+
           <View style={styles.titleInfo}>
-            <Text style={styles.typeLabel}>{config.label}</Text>
-            <Text style={styles.title}>{suggestion.title}</Text>
+            <AppText variant="tiny" style={[styles.typeLabel, { color: config.color }]}>
+              {t(config.labelKey)}
+            </AppText>
+            <AppText variant="bodyBold" color="primary">
+              {suggestion.title}
+            </AppText>
           </View>
-          <View style={[styles.statusBadge, isDone ? styles.statusDone : styles.statusPending]}>
-            <Text style={[styles.statusText, isDone ? styles.statusTextDone : styles.statusTextPending]}>
+
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: isDone ? colors.successSoft : colors.warningSoft },
+            ]}
+          >
+            <AppText
+              variant="tiny"
+              style={[
+                styles.statusText,
+                { color: isDone ? colors.successText : colors.warningText },
+              ]}
+            >
               {isDone ? t('suggestions.done') : t('suggestions.pending')}
-            </Text>
+            </AppText>
           </View>
         </View>
 
-        {/* Suggestion Content - AC016.12 */}
+        {/* Suggestion Content Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleRow}>
-            <FileText size={18} color={ACCENT_COLOR} />
-            <Text style={styles.sectionTitle}>{t('suggestions.suggestionContent')}</Text>
+            <FileText size={16} color={colors.primary} />
+            <AppText variant="bodySmallBold" color="primary">
+              {t('suggestions.suggestionContent')}
+            </AppText>
           </View>
-          <Text style={styles.sectionBody}>{suggestion.description}</Text>
+          <AppText variant="bodySmall" color="secondary" style={styles.sectionBody}>
+            {suggestion.description}
+          </AppText>
         </View>
 
-        {/* Why This Suggestion - AC016.13 */}
+        {/* Why This Suggestion Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleRow}>
-            <Sparkles size={18} color={ACCENT_COLOR} />
-            <Text style={styles.sectionTitle}>{t('suggestions.whyThisSuggestion')}</Text>
+            <Sparkles size={16} color={colors.primary} />
+            <AppText variant="bodySmallBold" color="primary">
+              {t('suggestions.whyThisSuggestion')}
+            </AppText>
           </View>
-          <Text style={styles.sectionBody}>{suggestion.triggerContext}</Text>
-          <Text style={styles.timestamp}>{formatRelativeTime(suggestion.createdAt, t)}</Text>
+          <AppText variant="bodySmall" color="secondary" style={styles.sectionBody}>
+            {suggestion.triggerContext}
+          </AppText>
+          <AppText variant="caption" color="muted" style={styles.timestamp}>
+            {formatRelativeTime(suggestion.createdAt, t)}
+          </AppText>
         </View>
-
-        {/* Choose an action - AC016.14, 15, 16 */}
-        {!isDone && suggestion.type !== 'OFFLINE' && (
-          <View style={styles.section}>
-            <View style={styles.sectionTitleRow}>
-              <Target size={18} color={ACCENT_COLOR} />
-              <Text style={styles.sectionTitle}>{t('suggestions.chooseAction')}</Text>
-            </View>
-            {suggestion.type === 'TASK' && (
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#E91E63' }]} onPress={handleCreateLoveTask}>
-                <Heart size={20} color="#FFF" />
-                <Text style={styles.actionBtnText}>{t('suggestions.createLoveTask')}</Text>
-              </TouchableOpacity>
-            )}
-            {suggestion.type === 'EVENT' && (
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#2196F3' }]} onPress={handleAddToSchedule}>
-                <Calendar size={20} color="#FFF" />
-                <Text style={styles.actionBtnText}>{t('suggestions.addToSchedule')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Pinned Bottom Action Button */}
+      {hasAction && (
+        <View style={styles.bottomFooter}>
+          {suggestion.type === 'TASK' && (
+            <AppButton
+              title={t('suggestions.createLoveTask')}
+              variant="primary"
+              size="md"
+              icon={<Heart size={16} color={colors.textLight} />}
+              onPress={handleCreateLoveTask}
+              style={styles.actionBtnTask}
+            />
+          )}
+
+          {suggestion.type === 'EVENT' && (
+            <AppButton
+              title={t('suggestions.addToSchedule')}
+              variant="primary"
+              size="md"
+              icon={<Calendar size={16} color={colors.textLight} />}
+              onPress={handleAddToSchedule}
+              style={styles.actionBtnEvent}
+            />
+          )}
+        </View>
+      )}
+    </AppScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 35,
-    paddingBottom: 15,
-    gap: 8,
-  },
-  logoContainer: { flexDirection: 'row', alignItems: 'center' },
-  logoIcon: { width: 40, height: 40 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10, color: '#000' },
-  container: { padding: 16, paddingBottom: 40 },
-  titleCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#F5D6B5',
-    marginBottom: 16,
-  },
-  iconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  centered: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    padding: spacing.lg,
   },
-  titleInfo: { flex: 1 },
-  typeLabel: { fontSize: 11, color: ACCENT_COLOR, fontWeight: '600', marginBottom: 4 },
-  title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  statusPending: { backgroundColor: '#FFF3E0' },
-  statusDone: { backgroundColor: '#E8F5E9' },
-  statusText: { fontSize: 11, fontWeight: 'bold' },
-  statusTextPending: { color: '#EF6C00' },
-  statusTextDone: { color: '#2E7D32' },
-  section: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxxl,
+  },
+  titleCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#F5D6B5',
+    borderColor: colors.borderLight,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
-  sectionTitle: { fontSize: 15, fontWeight: 'bold', color: ACCENT_COLOR },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm + 2,
+  },
+  titleInfo: {
+    flex: 1,
+    marginRight: spacing.xs,
+  },
+  typeLabel: {
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  statusText: {
+    fontWeight: '700',
+  },
+  section: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
+    gap: spacing.xs + 2,
+    marginBottom: spacing.sm,
   },
-  sectionBody: { fontSize: 14, color: '#555', lineHeight: 22 },
-  timestamp: { fontSize: 12, color: '#999', marginTop: 8, fontStyle: 'italic' },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 20,
-    gap: 10,
-    marginTop: 4,
+  sectionBody: {
+    lineHeight: 20,
   },
-  actionBtnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { color: '#E53935', fontSize: 14, marginBottom: 12 },
-  retryBtn: { backgroundColor: ACCENT_COLOR, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
-  retryText: { color: '#FFF', fontWeight: 'bold' },
+  timestamp: {
+    marginTop: spacing.sm,
+    fontStyle: 'italic',
+  },
+  bottomFooter: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  actionBtnTask: {
+    width: '100%',
+    backgroundColor: colors.love,
+    borderColor: colors.love,
+  },
+  actionBtnEvent: {
+    width: '100%',
+    backgroundColor: colors.info,
+    borderColor: colors.info,
+  },
 });
 
 export default SuggestionDetailScreen;

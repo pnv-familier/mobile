@@ -35,7 +35,6 @@ export const useUrgentSuggestions = (enabled: boolean = true) => {
   };
 
   const handleWebSocketMessage = (data: UrgentSuggestion) => {
-    console.log('[UrgentSuggestion] WebSocket message:', data);
     // Thêm suggestion mới vào đầu danh sách
     const currentSuggestions = useUrgentSuggestionStore.getState().suggestions;
     setSuggestions([data, ...currentSuggestions]);
@@ -57,15 +56,12 @@ export const useUrgentSuggestions = (enabled: boolean = true) => {
     const connectWebSocket = async () => {
       try {
         const token = await AsyncStorage.getItem('accessToken');
-        console.log('[UrgentSuggestion] Token from AsyncStorage:', token ? `${token.substring(0, 50)}...` : 'NULL');
         
         if (!token) {
-          console.error('[UrgentSuggestion] No token found in AsyncStorage');
           return;
         }
         
         if (!isConnectedRef.current) {
-          console.log('[UrgentSuggestion] Attempting to connect WebSocket...');
           urgentSuggestionWS.connect(
             token,
             handleWebSocketMessage,

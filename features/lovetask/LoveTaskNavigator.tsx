@@ -9,7 +9,7 @@ const Stack = createNativeStackNavigator();
 export default function LoveTaskNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="LoveTasks" component={LoveTasksScreen} />
+      <Stack.Screen name="LoveTasksScreen" component={LoveTasksScreen} />
       <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
       <Stack.Screen name="CreateLoveTask" component={CreateLoveTaskScreen} />
     </Stack.Navigator>

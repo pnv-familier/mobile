@@ -1,30 +1,35 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Image,
   TouchableOpacity,
-  SafeAreaView,
+  ScrollView,
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Copy, Share2 } from 'lucide-react-native';
 import { useInviteMembers } from '../hooks/useInviteMembers';
+import { AppScreen, AppHeader, AppText, AppButton } from '../../../components';
+import { colors, spacing, radius, shadows } from '../../../theme';
 
 export default function InviteMembersScreen({ route }: any) {
   const { inviteCode } = route.params || { inviteCode: 'FAM-XXXX-0000' };
   const { onShare, onCopy, handleFinish, goBack } = useInviteMembers(inviteCode);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goBack}>
-          <Ionicons name="chevron-back" size={28} color="#D48141" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Invite members</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <AppHeader
+        title="Invite members"
+        showBack={true}
+        onBackPress={goBack}
+        showNotification={false}
+        showProfile={false}
+      />
 
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Compact Brand Logo */}
         <View style={styles.logoContainer}>
           <Image
             source={require('../../../assets/icon.png')}
@@ -33,164 +38,134 @@ export default function InviteMembersScreen({ route }: any) {
           />
         </View>
 
-        <Text style={styles.mainTitle}>Invite your family to join</Text>
-        <Text style={styles.subtitle}>
-          Share the code or link to invite{'\n'}members
-        </Text>
+        {/* Title & Subtitle */}
+        <AppText variant="heading2" color="brand" align="center" style={styles.mainTitle}>
+          Invite your family to join
+        </AppText>
+        <AppText
+          variant="caption"
+          color="secondary"
+          align="center"
+          style={styles.subtitle}
+        >
+          Share the code or link to invite members
+        </AppText>
 
+        {/* Compact Family Code Card */}
         <View style={styles.codeCard}>
-          <Text style={styles.codeLabel}>Your family code</Text>
-          <Text style={styles.codeText}>{inviteCode}</Text>
+          <AppText variant="captionBold" color="secondary" style={styles.codeLabel}>
+            Your family code
+          </AppText>
+          <AppText variant="heading2" color="brand" style={styles.codeText}>
+            {inviteCode}
+          </AppText>
 
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.copyBtn} onPress={onCopy}>
-              <Feather name="copy" size={18} color="#D48141" />
-              <Text style={styles.copyBtnText}>Copy</Text>
-            </TouchableOpacity>
+            <AppButton
+              title="Copy"
+              variant="secondary"
+              size="sm"
+              icon={<Copy size={15} color={colors.primary} />}
+              onPress={onCopy}
+              style={styles.codeActionBtn}
+            />
 
-            <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
-              <Ionicons name="share-social-outline" size={18} color="white" />
-              <Text style={styles.shareBtnText}>Share</Text>
-            </TouchableOpacity>
+            <AppButton
+              title="Share"
+              variant="primary"
+              size="sm"
+              icon={<Share2 size={15} color={colors.textLight} />}
+              onPress={onShare}
+              style={styles.codeActionBtn}
+            />
           </View>
         </View>
+      </ScrollView>
 
-        <View style={styles.bottomArea}>
-          <TouchableOpacity style={styles.mainBtn} onPress={handleFinish}>
-            <Text style={styles.mainBtnText}>Continue</Text>
-          </TouchableOpacity>
+      {/* Pinned Bottom Actions */}
+      <View style={styles.bottomFooter}>
+        <AppButton
+          title="Continue"
+          variant="primary"
+          size="md"
+          onPress={handleFinish}
+          style={styles.mainBtn}
+        />
 
-          <TouchableOpacity style={styles.skipBtn} onPress={handleFinish}>
-            <Text style={styles.skipText}>
-              Skip this, we'll continue later
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.skipBtn} onPress={handleFinish} activeOpacity={0.7}>
+          <AppText variant="captionBold" color="muted">
+            Skip this, we'll continue later
+          </AppText>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF5E6',
-  },
-  header: {
-    flexDirection: 'row',
+  scrollContent: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 60,
-    paddingTop: 10,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#D48141',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingTop: 10,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxxl,
   },
   logoContainer: {
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 68,
+    height: 68,
+    borderRadius: radius.md,
   },
   mainTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#D48141',
-    textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    color: '#D48141',
-    fontWeight: '600',
-    marginBottom: 25,
+    marginBottom: spacing.lg,
+    maxWidth: 240,
   },
   codeCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     width: '100%',
-    borderRadius: 15,
-    padding: 25,
+    borderRadius: radius.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   codeLabel: {
-    color: '#D48141',
-    fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 2,
   },
   codeText: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#D48141',
-    marginBottom: 20,
+    letterSpacing: 1.5,
+    marginBottom: spacing.md,
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    gap: spacing.sm,
   },
-  copyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF1DD',
-    paddingVertical: 12,
-    borderRadius: 10,
-    flex: 0.47,
+  codeActionBtn: {
+    flex: 1,
   },
-  copyBtnText: {
-    color: '#D48141',
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  shareBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#D48141',
-    paddingVertical: 12,
-    borderRadius: 10,
-    flex: 0.47,
-  },
-  shareBtnText: {
-    color: 'white',
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  bottomArea: {
-    width: '100%',
-    marginTop: 30,
-    marginBottom: 40,
+  bottomFooter: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    ...shadows.sm,
   },
   mainBtn: {
-    backgroundColor: '#D48141',
-    height: 55,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  mainBtnText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+    width: '100%',
   },
   skipBtn: {
     alignItems: 'center',
-  },
-  skipText: {
-    color: '#A0A0A0',
-    fontSize: 14,
+    marginTop: spacing.xs + 2,
+    paddingVertical: spacing.xs,
   },
 });

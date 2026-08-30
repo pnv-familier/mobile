@@ -2,42 +2,34 @@ import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
-  Image,
-  ActivityIndicator,
 } from 'react-native';
 import { Lightbulb, Heart, Calendar } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSuggestions, FilterValue } from '../hooks/useSuggestions';
 import { SuggestionListItem, SuggestionType } from '../types';
-import { AppHeader } from '../../../components/AppHeader';
+import {
+  AppScreen,
+  AppHeader,
+  AppText,
+  AppLoader,
+  AppError,
+  EmptyState,
+} from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 import { useTranslation } from 'react-i18next';
 
-const BACKGROUND_COLOR = '#FDF2E3';
-const ACCENT_COLOR = '#D69E66';
-
-const TYPE_CONFIG: Record<SuggestionType, { icon: any; label: string; color: string }> = {
-  TASK: { icon: Heart, label: 'Love Task', color: '#E91E63' },
-  EVENT: { icon: Calendar, label: 'Event', color: '#2196F3' },
-  OFFLINE: { icon: Lightbulb, label: 'Offline', color: '#FF9800' },
+const TYPE_CONFIG: Record<SuggestionType, { icon: any; labelKey: string; color: string; bg: string }> = {
+  TASK: { icon: Heart, labelKey: 'loveTasks.loveTasks', color: colors.love, bg: colors.loveSoft },
+  EVENT: { icon: Calendar, labelKey: 'schedule.events', color: colors.info, bg: colors.infoSoft },
+  OFFLINE: { icon: Lightbulb, labelKey: 'suggestions.offline', color: colors.warning, bg: colors.warningSoft },
 };
 
-const getFilterLabel = (t: any, value: FilterValue) => {
-  switch (value) {
-    case 'ALL': return t('suggestions.all');
-    case 'PENDING': return t('suggestions.pending');
-    case 'ACCEPTED': return t('suggestions.done');
-    default: return value;
-  }
-};
-
-const FILTERS: { label: string; value: FilterValue }[] = [
-  { label: 'All', value: 'ALL' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'Done', value: 'ACCEPTED' },
+const FILTERS: { labelKey: string; value: FilterValue }[] = [
+  { labelKey: 'suggestions.all', value: 'ALL' },
+  { labelKey: 'suggestions.pending', value: 'PENDING' },
+  { labelKey: 'suggestions.done', value: 'ACCEPTED' },
 ];
 
 interface SuggestionsScreenProps {
@@ -61,7 +53,7 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
   };
 
   const renderItem = (item: SuggestionListItem) => {
-    const config = TYPE_CONFIG[item.type];
+    const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.OFFLINE;
     const IconComponent = config.icon;
     const isDone = item.status === 'ACCEPTED';
 
@@ -70,138 +62,201 @@ const SuggestionsScreen: React.FC<SuggestionsScreenProps> = ({ navigation }) => 
         key={item.id}
         style={styles.card}
         onPress={() => navigation.navigate('SuggestionDetail', { id: item.id })}
+        activeOpacity={0.7}
       >
-        <View style={[styles.iconContainer, { backgroundColor: config.color + '20' }]}>
-          <IconComponent size={24} color={config.color} />
+        <View style={[styles.iconContainer, { backgroundColor: config.bg }]}>
+          <IconComponent size={20} color={config.color} />
         </View>
+
         <View style={styles.cardContent}>
           <View style={styles.cardTop}>
-            <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-            <View style={[styles.statusBadge, isDone ? styles.statusDone : styles.statusPending]}>
-              <Text style={[styles.statusText, isDone ? styles.statusTextDone : styles.statusTextPending]}>
+            <AppText
+              variant="bodySmallBold"
+              color="primary"
+              numberOfLines={1}
+              style={styles.cardTitle}
+            >
+              {item.title}
+            </AppText>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: isDone ? colors.successSoft : colors.warningSoft },
+              ]}
+            >
+              <AppText
+                variant="tiny"
+                style={[
+                  styles.statusText,
+                  { color: isDone ? colors.successText : colors.warningText },
+                ]}
+              >
                 {isDone ? t('suggestions.done') : t('suggestions.pending')}
-              </Text>
+              </AppText>
             </View>
           </View>
-          <Text style={styles.typeLabel}>{config.label}</Text>
-          <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
+
+          <AppText variant="tiny" style={[styles.typeLabel, { color: config.color }]}>
+            {t(config.labelKey)}
+          </AppText>
+
+          <AppText variant="caption" color="secondary" numberOfLines={2} style={styles.cardDesc}>
+            {item.description}
+          </AppText>
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
       <AppHeader title={t('suggestions.aiSuggestions')} navigation={navigation} />
 
+      {/* Segmented Filter Pills */}
       <View style={styles.filterWrapper}>
         <View style={styles.filterRow}>
-          {FILTERS.map((f) => (
-            <TouchableOpacity
-              key={f.value}
-              style={[styles.filterBtn, activeFilter === f.value && styles.filterBtnActive]}
-              onPress={() => handleFilterChange(f.value)}
-            >
-              <Text style={[styles.filterText, activeFilter === f.value && styles.filterTextActive]}>
-                {getFilterLabel(t, f.value)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {FILTERS.map((f) => {
+            const isActive = activeFilter === f.value;
+            return (
+              <TouchableOpacity
+                key={f.value}
+                style={[styles.filterBtn, isActive && styles.filterBtnActive]}
+                onPress={() => handleFilterChange(f.value)}
+                activeOpacity={0.8}
+              >
+                <AppText
+                  variant="captionBold"
+                  color={isActive ? 'white' : 'secondary'}
+                >
+                  {t(f.labelKey)}
+                </AppText>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
+      {/* Suggestion Feed & UX States */}
       {loading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={ACCENT_COLOR} />
-        </View>
+        <AppLoader style={styles.centered} />
       ) : error ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => fetchSuggestions(activeFilter)}>
-            <Text style={styles.retryText}>{t('common.retry')}</Text>
-          </TouchableOpacity>
+        <View style={styles.stateWrapper}>
+          <AppError
+            message={error}
+            onRetry={() => fetchSuggestions(activeFilter)}
+            retryTitle={t('common.retry')}
+          />
         </View>
       ) : suggestions.length === 0 ? (
-        <View style={styles.centered}>
-          <Lightbulb size={60} color={ACCENT_COLOR} opacity={0.4} />
-          <Text style={styles.emptyText}>{t('suggestions.noSuggestionsFound')}</Text>
-        </View>
+        <EmptyState
+          icon={<Lightbulb size={36} color={colors.primary} />}
+          title={t('suggestions.noSuggestionsFound')}
+          description="AI will provide helpful recommendations based on your family habits."
+          style={styles.emptyCard}
+        />
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
           {suggestions.map(renderItem)}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </AppScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
   filterWrapper: {
-    marginHorizontal: 8,
-    marginBottom: 12,
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#F5D6B5',
-    paddingHorizontal: 12,
-    paddingVertical: 18,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   filterRow: {
     flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.full,
+    padding: 3,
   },
   filterBtn: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: ACCENT_COLOR,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  filterBtnActive: { backgroundColor: ACCENT_COLOR },
-  filterText: { color: ACCENT_COLOR, fontWeight: '600', fontSize: 14 },
-  filterTextActive: { color: '#FFF' },
-  list: { padding: 16, paddingBottom: 40 },
+  filterBtnActive: {
+    backgroundColor: colors.primary,
+    ...shadows.sm,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxxl + spacing.xl,
+  },
   card: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.sm + 2,
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#F5D6B5',
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm + 2,
   },
-  cardContent: { flex: 1 },
+  cardContent: {
+    flex: 1,
+  },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#333', flex: 1, marginRight: 8 },
-  typeLabel: { fontSize: 11, color: ACCENT_COLOR, fontWeight: '600', marginBottom: 4 },
-  cardDesc: { fontSize: 13, color: '#777', lineHeight: 18 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
-  statusPending: { backgroundColor: '#FFF3E0' },
-  statusDone: { backgroundColor: '#E8F5E9' },
-  statusText: { fontSize: 11, fontWeight: 'bold' },
-  statusTextPending: { color: '#EF6C00' },
-  statusTextDone: { color: '#2E7D32' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { color: '#E53935', fontSize: 14, marginBottom: 12 },
-  retryBtn: { backgroundColor: ACCENT_COLOR, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
-  retryText: { color: '#FFF', fontWeight: 'bold' },
-  emptyText: { color: ACCENT_COLOR, fontSize: 16, fontWeight: '600', marginTop: 16 },
+  cardTitle: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  typeLabel: {
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  cardDesc: {
+    lineHeight: 18,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  statusText: {
+    fontWeight: '700',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxxl,
+  },
+  stateWrapper: {
+    margin: spacing.md,
+  },
+  emptyCard: {
+    margin: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
 });
 
 export default SuggestionsScreen;

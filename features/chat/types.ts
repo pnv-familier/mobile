@@ -1,4 +1,4 @@
-import { InstantString } from '../../../types/instant';
+import { InstantString } from '../../types/instant';
 
 export interface ChatSession {
   id: string;

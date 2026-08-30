@@ -1,43 +1,37 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   Image,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import {
-  ChevronLeft,
   Camera,
   Home,
-  MoreVertical,
   Copy,
+  Users,
+  Calendar,
 } from 'lucide-react-native';
 import type { RootNavigationProp } from '../../../navigation/types';
 import { useFamilyMembers } from '../hooks/useFamilyMembers';
 import { useFamilyStore } from '../store/family.store';
+import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
-
-
-const BACKGROUND_COLOR = '#FFF4E6';
-const ACCENT_COLOR = '#D4A056';
-const TEXT_COLOR = '#4A3428';
-
+import { AppScreen, AppHeader, AppText } from '../../../components';
+import { colors, spacing, radius, shadows } from '../../../theme';
 
 interface ViewListFamilyScreenProps {
   navigation: RootNavigationProp;
 }
 
-
 export default function ViewListFamilyScreen({
   navigation,
 }: ViewListFamilyScreenProps) {
-  const [familyAvatar, setFamilyAvatar] = useState<string | null>(
+  const { t } = useTranslation();
+  const [familyAvatar] = useState<string | null>(
     'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400'
   );
   const { members, familyCreatedAt, loading } = useFamilyMembers();
@@ -47,68 +41,100 @@ export default function ViewListFamilyScreen({
     fetchMyFamily();
   }, []);
 
+  const formattedDate = familyCreatedAt
+    ? (() => {
+        if (Array.isArray(familyCreatedAt)) {
+          const [y, m, d] = familyCreatedAt as any;
+          return new Date(y, m - 1, d).toLocaleDateString();
+        }
+        return new Date(familyCreatedAt).toLocaleDateString();
+      })()
+    : null;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.navHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronLeft size={28} color={ACCENT_COLOR} />
-        </TouchableOpacity>
-        <Text style={styles.navTitle}>Family members</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <AppHeader
+        title={t('family.familyMembers')}
+        navigation={navigation}
+        showBack={true}
+        showNotification={false}
+        showProfile={false}
+      />
 
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.profileSection}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Family Hero Card */}
+        <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.mainAvatar}>
               {familyAvatar ? (
                 <Image source={{ uri: familyAvatar }} style={styles.familyAvatar} />
               ) : (
-                <Home size={60} color={ACCENT_COLOR} />
+                <Home size={44} color={colors.primary} />
               )}
             </View>
 
-
             <TouchableOpacity
               style={styles.cameraBtn}
-              onPress={() => console.log('Change family avatar')}
+              onPress={() => {}}
+              activeOpacity={0.8}
             >
-              <Camera size={18} color="#FFF" />
+              <Camera size={14} color={colors.textLight} />
             </TouchableOpacity>
           </View>
 
+          <AppText variant="heading2" color="brand" align="center" style={styles.familyName}>
+            {familyData?.name || t('family.myFamily')}
+          </AppText>
 
-          <Text style={styles.familyName}>{familyData?.name || 'Family'}</Text>
           {familyData?.inviteCode && (
             <TouchableOpacity
               style={styles.inviteCodeRow}
               onPress={async () => {
                 await Clipboard.setStringAsync(familyData.inviteCode);
-                Alert.alert('Copied!', 'Invite code copied to clipboard.');
+                Alert.alert(t('family.codeCopied'), t('family.codeCopiedDesc'));
               }}
+              activeOpacity={0.7}
             >
-              <Text style={styles.inviteCodeText}>{familyData.inviteCode}</Text>
-              <Copy size={14} color={ACCENT_COLOR} style={{ marginLeft: 6 }} />
+              <AppText variant="captionBold" color="brand">
+                {familyData.inviteCode}
+              </AppText>
+              <Copy size={13} color={colors.primary} style={styles.copyIcon} />
             </TouchableOpacity>
           )}
-          <Text style={styles.familyMeta}>
-            {members?.length || 0} members • Created {familyCreatedAt 
-              ? (() => {
-                  if (Array.isArray(familyCreatedAt)) {
-                    const [y, m, d] = familyCreatedAt as any;
-                    return new Date(y, m - 1, d).toLocaleDateString();
-                  }
-                  return new Date(familyCreatedAt).toLocaleDateString();
-                })()
-              : 'N/A'}
-          </Text>
+
+          <View style={styles.metaRow}>
+            <View style={styles.metaBadge}>
+              <Users size={13} color={colors.textSecondary} />
+              <AppText variant="caption" color="secondary">
+                {members?.length || 0} {t('family.members')}
+              </AppText>
+            </View>
+
+            {formattedDate && (
+              <View style={styles.metaBadge}>
+                <Calendar size={13} color={colors.textSecondary} />
+                <AppText variant="caption" color="secondary">
+                  {t('family.since')} {formattedDate}
+                </AppText>
+              </View>
+            )}
+          </View>
         </View>
 
+        {/* Member Section Header */}
+        <View style={styles.sectionHeader}>
+          <AppText variant="bodySmallBold" color="primary">
+            {t('family.familyMembers')} ({members?.length || 0})
+          </AppText>
+        </View>
 
+        {/* Member List */}
         <View style={styles.memberList}>
           {loading ? (
-            <ActivityIndicator size="large" color={ACCENT_COLOR} style={{ marginTop: 20 }} />
+            <ActivityIndicator size="small" color={colors.primary} style={styles.loader} />
           ) : (
             members?.map((item: any) => (
               <View key={item.userId} style={styles.memberItem}>
@@ -116,255 +142,137 @@ export default function ViewListFamilyScreen({
                   <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
                 ) : (
                   <View style={[styles.memberAvatar, styles.memberAvatarPlaceholder]}>
-                    <Text style={styles.memberAvatarText}>
+                    <AppText variant="bodySmallBold" color="brand">
                       {item.displayName?.charAt(0)?.toUpperCase() || '?'}
-                    </Text>
+                    </AppText>
                   </View>
                 )}
                 <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{item.displayName}</Text>
-                  <Text style={styles.memberRole}>{item.role}</Text>
+                  <AppText variant="bodySmallBold" color="primary">
+                    {item.displayName}
+                  </AppText>
+                  <AppText variant="caption" color="secondary">
+                    {item.role}
+                  </AppText>
                 </View>
-                <TouchableOpacity style={styles.moreButton}>
-                  <MoreVertical size={20} color="#999" />
-                </TouchableOpacity>
               </View>
             ))
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
-
-const TabItem = ({
-  icon,
-  label,
-  active,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) => (
-  <TouchableOpacity style={styles.tabItem}>
-    {icon}
-    <Text style={[styles.tabLabel, active && styles.activeTabLabel]}>
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
-
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BACKGROUND_COLOR,
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxxl,
   },
-
-
-  navHeader: {
-    flexDirection: 'row',
+  profileCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 35,
-    paddingBottom: 15,
-    backgroundColor: BACKGROUND_COLOR,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
-
-
-  navTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: TEXT_COLOR,
-  },
-
-
-  profileSection: {
-    alignItems: 'center',
-    marginVertical: 25,
-    paddingHorizontal: 20,
-  },
-
   avatarContainer: {
     position: 'relative',
-    marginBottom: 15,
+    marginBottom: spacing.sm,
   },
-
   mainAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#FFF',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: colors.surfaceSecondary,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 3,
-    borderColor: '#FFF',
+    borderWidth: 2,
+    borderColor: colors.borderLight,
   },
-
   familyAvatar: {
     width: '100%',
     height: '100%',
   },
-
-
   cameraBtn: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: ACCENT_COLOR,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    backgroundColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: BACKGROUND_COLOR,
-    elevation: 2,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    ...shadows.sm,
   },
-
-
   familyName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: TEXT_COLOR,
+    marginBottom: 4,
   },
   inviteCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 8,
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: '#FFDAB9',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderColor: colors.border,
   },
-  inviteCodeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: ACCENT_COLOR,
-    letterSpacing: 1,
+  copyIcon: {
+    marginLeft: 6,
   },
-
-
-  familyMeta: {
-    fontSize: 14,
-    color: '#666',
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
-
-
+  metaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sectionHeader: {
+    marginBottom: spacing.xs + 2,
+    marginLeft: spacing.xs,
+  },
   memberList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    gap: spacing.sm,
   },
-
-
+  loader: {
+    marginTop: spacing.md,
+  },
   memberItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#FFDAB9',
+    borderColor: colors.borderLight,
+    ...shadows.sm,
   },
-
-
   memberAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
   memberAvatarPlaceholder: {
-    backgroundColor: '#FFDAB9',
+    backgroundColor: colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  memberAvatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: ACCENT_COLOR,
-  },
-
-
   memberInfo: {
-    marginLeft: 12,
+    marginLeft: spacing.md,
     flex: 1,
   },
-
-
-  memberName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: TEXT_COLOR,
-    marginBottom: 2,
-  },
-
-
-  memberRole: {
-    fontSize: 13,
-    color: '#888',
-  },
-
-  memberDate: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-
-
-  bottomTab: {
-    flexDirection: 'row',
-    height: 100,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingBottom: 40,
-  },
-
-
-  tabItem: {
-    alignItems: 'center',
-  },
-
-
-  tabLabel: {
-    fontSize: 12,
-    color: ACCENT_COLOR,
-    marginTop: 4,
-  },
-
-
-  activeTabLabel: {
-    fontWeight: 'bold',
-  },
-
-  moreButton: {
-    padding: 8,
-  },
 });
-
-
-
