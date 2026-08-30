@@ -11,7 +11,6 @@ const Stack = createNativeStackNavigator<AppStackParamList>()
 export default function AppNavigator() {
     const isSetup = useAuthStore((state) => state.data?.setup)
     const hasFamily = useFamilyStore((state) => state.hasFamily)
-    console.log('AppNavigator isSetup:', isSetup);
 
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>

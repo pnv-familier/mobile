@@ -114,10 +114,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   disabled: {
-    opacity: 0.5,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.border,
   },
   disabledText: {
-    opacity: 0.8,
+    color: colors.textSecondary,
+    opacity: 0.7,
   },
 
   // Sizes

@@ -1,386 +1,455 @@
-import React from "react"
+import React, { useState } from 'react';
 import {
-    View,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Modal,
-} from "react-native"
-import { Feather } from "@expo/vector-icons"
-import AppScreen from "../../../components/AppScreen"
-import AppText from "../../../components/AppText"
-import AppButton from "../../../components/AppButton"
-import { GENDER_LIST } from "../constant/genderList"
-import { HOBBY_LIST } from "../constant/hobbyList"
-import { useSetupProfile } from "../hook/setupProfile"
-import { useTranslation } from "react-i18next"
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+} from 'react-native';
+import { Users, User, Check, Calendar, Heart } from 'lucide-react-native';
+import { AppScreen, AppText, AppButton } from '../../../components';
+import { GENDER_LIST } from '../constant/genderList';
+import { HOBBY_LIST } from '../constant/hobbyList';
+import { useSetupProfile } from '../hook/setupProfile';
+import { useTranslation } from 'react-i18next';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 
 const SetupProfileScreen = () => {
-    const { t } = useTranslation();
-    const {
-        dateOfBirth,
-        setDateOfBirth,
-        gender,
-        setGender,
-        selectedHobbies,
-        toggleHobby,
-        onSaveProfile,
-        loading
-    } = useSetupProfile()
+  const { t } = useTranslation();
+  const {
+    dateOfBirth,
+    setDateOfBirth,
+    gender,
+    setGender,
+    selectedHobbies,
+    toggleHobby,
+    onSaveProfile,
+    loading,
+  } = useSetupProfile();
 
-    const [showDayPicker, setShowDayPicker] = React.useState(false)
-    const [showMonthPicker, setShowMonthPicker] = React.useState(false)
-    const [showYearPicker, setShowYearPicker] = React.useState(false)
+  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
 
-    const days = Array.from({ length: 31 }, (_, i) => i + 1)
-    const months = [
-        { value: 1, label: "January" }, { value: 2, label: "February" }, { value: 3, label: "March" },
-        { value: 4, label: "April" }, { value: 5, label: "May" }, { value: 6, label: "June" },
-        { value: 7, label: "July" }, { value: 8, label: "August" }, { value: 9, label: "September" },
-        { value: 10, label: "October" }, { value: 11, label: "November" }, { value: 12, label: "December" }
-    ]
-    const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i)
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const months = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+  ];
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
 
-    const renderPicker = (items: any[], selectedValue: any, onSelect: (value: any) => void, onClose: () => void, isMonth = false) => (
-        <Modal transparent animationType="slide">
-            <View style={styles.modalOverlay}>
-                <View style={styles.pickerContainer}>
-                    <View style={styles.pickerHeader}>
-                        <TouchableOpacity onPress={onClose}>
-                            <AppText style={styles.pickerCancel}>{t('common.cancel')}</AppText>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={onClose}>
-                            <AppText style={styles.pickerDone}>{t('common.done')}</AppText>
-                        </TouchableOpacity>
-                    </View>
-                    <ScrollView style={styles.pickerScroll}>
-                        {items.map((item) => (
-                            <TouchableOpacity
-                                key={isMonth ? item.value : item}
-                                style={[
-                                    styles.pickerItem,
-                                    selectedValue === (isMonth ? item.value : item) && styles.pickerItemSelected
-                                ]}
-                                onPress={() => {
-                                    onSelect(isMonth ? item.value : item)
-                                    onClose()
-                                }}
-                            >
-                                <AppText style={[
-                                    styles.pickerItemText,
-                                    selectedValue === (isMonth ? item.value : item) && styles.pickerItemTextSelected
-                                ]}>
-                                    {isMonth ? item.label : item}
-                                </AppText>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
-            </View>
-        </Modal>
-    )
+  const renderPicker = (
+    items: any[],
+    selectedValue: any,
+    onSelect: (value: any) => void,
+    onClose: () => void,
+    isMonth = false
+  ) => (
+    <Modal transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <View style={styles.pickerContainer}>
+          <View style={styles.pickerHeader}>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <AppText variant="bodySmall" color="secondary">
+                {t('common.cancel')}
+              </AppText>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <AppText variant="bodySmallBold" color="brand">
+                {t('common.done')}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
+            {items.map((item) => {
+              const itemVal = isMonth ? item.value : item;
+              const isSelected = selectedValue === itemVal;
+              return (
+                <TouchableOpacity
+                  key={itemVal}
+                  style={[styles.pickerItem, isSelected && styles.pickerItemSelected]}
+                  onPress={() => {
+                    onSelect(itemVal);
+                    onClose();
+                  }}
+                >
+                  <AppText
+                    variant="bodySmall"
+                    style={[
+                      styles.pickerItemText,
+                      isSelected && styles.pickerItemTextSelected,
+                    ]}
+                  >
+                    {isMonth ? item.label : item}
+                  </AppText>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 
-    return (
-        <AppScreen style={styles.container}>
-            <View style={styles.header}>
-                <Feather name="users" size={32} color="#E39A5A" />
-                <AppText style={styles.headerTitle}>{t('profile.setupSubtitle')}</AppText>
-            </View>
+  return (
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header Hero */}
+        <View style={styles.headerSection}>
+          <View style={styles.iconBadge}>
+            <Users size={28} color={colors.primary} />
+          </View>
+          <AppText variant="heading1" color="brand" align="center">
+            {t('profile.setupProfile')}
+          </AppText>
+          <AppText variant="bodySmall" color="secondary" align="center" style={styles.subtitle}>
+            {t('profile.setupSubtitle')}
+          </AppText>
+        </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.stepContainer}>
-                    <AppText style={styles.stepTitle}>{t('profile.setupProfile')}</AppText>
-                    
-                    <View style={styles.inputCard}>
-                        <AppText style={styles.inputLabel}>{t('profile.dateOfBirth')}</AppText>
-                        <AppText style={styles.inputSubtext}>Used for family calendar and birthday reminders</AppText>
-                        <View style={styles.datePickerContainer}>
-                            <TouchableOpacity style={styles.dateSelector} onPress={() => setShowDayPicker(true)}>
-                                <AppText style={styles.dateSelectorLabel}>Day</AppText>
-                                <AppText style={styles.dateSelectorValue}>{dateOfBirth.day}</AppText>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.dateSelector} onPress={() => setShowMonthPicker(true)}>
-                                <AppText style={styles.dateSelectorLabel}>Month</AppText>
-                                <AppText style={styles.dateSelectorValue}>{months.find(m => m.value === dateOfBirth.month)?.label}</AppText>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.dateSelector} onPress={() => setShowYearPicker(true)}>
-                                <AppText style={styles.dateSelectorLabel}>Year</AppText>
-                                <AppText style={styles.dateSelectorValue}>{dateOfBirth.year}</AppText>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+        {/* Date of Birth Card */}
+        <View style={styles.inputCard}>
+          <View style={styles.cardHeaderRow}>
+            <Calendar size={18} color={colors.primary} />
+            <AppText variant="bodySmallBold" color="primary">
+              {t('profile.dateOfBirth')}
+            </AppText>
+          </View>
+          <AppText variant="caption" color="muted" style={styles.inputSubtext}>
+            Used for family calendar and birthday reminders
+          </AppText>
 
-                    <View style={styles.inputCard}>
-                        <AppText style={styles.inputLabel}>{t('profile.gender')}</AppText>
-                        <AppText style={styles.inputSubtext}>Used for correct pronoun usage by AI</AppText>
-                        <View style={styles.genderContainer}>
-                            {GENDER_LIST.map((item) => (
-                                <TouchableOpacity
-                                    key={item.key}
-                                    onPress={() => setGender(item.key)}
-                                    style={[
-                                        styles.genderOption,
-                                        gender === item.key && styles.genderOptionActive
-                                    ]}
-                                >
-                                    <Feather 
-                                        name={item.icon as any} 
-                                        size={18} 
-                                        color={gender === item.key ? "#fff" : "#E39A5A"} 
-                                    />
-                                    <AppText style={[
-                                        styles.genderText,
-                                        gender === item.key && styles.genderTextActive
-                                    ]}>
-                                        {item.label}
-                                    </AppText>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
+          <View style={styles.datePickerContainer}>
+            <TouchableOpacity
+              style={styles.dateSelector}
+              onPress={() => setShowDayPicker(true)}
+              activeOpacity={0.7}
+            >
+              <AppText variant="tiny" color="muted">
+                Day
+              </AppText>
+              <AppText variant="bodySmallBold" color="primary">
+                {dateOfBirth.day}
+              </AppText>
+            </TouchableOpacity>
 
-                    <View style={styles.inputCard}>
-                        <AppText style={styles.inputLabel}>{t('profile.hobbies')}</AppText>
-                        <AppText style={styles.inputSubtext}>{t('profile.selectHobbies')}</AppText>
-                        <View style={styles.hobbiesContainer}>
-                            {HOBBY_LIST.map((hobby, index) => {
-                                const isActive = selectedHobbies.includes(hobby);
-                                return (
-                                    <TouchableOpacity
-                                        key={index}
-                                        onPress={() => toggleHobby(hobby)}
-                                        style={[
-                                            styles.hobbyTag,
-                                            isActive && styles.hobbyTagActive,
-                                        ]}
-                                    >
-                                        {isActive && (
-                                            <Feather
-                                                name="check"
-                                                size={14}
-                                                color="#fff"
-                                                style={{ marginRight: 4 }}
-                                            />
-                                        )}
-                                        <AppText
-                                            style={[
-                                                styles.hobbyText,
-                                                isActive && styles.hobbyTextActive,
-                                            ]}
-                                        >
-                                            {hobby}
-                                        </AppText>
-                                    </TouchableOpacity>
-                                )
-                            })}
-                        </View>
-                    </View>
+            <TouchableOpacity
+              style={styles.dateSelector}
+              onPress={() => setShowMonthPicker(true)}
+              activeOpacity={0.7}
+            >
+              <AppText variant="tiny" color="muted">
+                Month
+              </AppText>
+              <AppText variant="bodySmallBold" color="primary">
+                {months.find((m) => m.value === dateOfBirth.month)?.label}
+              </AppText>
+            </TouchableOpacity>
 
-                    <AppButton
-                        title={loading ? t('common.loading') : t('common.save')}
-                        style={styles.saveButton}
-                        onPress={onSaveProfile}
-                        disabled={!gender || loading}
-                    />
-                </View>
-            </ScrollView>
+            <TouchableOpacity
+              style={styles.dateSelector}
+              onPress={() => setShowYearPicker(true)}
+              activeOpacity={0.7}
+            >
+              <AppText variant="tiny" color="muted">
+                Year
+              </AppText>
+              <AppText variant="bodySmallBold" color="primary">
+                {dateOfBirth.year}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-            {showDayPicker && renderPicker(days, dateOfBirth.day, (day) => setDateOfBirth({...dateOfBirth, day}), () => setShowDayPicker(false))}
-            {showMonthPicker && renderPicker(months, dateOfBirth.month, (month) => setDateOfBirth({...dateOfBirth, month}), () => setShowMonthPicker(false), true)}
-            {showYearPicker && renderPicker(years, dateOfBirth.year, (year) => setDateOfBirth({...dateOfBirth, year}), () => setShowYearPicker(false))}
-        </AppScreen>
-    )
-}
+        {/* Gender Selection Card */}
+        <View style={styles.inputCard}>
+          <View style={styles.cardHeaderRow}>
+            <User size={18} color={colors.primary} />
+            <AppText variant="bodySmallBold" color="primary">
+              {t('profile.gender')}
+            </AppText>
+          </View>
+          <AppText variant="caption" color="muted" style={styles.inputSubtext}>
+            Used for correct pronoun usage by AI
+          </AppText>
 
-export default SetupProfileScreen
+          <View style={styles.genderContainer}>
+            {GENDER_LIST.map((item) => {
+              const isActive = gender === item.key;
+              return (
+                <TouchableOpacity
+                  key={item.key}
+                  onPress={() => setGender(item.key)}
+                  style={[styles.genderOption, isActive && styles.genderOptionActive]}
+                  activeOpacity={0.7}
+                >
+                  <User
+                    size={18}
+                    color={isActive ? colors.textLight : colors.primary}
+                  />
+                  <AppText
+                    variant="bodySmallBold"
+                    style={[styles.genderText, isActive && styles.genderTextActive]}
+                  >
+                    {item.label}
+                  </AppText>
+                  {isActive && <Check size={16} color={colors.textLight} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Hobbies Card */}
+        <View style={styles.inputCard}>
+          <View style={styles.cardHeaderRow}>
+            <Heart size={18} color={colors.primary} />
+            <AppText variant="bodySmallBold" color="primary">
+              {t('profile.hobbies')}
+            </AppText>
+          </View>
+          <AppText variant="caption" color="muted" style={styles.inputSubtext}>
+            {t('profile.selectHobbies')}
+          </AppText>
+
+          <View style={styles.hobbiesContainer}>
+            {HOBBY_LIST.map((hobby, index) => {
+              const isActive = selectedHobbies.includes(hobby);
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => toggleHobby(hobby)}
+                  style={[styles.hobbyTag, isActive && styles.hobbyTagActive]}
+                  activeOpacity={0.7}
+                >
+                  {isActive && (
+                    <Check size={13} color={colors.textLight} style={styles.checkIcon} />
+                  )}
+                  <AppText
+                    variant="captionBold"
+                    style={[styles.hobbyText, isActive && styles.hobbyTextActive]}
+                  >
+                    {hobby}
+                  </AppText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Pinned Bottom Save Button */}
+      <View style={styles.bottomFooter}>
+        <AppButton
+          title={loading ? t('common.loading') : t('common.save')}
+          variant="primary"
+          size="md"
+          onPress={onSaveProfile}
+          disabled={!gender || loading}
+          loading={loading}
+          style={styles.saveButton}
+        />
+      </View>
+
+      {showDayPicker &&
+        renderPicker(
+          days,
+          dateOfBirth.day,
+          (day) => setDateOfBirth({ ...dateOfBirth, day }),
+          () => setShowDayPicker(false)
+        )}
+      {showMonthPicker &&
+        renderPicker(
+          months,
+          dateOfBirth.month,
+          (month) => setDateOfBirth({ ...dateOfBirth, month }),
+          () => setShowMonthPicker(false),
+          true
+        )}
+      {showYearPicker &&
+        renderPicker(
+          years,
+          dateOfBirth.year,
+          (year) => setDateOfBirth({ ...dateOfBirth, year }),
+          () => setShowYearPicker(false)
+        )}
+    </AppScreen>
+  );
+};
+
+export default SetupProfileScreen;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#FFF8E7",
-    },
-    header: {
-        alignItems: "center",
-        paddingVertical: 30,
-        paddingHorizontal: 24,
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#E39A5A",
-        textAlign: "center",
-        marginTop: 12,
-    },
-    scrollContent: {
-        paddingHorizontal: 24,
-        paddingBottom: 80,
-    },
-    stepContainer: {
-        flex: 1,
-    },
-    stepTitle: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#E39A5A",
-        marginBottom: 24,
-    },
-    inputCard: {
-        backgroundColor: "rgba(255, 255, 255, 0.9)",
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 16,
-        shadowColor: "#E39A5A",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    inputLabel: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#E39A5A",
-        marginBottom: 4,
-    },
-    inputSubtext: {
-        fontSize: 12,
-        color: "#B8860B",
-        marginBottom: 16,
-    },
-    datePickerContainer: {
-        flexDirection: "row",
-        gap: 12,
-    },
-    dateSelector: {
-        flex: 1,
-        alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-        backgroundColor: "rgba(240, 183, 133, 0.1)",
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: "rgba(227, 154, 90, 0.2)",
-    },
-    dateSelectorLabel: {
-        fontSize: 12,
-        fontWeight: "600",
-        color: "#B8860B",
-        marginBottom: 4,
-    },
-    dateSelectorValue: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#E39A5A",
-    },
-    genderContainer: {
-        gap: 8,
-    },
-    genderOption: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        backgroundColor: "rgba(240, 183, 133, 0.2)",
-        borderRadius: 12,
-        borderWidth: 2,
-        borderColor: "rgba(227, 154, 90, 0.3)",
-        gap: 12,
-    },
-    genderOptionActive: {
-        backgroundColor: "#E39A5A",
-        borderColor: "#E39A5A",
-    },
-    genderText: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#E39A5A",
-        flex: 1,
-    },
-    genderTextActive: {
-        color: "#fff",
-    },
-    saveButton: {
-        marginTop: 8,
-        backgroundColor: "#E39A5A",
-        borderRadius: 16,
-        shadowColor: "#E39A5A",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "flex-end",
-    },
-    pickerContainer: {
-        backgroundColor: "#fff",
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        maxHeight: "50%",
-    },
-    pickerHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "#f0f0f0",
-    },
-    pickerCancel: {
-        fontSize: 16,
-        color: "#999",
-    },
-    pickerDone: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#E39A5A",
-    },
-    pickerScroll: {
-        maxHeight: 300,
-    },
-    pickerItem: {
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: "#f5f5f5",
-    },
-    pickerItemSelected: {
-        backgroundColor: "rgba(227, 154, 90, 0.1)",
-    },
-    pickerItemText: {
-        fontSize: 14,
-        color: "#333",
-        textAlign: "center",
-    },
-    pickerItemTextSelected: {
-        color: "#E39A5A",
-        fontWeight: "600",
-    },
-    hobbiesContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 10,
-    },
-    hobbyTag: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: "#F3C596",
-        flexDirection: "row",
-        alignItems: "center",
-    },
-    hobbyTagActive: {
-        backgroundColor: "#E39A5A",
-    },
-    hobbyText: {
-        fontSize: 13,
-        color: "#fff",
-        fontWeight: "500",
-        textTransform: "capitalize",
-    },
-    hobbyTextActive: {
-        color: "#fff",
-        fontWeight: "700",
-    },
-})
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxxl,
+  },
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  iconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  subtitle: {
+    marginTop: 4,
+  },
+  inputCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    marginBottom: 2,
+  },
+  inputSubtext: {
+    marginBottom: spacing.sm,
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  dateSelector: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  genderContainer: {
+    gap: spacing.sm,
+  },
+  genderOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    gap: spacing.sm,
+  },
+  genderOptionActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  genderText: {
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  genderTextActive: {
+    color: colors.textLight,
+  },
+  hobbiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs + 2,
+  },
+  hobbyTag: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hobbyTagActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkIcon: {
+    marginRight: 4,
+  },
+  hobbyText: {
+    color: colors.textSecondary,
+    textTransform: 'capitalize',
+  },
+  hobbyTextActive: {
+    color: colors.textLight,
+  },
+  bottomFooter: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  saveButton: {
+    width: '100%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  pickerContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    maxHeight: '50%',
+    paddingBottom: spacing.xl,
+    ...shadows.lg,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  pickerScroll: {
+    maxHeight: 280,
+  },
+  pickerItem: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  pickerItemSelected: {
+    backgroundColor: colors.primarySoft,
+  },
+  pickerItemText: {
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  pickerItemTextSelected: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+});
