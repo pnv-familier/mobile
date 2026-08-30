@@ -9,12 +9,13 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from 'react-native';
-import { Menu, Users, User, ChevronRight, Globe, LogOut } from 'lucide-react-native';
+import { Menu, Users, User, ChevronRight, ChevronLeft, Globe, LogOut } from 'lucide-react-native';
 import { NotificationBell } from '../features/notification/components/NotificationBell';
 import { NotificationPopup } from '../features/notification/components/NotificationPopup';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '../i18n';
 import { useLogout } from '../features/auth/hooks/useLogout';
+import { useAuthStore } from '../features/auth/store/auth.store';
 import { colors, spacing, radius, typography } from '../theme';
 
 const ACCENT_COLOR = '#D4A056';
@@ -22,6 +23,8 @@ const ACCENT_COLOR = '#D4A056';
 interface AppHeaderProps {
   title: string;
   navigation?: any;
+  showBack?: boolean;
+  onBackPress?: () => void;
   showNotification?: boolean;
   showProfile?: boolean;
   showMenu?: boolean;
@@ -31,17 +34,33 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({
   title,
   navigation,
-  showNotification = true,
-  showProfile = true,
+  showBack = false,
+  onBackPress,
+  showNotification,
+  showProfile,
   showMenu = true,
   onUserPress,
 }) => {
   const { t, i18n } = useTranslation();
   const { logout } = useLogout();
+  const user = useAuthStore((state) => state.data);
+  const isAuthenticated = !!user;
+
+  const shouldShowNotification = showNotification !== undefined ? showNotification : isAuthenticated;
+  const shouldShowProfile = showProfile !== undefined ? showProfile : isAuthenticated;
+
   const [showOptions, setShowOptions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const currentLanguage = i18n.language;
+
+  const handleBack = () => {
+    if (onBackPress) {
+      onBackPress();
+    } else if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -70,17 +89,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
+          {showBack && (
+            <TouchableOpacity
+              onPress={handleBack}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.backButton}
+            >
+              <ChevronLeft size={22} color={colors.primary} />
+            </TouchableOpacity>
+          )}
           <Text style={styles.headerTitle}>{title}</Text>
         </View>
         <View style={styles.headerRight}>
-          {showNotification && (
+          {shouldShowNotification && (
             <NotificationBell 
               onPress={() => setShowNotifications(true)} 
               color={ACCENT_COLOR}
               style={styles.headerIcon}
             />
           )}
-          {showProfile && (
+          {shouldShowProfile && (
             <TouchableOpacity accessibilityLabel='profile-options-btn' testID='profile-options-btn' onPress={onUserPress || (() => setShowOptions(true))}>
               <User size={22} color={ACCENT_COLOR} />
             </TouchableOpacity>
@@ -221,6 +249,11 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  backButton: {
+    padding: spacing.xs,
+    marginRight: spacing.xs,
+    marginLeft: -spacing.xs,
   },
   headerTitle: {
     ...typography.heading2,
