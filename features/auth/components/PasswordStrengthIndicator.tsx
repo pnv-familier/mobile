@@ -1,37 +1,43 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { PasswordStrength } from '../utils/password';
+import AppText from '../../../components/AppText';
+import { colors, radius, spacing } from '../../../theme';
 
 type Props = {
   strength: PasswordStrength;
 };
 
-const strengthLevels = {
-  weak: { text: 'Weak', color: '#FF4136' },
-  medium: { text: 'Medium', color: '#FFDC00' },
-  strong: { text: 'Strong', color: '#2ECC40' },
-  '': { text: '', color: 'transparent' }
+const strengthLevels: Record<string, { text: string; color: string; percent: string }> = {
+  weak: { text: 'Weak', color: colors.error, percent: '33%' },
+  medium: { text: 'Medium', color: colors.warning, percent: '66%' },
+  strong: { text: 'Strong', color: colors.success, percent: '100%' },
 };
 
 const PasswordStrengthIndicator = ({ strength }: Props) => {
-  if (!strength) {
+  if (!strength || !strengthLevels[strength]) {
     return null;
   }
 
-  const { text, color } = strengthLevels[strength];
+  const { text, color, percent } = strengthLevels[strength];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.strengthText}>
-        Password strength: <Text style={{ color }}>{text}</Text>
-      </Text>
+      <View style={styles.textRow}>
+        <AppText variant="tiny" color="muted">
+          Password strength:{' '}
+        </AppText>
+        <AppText variant="captionBold" style={{ color }}>
+          {text}
+        </AppText>
+      </View>
       <View style={styles.strengthBarContainer}>
         <View
           style={[
             styles.strengthBar,
             {
               backgroundColor: color,
-              width: strength === 'weak' ? '33%' : strength === 'medium' ? '66%' : '100%',
+              width: percent as any,
             },
           ]}
         />
@@ -42,24 +48,25 @@ const PasswordStrengthIndicator = ({ strength }: Props) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: -10,
-    marginBottom: 10,
-    alignItems: 'flex-start',
+    width: '100%',
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
   },
-  strengthText: {
-    fontSize: 12,
-    color: '#888',
+  textRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 4,
   },
   strengthBarContainer: {
     width: '100%',
     height: 4,
-    backgroundColor: '#eee',
-    borderRadius: 2,
+    backgroundColor: colors.borderLight,
+    borderRadius: radius.full,
+    overflow: 'hidden',
   },
   strengthBar: {
     height: 4,
-    borderRadius: 2,
+    borderRadius: radius.full,
   },
 });
 
