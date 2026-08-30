@@ -205,8 +205,7 @@ export const chatService = {
             if (line.startsWith('event:')) {
               currentEvent = line.replace(/^event:\s*/, '').trim();
             } else if (line.startsWith('data:')) {
-              const dataLine = line.substring(5);
-              const content = dataLine.startsWith(' ') ? dataLine.substring(1) : dataLine;
+              const content = line.substring(5);
               if (currentData) {
                 currentData += '\n' + content;
               } else {
