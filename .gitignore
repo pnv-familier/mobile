@@ -45,5 +45,4 @@ yarn-error.*
 # Firebase
 GoogleService-Info.plist
 
-.agent
 .dev
