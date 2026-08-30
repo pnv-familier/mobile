@@ -1,11 +1,18 @@
 import React from 'react';
-import { 
-  View, Text, StyleSheet, TextInput, TouchableOpacity, 
-  SafeAreaView, ScrollView, ActivityIndicator 
+import {
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Home, Sparkles } from 'lucide-react-native';
 import { useCreateFamily } from '../hooks/useCreateFamily';
 import { useTranslation } from 'react-i18next';
+import { AppScreen, AppHeader, AppText, AppButton } from '../../../components';
+import { colors, spacing, radius, typography, shadows } from '../../../theme';
 
 export default function CreateFamilyScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -17,213 +24,213 @@ export default function CreateFamilyScreen({ navigation }: any) {
     handleContinue,
     validationError,
     isFormValid,
-    handleInputFocus
+    handleInputFocus,
   } = useCreateFamily();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color="#D48141" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('family.createFamily')}</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <AppScreen edges={['top']} backgroundColor={colors.background}>
+      <AppHeader
+        title={t('family.createFamily')}
+        navigation={navigation}
+        showBack={true}
+        showNotification={false}
+        showProfile={false}
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.circleOutline}>
-            <View style={styles.innerCircle}>
-              <MaterialCommunityIcons name="home-variant-outline" size={60} color="#D48141" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Home Icon Hero */}
+          <View style={styles.heroBadge}>
+            <View style={styles.iconCircle}>
+              <Home size={40} color={colors.primary} />
             </View>
           </View>
-          <TouchableOpacity style={styles.cameraButton}>
-            <Ionicons name="camera" size={18} color="white" />
-          </TouchableOpacity>
-        </View>
 
-        <Text style={styles.mainTitle}>{t('family.familyName')}</Text>
-        <Text style={styles.instructionText}>{t('family.enterFamilyName')}</Text>
+          {/* Title & Instructions */}
+          <AppText variant="heading1" color="brand" align="center" style={styles.title}>
+            {t('family.familyName')}
+          </AppText>
+          <AppText
+            variant="bodySmall"
+            color="secondary"
+            align="center"
+            style={styles.instructionText}
+          >
+            {t('family.enterFamilyName')}
+          </AppText>
 
-        <View style={[styles.inputContainer, validationError ? styles.inputErrorBorder : null]}>
-          <MaterialCommunityIcons name="home-outline" size={24} color="#D48141" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder={t('family.enterFamilyName')}
-            placeholderTextColor="#E0C3A5"
-            value={familyName}
-            onChangeText={setFamilyName}
-            onFocus={handleInputFocus}
+          {/* Family Name Input Box */}
+          <View
+            style={[
+              styles.inputContainer,
+              validationError ? styles.inputErrorBorder : styles.inputNormalBorder,
+            ]}
+          >
+            <Home size={18} color={colors.primary} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder={t('family.enterFamilyName')}
+              placeholderTextColor={colors.textPlaceholder}
+              value={familyName}
+              onChangeText={setFamilyName}
+              onFocus={handleInputFocus}
+              editable={!loading}
+            />
+          </View>
+
+          {validationError ? (
+            <AppText variant="tiny" color="error" style={styles.errorText}>
+              {validationError}
+            </AppText>
+          ) : null}
+
+          {/* Suggested Names Section */}
+          {suggestions && suggestions.length > 0 && (
+            <View style={styles.suggestSection}>
+              <View style={styles.suggestHeaderRow}>
+                <Sparkles size={14} color={colors.primary} />
+                <AppText variant="captionBold" color="primary">
+                  Suggest:
+                </AppText>
+              </View>
+
+              <View style={styles.chipContainer}>
+                {suggestions.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.chip}
+                    onPress={() => setFamilyName(item)}
+                    activeOpacity={0.7}
+                  >
+                    <AppText variant="captionBold" color="secondary">
+                      {item}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Pinned Bottom CTA */}
+        <View style={styles.bottomFooter}>
+          <AppButton
+            title={t('common.next')}
+            variant="primary"
+            size="md"
+            onPress={handleContinue}
+            loading={loading}
+            disabled={loading || !isFormValid}
+            style={styles.continueButton}
           />
         </View>
-        {validationError ? (
-          <Text style={{ color: 'red'}}>{validationError}</Text>
-        ) : null}
-  
-        <View style={styles.suggestSection}>
-          <Text style={styles.suggestLabel}>Suggest:</Text>
-          <View style={styles.chipContainer}>
-            {suggestions.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.chip} onPress={() => setFamilyName(item)}>
-                <Text style={styles.chipText}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.continueButton, loading && { opacity: 0.7 }, !isFormValid && { opacity: 0.7 }]} 
-          onPress={handleContinue}
-          disabled={loading || !isFormValid}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.continueText}>{t('common.next')}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </KeyboardAvoidingView>
+    </AppScreen>
   );
 }
+
 const styles = StyleSheet.create({
-  container: {
+  keyboardAvoid: {
     flex: 1,
-    backgroundColor: '#FFF5E6',
   },
-  header: {
-    flexDirection: 'row',
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxxl,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 60,
-    paddingLeft: 10,
-    paddingTop: 10, 
-    zIndex: 1,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#D48141',
-  },
-  headerPlaceholder: {
-    width: 28,
-  },
-  content: {
+  heroBadge: {
+    marginBottom: spacing.md,
     alignItems: 'center',
-    paddingTop: 10,
-    paddingHorizontal: 25,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 30,
-    paddingTop: 50,
-  },
-  circleOutline: {
-    width: 120,
-    height: 120,
-    borderRadius: 70,
-    borderWidth: 5,
-    borderColor: '#FFFFFF',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  innerCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 65,
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: colors.primarySoft,
+    borderWidth: 3,
+    borderColor: colors.surface,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    ...shadows.sm,
   },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 5,
-    right: 5,
-    backgroundColor: '#D48141',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFF5E6',
-  },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#D48141',
-    marginBottom: 10,
-    padding: 20,
+  title: {
+    marginBottom: 4,
   },
   instructionText: {
-    fontSize: 16,
-    color: '#D48141',
-    fontWeight: '600',
-    marginBottom: 30,
+    marginBottom: spacing.xl,
+    maxWidth: 280,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    height: 55,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    height: 46,
     width: '100%',
+    borderWidth: 1,
+    ...shadows.sm,
+  },
+  inputNormalBorder: {
+    borderColor: colors.borderLight,
+  },
+  inputErrorBorder: {
+    borderColor: colors.error,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#D48141',
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+  },
+  errorText: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    marginLeft: 4,
   },
   suggestSection: {
     width: '100%',
-    marginTop: 20,
+    marginTop: spacing.xl,
   },
-  suggestLabel: {
-    color: '#D48141',
-    fontWeight: '700',
-    marginBottom: 12,
+  suggestHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: spacing.xs + 2,
   },
   chip: {
-    backgroundColor: '#EBC094',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginRight: 10,
-    marginBottom: 10,
+    backgroundColor: colors.surfaceSecondary,
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
-  chipText: {
-    color: 'white',
-    fontWeight: '500',
-  },
-  footer: {
-    padding: 25,
-    paddingBottom: 35,
+  bottomFooter: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    ...shadows.sm,
   },
   continueButton: {
-    backgroundColor: '#D48141',
-    height: 55,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  continueText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  inputErrorBorder: {
-    borderColor: 'red',
-    borderWidth: 1,
+    width: '100%',
   },
 });
