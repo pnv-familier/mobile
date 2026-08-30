@@ -4,24 +4,6 @@ import { ChatMessageDto, ChatSession } from '../types';
 
 const STREAMING_ID = 'active-ai-stream';
 
-const safeConcat = (prev: string, chunk: string) => {
-  if (!prev) return chunk;
-
-  const lastChar = prev.slice(-1);
-  const firstChar = chunk[0];
-
-  if (
-    lastChar !== ' ' &&
-    firstChar !== ' ' &&
-    /[a-zA-Z]/.test(lastChar) &&
-    /[a-zA-Z]/.test(firstChar)
-  ) {
-    return prev + ' ' + chunk;
-  }
-
-  return prev + chunk;
-};
-
 interface ChatState {
     sessions: ChatSession[];
     currentSessionId: string | null;
@@ -94,7 +76,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             
             newMessages[messageIndex] = {
                 ...newMessages[messageIndex],
-                content: safeConcat(oldContent, chunk)
+                content: oldContent + chunk
             };
             
             return { messages: newMessages };
