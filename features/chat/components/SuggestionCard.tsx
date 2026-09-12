@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { X, Calendar, CheckCircle, Lightbulb, Sun } from 'lucide-react-native';
+import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { X, Calendar, CheckCircle, Lightbulb, Sparkles } from 'lucide-react-native';
+import { AppText } from '../../../components';
+import { colors, spacing, radius, shadows } from '../../../theme';
 
 interface SuggestionCardProps {
   visible: boolean;
@@ -8,6 +10,11 @@ interface SuggestionCardProps {
   onConfirm: () => void;
   onIgnore: () => void;
 }
+
+const sanitizeText = (val?: string | null): string => {
+  if (!val || val === 'undefined' || val === 'null') return '';
+  return String(val).trim();
+};
 
 export default function SuggestionCard({
   visible,
@@ -17,79 +24,104 @@ export default function SuggestionCard({
 }: SuggestionCardProps) {
   if (!visible || !metadata) return null;
 
+  const rawTitle = sanitizeText(metadata.title);
+  const rawDesc = sanitizeText(metadata.description);
+  const rawAction = sanitizeText(metadata.action);
+  const rawStartTime = sanitizeText(metadata.startTime);
+  const rawEndTime = sanitizeText(metadata.endTime);
+  const rawLocation = sanitizeText(metadata.location);
+
+  // If metadata is empty and has no meaningful content, do not show empty card
+  const hasContent = Boolean(
+    rawTitle || rawDesc || rawAction || rawStartTime || rawEndTime || rawLocation
+  );
+  if (!hasContent) return null;
+
+  const type = (metadata.type || '').toUpperCase();
+
   const getDisplayContent = () => {
-    const type = metadata.type;
-    
+    if (type === 'EVENT') {
+      let timeRange = '';
+      if (rawStartTime && rawEndTime) {
+        timeRange = `${rawStartTime} - ${rawEndTime}`;
+      } else if (rawStartTime) {
+        timeRange = rawStartTime;
+      } else if (rawEndTime) {
+        timeRange = rawEndTime;
+      }
+
+      let timeAndLocation = timeRange;
+      if (rawLocation) {
+        timeAndLocation = timeRange ? `${timeRange} at ${rawLocation}` : rawLocation;
+      }
+
+      return {
+        title: rawTitle || 'Event Suggestion',
+        description: rawDesc || timeAndLocation || 'Scheduled family event',
+      };
+    }
+
+    if (type === 'TASK') {
+      return {
+        title: rawTitle || 'Care Task',
+        description: rawDesc || 'Care task recommendation for your family',
+      };
+    }
+
+    if (type === 'OFFLINE') {
+      return {
+        title: rawTitle || 'Offline Action',
+        description: rawAction || rawDesc || 'Family offline activity recommendation',
+      };
+    }
+
+    return {
+      title: rawTitle || 'AI Suggestion',
+      description: rawDesc || rawAction || 'Recommendation for you and your family',
+    };
+  };
+
+  const { title, description } = getDisplayContent();
+
+  const getTypeTag = () => {
+    if (type === 'TASK') {
+      return {
+        Icon: CheckCircle,
+        label: 'Care Task',
+        color: colors.loveSoft,
+        textColor: colors.love,
+        iconColor: colors.love,
+      };
+    }
     if (type === 'EVENT') {
       return {
-        title: metadata.title || 'Event',
-        description: metadata.location 
-          ? `${metadata.startTime} - ${metadata.endTime} at ${metadata.location}`
-          : `${metadata.startTime} - ${metadata.endTime}`
-      };
-    } else if (type === 'TASK') {
-      return {
-        title: metadata.title || 'Task',
-        description: metadata.description || ''
-      };
-    } else if (type === 'OFFLINE') {
-      return {
-        title: 'Offline Suggestion',
-        description: metadata.action || ''
+        Icon: Calendar,
+        label: 'Event',
+        color: colors.infoSoft,
+        textColor: colors.info,
+        iconColor: colors.info,
       };
     }
-    
-    return {
-      title: 'Suggestion',
-      description: ''
-    };
-  };
-  
-  const { title, description } = getDisplayContent();
-  
-  const getTypeTag = () => {
-    const type = metadata.type || '';
-    
-    if (type === 'TASK') {
-      return { 
-        Icon: CheckCircle, 
-        label: 'Care Task', 
-        color: '#F7D6EA', 
-        textColor: '#C05299',
-        iconColor: '#C05299'
-      };
-    } else if (type === 'EVENT') {
-      return { 
-        Icon: Calendar, 
-        label: 'Event', 
-        color: '#E3F2FD', 
-        textColor: '#1976D2',
-        iconColor: '#1976D2'
-      };
-    } else if (type === 'OFFLINE') {
-      return { 
-        Icon: Lightbulb, 
-        label: 'Offline Action', 
-        color: '#FFF3E0', 
-        textColor: '#F57C00',
-        iconColor: '#F57C00'
+    if (type === 'OFFLINE') {
+      return {
+        Icon: Lightbulb,
+        label: 'Offline Action',
+        color: colors.warningSoft,
+        textColor: colors.warningText,
+        iconColor: colors.warning,
       };
     }
-    
-    return { 
-      Icon: Lightbulb, 
-      label: 'Suggestion', 
-      color: '#FFF3E0', 
-      textColor: '#F57C00',
-      iconColor: '#F57C00'
-    };
-  };
-  
-  const typeTag = getTypeTag();
 
-  const handleHide = () => {
-    onIgnore();
+    return {
+      Icon: Sparkles,
+      label: 'Suggestion',
+      color: colors.primarySoft,
+      textColor: colors.primary,
+      iconColor: colors.primary,
+    };
   };
+
+  const typeTag = getTypeTag();
 
   return (
     <Modal
@@ -100,45 +132,64 @@ export default function SuggestionCard({
     >
       <View style={styles.overlay}>
         <View style={styles.card}>
-          
           <View style={styles.header}>
             <View style={styles.headerTitleContainer}>
-              <Sun size={16} color="#E4A86E" />
-              <Text style={styles.headerTitle}>Suggestions for you!</Text>
+              <Sparkles size={18} color={colors.primary} />
+              <AppText variant="bodyBold" color="primary">
+                Suggestions for you!
+              </AppText>
             </View>
-            <TouchableOpacity onPress={onIgnore}>
-              <X size={18} color="#555" />
+            <TouchableOpacity
+              onPress={onIgnore}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.closeBtn}
+            >
+              <X size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View style={[styles.tag, { backgroundColor: typeTag.color }]}>
-            <typeTag.Icon size={14} color={typeTag.iconColor} />
-            <Text style={[styles.tagText, { color: typeTag.textColor }]}>
+            <typeTag.Icon size={13} color={typeTag.iconColor} />
+            <AppText
+              variant="tiny"
+              style={[styles.tagText, { color: typeTag.textColor }]}
+            >
               {typeTag.label}
-            </Text>
+            </AppText>
           </View>
 
           <View style={styles.messageBox}>
-            <Text style={styles.messageTitle}>{title}</Text>
-            <Text style={styles.description}>{description}</Text>
+            <AppText variant="bodySmallBold" color="primary" style={styles.messageTitle}>
+              {title}
+            </AppText>
+            {Boolean(description) && (
+              <AppText variant="caption" color="secondary" style={styles.description}>
+                {description}
+              </AppText>
+            )}
           </View>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.hideButton}
-              onPress={handleHide}
+              onPress={onIgnore}
+              activeOpacity={0.7}
             >
-              <Text style={styles.hideText}>Hide 5min</Text>
+              <AppText variant="captionBold" color="secondary">
+                Hide
+              </AppText>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.suggestButton}
               onPress={onConfirm}
+              activeOpacity={0.8}
             >
-              <Text style={styles.suggestText}>Suggest</Text>
+              <AppText variant="captionBold" color="white">
+                Suggest
+              </AppText>
             </TouchableOpacity>
           </View>
-
         </View>
       </View>
     </Modal>
@@ -148,93 +199,86 @@ export default function SuggestionCard({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
   },
   card: {
-    width: 280,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 14,
-    borderWidth: 2,
-    borderColor: '#E4A86E',
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.md,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.xs + 2,
   },
   headerTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
-  headerTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#E4A86E',
+  closeBtn: {
+    padding: spacing.xs,
   },
   tag: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 3,
-    borderRadius: 10,
-    marginBottom: 8,
+    borderRadius: radius.full,
+    marginBottom: spacing.sm,
   },
   tagText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   messageBox: {
-    borderWidth: 2,
-    borderColor: '#E4A86E',
-    borderRadius: 8,
-    padding: 10,
-    minHeight: 60,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
+    padding: spacing.sm + 2,
+    minHeight: 56,
   },
   messageTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
   description: {
-    fontSize: 13,
-    color: '#555',
     lineHeight: 18,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 12,
-    gap: 8,
+    marginTop: spacing.md,
+    gap: spacing.sm,
   },
   hideButton: {
     borderWidth: 1,
-    borderColor: '#E4A86E',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  hideText: {
-    color: '#E4A86E',
-    fontSize: 13,
-    fontWeight: '500',
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
   },
   suggestButton: {
-    backgroundColor: '#7A4A21',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  suggestText: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '500',
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.xs + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+    ...shadows.sm,
   },
 });
