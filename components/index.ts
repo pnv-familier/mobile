@@ -6,5 +6,6 @@ export { default as AppCard } from './AppCard';
 export { default as AppLoader } from './AppLoader';
 export { default as AppError } from './AppError';
 export { default as EmptyState } from './EmptyState';
+export { default as NoInternetScreen } from './NoInternetScreen';
 export { AppHeader } from './AppHeader';
 export { InAppNotificationBanner } from './InAppNotificationBanner';
