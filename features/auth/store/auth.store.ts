@@ -1,4 +1,4 @@
-import {create} from "zustand"
+import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isAxiosError } from "axios";
 import { User } from "../../user/type";
@@ -13,7 +13,7 @@ type AuthState = {
     setAuth: (user: User) => void;
     reset: () => Promise<void>;
     updateIsSetUp: (isSetup: boolean) => void;
-}
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
     data: null,
@@ -34,20 +34,44 @@ export const useAuthStore = create<AuthState>((set) => ({
                 return;
             }
 
+            // Restore cached user profile if exists to reduce UI flicker on cold start
+            const cachedUserStr = await AsyncStorage.getItem("user");
+            if (cachedUserStr) {
+                try {
+                    const cachedUser = JSON.parse(cachedUserStr);
+                    if (cachedUser) {
+                        set({ data: cachedUser });
+                    }
+                } catch (e) {}
+            }
+
             const { userService } = require("../../user/service/user.service");
             const response = await userService.getCurrentUser();
             const userData = response.data;
 
-            set({ data: userData, isLoading: false });
+            if (userData) {
+                await AsyncStorage.setItem("user", JSON.stringify(userData));
+                set({ data: userData, isLoading: false, error: null });
+            }
         } catch (error) {
             console.error("Failed to get user info:", error);
 
             if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
-                await AsyncStorage.removeItem("accessToken");
-                await AsyncStorage.removeItem("refreshToken");
+                await AsyncStorage.multiRemove(["accessToken", "refreshToken", "user"]);
                 set({ data: null, error: "Session expired" });
             } else {
-                set({ error: "Cannot get user info", data: null });
+                // If offline / network error, preserve cached user if available
+                const cachedUserStr = await AsyncStorage.getItem("user");
+                if (cachedUserStr) {
+                    try {
+                        const cachedUser = JSON.parse(cachedUserStr);
+                        set({ data: cachedUser, error: null });
+                    } catch (e) {
+                        set({ error: "Cannot get user info", data: null });
+                    }
+                } else {
+                    set({ error: "Cannot get user info", data: null });
+                }
             }
 
             set({ isLoading: false });
@@ -55,8 +79,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     reset: async () => {
-        await AsyncStorage.removeItem("accessToken");
-        await AsyncStorage.removeItem("refreshToken");
+        await AsyncStorage.multiRemove(["accessToken", "refreshToken", "user"]);
         await storage.clearNotifiedIds();
         set({ data: null, error: null, isLoading: false });
     },
@@ -69,5 +92,4 @@ export const useAuthStore = create<AuthState>((set) => ({
                 : null
         }));
     }
-
-}))
+}));

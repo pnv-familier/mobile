@@ -43,7 +43,7 @@ export function useRegister() {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { confirmPassword, ...rest } = values
             const data: AuthResponse = (await register(rest)).data
-            saveTokens(data)
+            await saveTokens(data)
             setAuth(data.user)
             showBanner('🎉 Welcome to Family Emotions!', `Hi ${data.user.fullName}, your account is ready`)
         } catch (err: any) {
