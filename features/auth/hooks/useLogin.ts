@@ -32,7 +32,7 @@ export function useLogin() {
         try {
             setLoading(true)
             const data: AuthResponse = (await login(values)).data
-            saveTokens(data)
+            await saveTokens(data)
             setAuth(data.user)
             showBanner('👋 Welcome back!', `Good to see you again, ${data.user.fullName}`)
         } catch (error: any) {
