@@ -11,18 +11,20 @@ interface ConfirmSuggestionResponse {
 export const suggestionService = {
   getSuggestions: async (status?: SuggestionStatus): Promise<SuggestionListItem[]> => {
     const params = status ? { status } : {};
-    const response = await apiClient.get<SuggestionListItem[]>('/ai/suggestions', { params });
-    return response.data;
+    const response = await apiClient.get<any>('/ai/suggestions', { params });
+    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response.data?.data)) return response.data.data;
+    return [];
   },
 
   getSuggestionDetail: async (id: string): Promise<SuggestionDetail> => {
-    const response = await apiClient.get<SuggestionDetail>(`/ai/suggestions/${id}`);
-    return response.data;
+    const response = await apiClient.get<any>(`/ai/suggestions/${id}`);
+    return response.data?.data || response.data;
   },
 
   acceptSuggestion: async (id: string): Promise<SuggestionDetail> => {
-    const response = await apiClient.post<SuggestionDetail>(`/ai/suggestions/${id}/accept`);
-    return response.data;
+    const response = await apiClient.post<any>(`/ai/suggestions/${id}/accept`);
+    return response.data?.data || response.data;
   },
 
   confirmSuggestion: async (
@@ -31,13 +33,14 @@ export const suggestionService = {
     triggerContext: string
   ): Promise<ConfirmSuggestionResponse> => {
     try {
-      const type = metadata.type;
+      const type = metadata.type || metadata.payload?.type;
+      const payloadContent = metadata.payload || metadata;
 
       const requestBody = {
         type,
         payload: {
           type,
-          ...metadata
+          ...payloadContent,
         },
         sessionId,
         triggerContext,

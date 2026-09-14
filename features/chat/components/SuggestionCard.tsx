@@ -24,20 +24,24 @@ export default function SuggestionCard({
 }: SuggestionCardProps) {
   if (!visible || !metadata) return null;
 
-  const rawTitle = sanitizeText(metadata.title);
-  const rawDesc = sanitizeText(metadata.description);
-  const rawAction = sanitizeText(metadata.action);
-  const rawStartTime = sanitizeText(metadata.startTime);
-  const rawEndTime = sanitizeText(metadata.endTime);
-  const rawLocation = sanitizeText(metadata.location);
+  const payload = metadata.payload || metadata;
+  const rawTitle = sanitizeText(metadata.title || payload.title);
+  const rawDesc = sanitizeText(metadata.description || payload.description);
+  const rawAction = sanitizeText(metadata.action || payload.action);
+  const rawStartTime = sanitizeText(metadata.startTime || payload.startTime);
+  const rawEndTime = sanitizeText(metadata.endTime || payload.endTime);
+  const rawLocation = sanitizeText(metadata.location || payload.location);
+  const rawDate = payload.date;
+  const rawMonth = payload.month;
+  const rawYear = payload.year;
 
-  // If metadata is empty and has no meaningful content, do not show empty card
+  // If metadata and payload are empty and have no meaningful content, do not show empty card
   const hasContent = Boolean(
-    rawTitle || rawDesc || rawAction || rawStartTime || rawEndTime || rawLocation
+    rawTitle || rawDesc || rawAction || rawStartTime || rawEndTime || rawLocation || rawDate
   );
   if (!hasContent) return null;
 
-  const type = (metadata.type || '').toUpperCase();
+  const type = (metadata.type || payload.type || '').toUpperCase();
 
   const getDisplayContent = () => {
     if (type === 'EVENT') {
@@ -50,14 +54,16 @@ export default function SuggestionCard({
         timeRange = rawEndTime;
       }
 
-      let timeAndLocation = timeRange;
-      if (rawLocation) {
-        timeAndLocation = timeRange ? `${timeRange} at ${rawLocation}` : rawLocation;
+      let dateStr = '';
+      if (rawDate && rawMonth) {
+        dateStr = `${rawDate}/${rawMonth}${rawYear ? `/${rawYear}` : ''}`;
       }
+
+      let eventDetails = [dateStr, timeRange, rawLocation].filter(Boolean).join(' • ');
 
       return {
         title: rawTitle || 'Event Suggestion',
-        description: rawDesc || timeAndLocation || 'Scheduled family event',
+        description: rawDesc || eventDetails || 'Scheduled family event',
       };
     }
 
