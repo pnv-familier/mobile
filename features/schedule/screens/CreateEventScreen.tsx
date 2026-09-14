@@ -42,10 +42,37 @@ interface FamilyMember {
   joinedAt: string;
 }
 
+interface TimeValue {
+  hours: number;
+  minutes: number;
+  ampm: 'AM' | 'PM';
+}
+
 interface CreateEventScreenProps {
   navigation: any;
   route?: any;
 }
+
+const parseInitialTime = (timeStr?: string, defaultHour = 10, defaultMin = 0, defaultAmPm: 'AM' | 'PM' = 'AM'): TimeValue => {
+  if (!timeStr) {
+    return { hours: defaultHour, minutes: defaultMin, ampm: defaultAmPm };
+  }
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (match) {
+    const rawH = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10);
+    const ampm = (match[3]?.toUpperCase() as 'AM' | 'PM') || (rawH >= 12 ? 'PM' : 'AM');
+    const h = rawH > 12 ? rawH - 12 : rawH === 0 ? 12 : rawH;
+    return { hours: h, minutes: m, ampm };
+  }
+  return { hours: defaultHour, minutes: defaultMin, ampm: defaultAmPm };
+};
+
+const formatTimeDisplay = (time: TimeValue): string => {
+  const h = String(time.hours).padStart(2, '0');
+  const m = String(time.minutes).padStart(2, '0');
+  return `${h}:${m} ${time.ampm}`;
+};
 
 const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route }) => {
   const { t, i18n } = useTranslation();
@@ -63,25 +90,19 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
   const [selectedParticipants, setSelectedParticipants] = useState<FamilyMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
 
-  // Parse prefilled time to extract time and AM/PM
-  const parseTimeString = (timeStr: string) => {
-    if (!timeStr) return { time: '', ampm: 'AM' };
-    const match = timeStr.match(/^(\d{1,2}:\d{2})\s*(AM|PM)?$/i);
-    if (match) {
-      return { time: match[1], ampm: match[2]?.toUpperCase() || 'AM' };
-    }
-    return { time: timeStr, ampm: 'AM' };
-  };
+  // Time state using structured TimeValue
+  const [startTime, setStartTime] = useState<TimeValue>(() =>
+    parseInitialTime(prefill?.prefillStartTime, 10, 30, 'AM')
+  );
+  const [endTime, setEndTime] = useState<TimeValue>(() =>
+    parseInitialTime(prefill?.prefillEndTime, 11, 30, 'AM')
+  );
 
-  const startParsed = parseTimeString(prefill?.prefillStartTime);
-  const endParsed = parseTimeString(prefill?.prefillEndTime);
+  // Time picker modal state
+  const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end' | null>(null);
+  const [tempTime, setTempTime] = useState<TimeValue>({ hours: 10, minutes: 0, ampm: 'AM' });
 
-  const [startTimeText, setStartTimeText] = useState(startParsed.time || '10:30');
-  const [endTimeText, setEndTimeText] = useState(endParsed.time || '1:30');
-  const [startAmPm, setStartAmPm] = useState(startParsed.ampm);
-  const [endAmPm, setEndAmPm] = useState(endParsed.ampm);
   const [showInvalidCharWarning, setShowInvalidCharWarning] = useState(false);
-
   const [tempDate, setTempDate] = useState({ day: 1, month: 1, year: 2024 });
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -90,6 +111,9 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       ? ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12']
       : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
+
+  const hoursList = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
   useEffect(() => {
     loadFamilyMembers();
@@ -147,75 +171,40 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     setShowDatePicker(false);
   };
 
-  const validateForm = () => {
-    if (!eventName.trim()) {
-      Alert.alert(t('common.error'), t('schedule.eventTitleRequired'));
-      return false;
-    }
-
-    const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])$/;
-    const trimmedStartTime = startTimeText.trim();
-    const trimmedEndTime = endTimeText.trim();
-
-    if (!timeRegex.test(trimmedStartTime)) {
-      Alert.alert(
-        t('common.error'),
-        `${t('schedule.startTimeRequired')}\n${t('schedule.timeFormatExample')}: "${trimmedStartTime}"`
-      );
-      return false;
-    }
-
-    if (!timeRegex.test(trimmedEndTime)) {
-      Alert.alert(
-        t('common.error'),
-        `${t('schedule.endTimeRequired')}\n${t('schedule.timeFormatExample')}: "${trimmedEndTime}"`
-      );
-      return false;
-    }
-
-    const [startHours, startMinutes] = trimmedStartTime.split(':').map((s) => parseInt(s.trim()));
-    const [endHours, endMinutes] = trimmedEndTime.split(':').map((s) => parseInt(s.trim()));
-
-    let startHour24 = startHours;
-    if (startAmPm === 'PM' && startHours !== 12) {
-      startHour24 = startHours + 12;
-    } else if (startAmPm === 'AM' && startHours === 12) {
-      startHour24 = 0;
-    }
-
-    let endHour24 = endHours;
-    if (endAmPm === 'PM' && endHours !== 12) {
-      endHour24 = endHours + 12;
-    } else if (endAmPm === 'AM' && endHours === 12) {
-      endHour24 = 0;
-    }
-
-    const startTotalMinutes = startHour24 * 60 + startMinutes;
-    const endTotalMinutes = endHour24 * 60 + endMinutes;
-
-    if (endTotalMinutes <= startTotalMinutes) {
-      Alert.alert(
-        t('common.error'),
-        `${t('schedule.endTimeAfterStart')}\n${t('schedule.startTime')}: ${trimmedStartTime} ${startAmPm}\n${t('schedule.endTime')}: ${trimmedEndTime} ${endAmPm}`
-      );
-      return false;
-    }
-
-    return true;
+  const openTimePicker = (target: 'start' | 'end') => {
+    setTimePickerTarget(target);
+    setTempTime(target === 'start' ? { ...startTime } : { ...endTime });
   };
 
-  const combineDateTime = (date: Date, timeText: string, ampm: string) => {
-    const [hours, minutes] = timeText.split(':').map((s) => parseInt(s.trim()) || 0);
-    let hour24 = hours;
+  const confirmTimePicker = () => {
+    if (timePickerTarget === 'start') {
+      setStartTime({ ...tempTime });
+    } else if (timePickerTarget === 'end') {
+      setEndTime({ ...tempTime });
+    }
+    setTimePickerTarget(null);
+  };
 
-    if (ampm === 'PM' && hours !== 12) {
-      hour24 = hours + 12;
-    } else if (ampm === 'AM' && hours === 12) {
+  const get24HourTotalMinutes = (time: TimeValue): number => {
+    let hour24 = time.hours;
+    if (time.ampm === 'PM' && time.hours !== 12) {
+      hour24 = time.hours + 12;
+    } else if (time.ampm === 'AM' && time.hours === 12) {
+      hour24 = 0;
+    }
+    return hour24 * 60 + time.minutes;
+  };
+
+  const combineDateTime = (date: Date, time: TimeValue): string => {
+    let hour24 = time.hours;
+    if (time.ampm === 'PM' && time.hours !== 12) {
+      hour24 = time.hours + 12;
+    } else if (time.ampm === 'AM' && time.hours === 12) {
       hour24 = 0;
     }
 
     const combined = new Date(date);
-    combined.setHours(hour24, minutes, 0, 0);
+    combined.setHours(hour24, time.minutes, 0, 0);
 
     const yyyy = combined.getFullYear();
     const MM = String(combined.getMonth() + 1).padStart(2, '0');
@@ -223,6 +212,26 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
     const hh = String(combined.getHours()).padStart(2, '0');
     const mm = String(combined.getMinutes()).padStart(2, '0');
     return `${yyyy}-${MM}-${dd}T${hh}:${mm}:00`;
+  };
+
+  const validateForm = () => {
+    if (!eventName.trim()) {
+      Alert.alert(t('common.error'), t('schedule.eventTitleRequired'));
+      return false;
+    }
+
+    const startTotalMinutes = get24HourTotalMinutes(startTime);
+    const endTotalMinutes = get24HourTotalMinutes(endTime);
+
+    if (endTotalMinutes <= startTotalMinutes) {
+      Alert.alert(
+        t('common.error'),
+        `${t('schedule.endTimeAfterStart')}\n${t('schedule.startTime')}: ${formatTimeDisplay(startTime)}\n${t('schedule.endTime')}: ${formatTimeDisplay(endTime)}`
+      );
+      return false;
+    }
+
+    return true;
   };
 
   const handleSave = async () => {
@@ -236,8 +245,8 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
       const eventData = {
         title: eventName.trim(),
         description: note.trim(),
-        startTime: combineDateTime(selectedDate, startTimeText, startAmPm),
-        endTime: combineDateTime(selectedDate, endTimeText, endAmPm),
+        startTime: combineDateTime(selectedDate, startTime),
+        endTime: combineDateTime(selectedDate, endTime),
         participantIds: selectedParticipants.map((p) => p.userId),
       };
 
@@ -320,60 +329,40 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
             <CalendarIcon size={18} color={colors.primary} />
           </TouchableOpacity>
 
-          {/* Time Range Inputs */}
+          {/* Time Range Pickers */}
           <View style={styles.timeRow}>
             <View style={styles.timeColumn}>
               <AppText variant="captionBold" color="primary" style={styles.fieldLabel}>
                 {t('schedule.startTime')}
               </AppText>
-              <View style={styles.timeInputWrapper}>
-                <TextInput
-                  style={styles.timeInput}
-                  placeholder="10:30"
-                  placeholderTextColor={colors.textPlaceholder}
-                  value={startTimeText}
-                  onChangeText={setStartTimeText}
-                  keyboardType="numbers-and-punctuation"
-                  editable={!loading}
-                />
-                <TouchableOpacity
-                  style={styles.ampmButton}
-                  onPress={() => setStartAmPm(startAmPm === 'AM' ? 'PM' : 'AM')}
-                  disabled={loading}
-                  activeOpacity={0.7}
-                >
-                  <AppText variant="captionBold" color="white">
-                    {startAmPm}
-                  </AppText>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.inputWithIcon}
+                onPress={() => openTimePicker('start')}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <AppText variant="bodySmall" color="primary">
+                  {formatTimeDisplay(startTime)}
+                </AppText>
+                <Clock size={16} color={colors.primary} />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.timeColumn}>
               <AppText variant="captionBold" color="primary" style={styles.fieldLabel}>
                 {t('schedule.endTime')}
               </AppText>
-              <View style={styles.timeInputWrapper}>
-                <TextInput
-                  style={styles.timeInput}
-                  placeholder="1:30"
-                  placeholderTextColor={colors.textPlaceholder}
-                  value={endTimeText}
-                  onChangeText={setEndTimeText}
-                  keyboardType="numbers-and-punctuation"
-                  editable={!loading}
-                />
-                <TouchableOpacity
-                  style={styles.ampmButton}
-                  onPress={() => setEndAmPm(endAmPm === 'AM' ? 'PM' : 'AM')}
-                  disabled={loading}
-                  activeOpacity={0.7}
-                >
-                  <AppText variant="captionBold" color="white">
-                    {endAmPm}
-                  </AppText>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.inputWithIcon}
+                onPress={() => openTimePicker('end')}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <AppText variant="bodySmall" color="primary">
+                  {formatTimeDisplay(endTime)}
+                </AppText>
+                <Clock size={16} color={colors.primary} />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -616,6 +605,106 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation, route
           </View>
         </View>
       </Modal>
+
+      {/* Time Picker Modal */}
+      <Modal
+        visible={timePickerTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTimePickerTarget(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerModal}>
+            <AppText variant="heading3" color="primary" align="center" style={styles.pickerTitle}>
+              {timePickerTarget === 'start' ? t('schedule.startTime') : t('schedule.endTime')}
+            </AppText>
+
+            {/* Time Preview Header */}
+            <View style={styles.timePreviewBox}>
+              <Clock size={20} color={colors.primary} />
+              <AppText variant="heading2" color="primary">
+                {formatTimeDisplay(tempTime)}
+              </AppText>
+            </View>
+
+            <View style={styles.pickerContainer}>
+              {/* Hours Column (1-12) */}
+              <ScrollView style={styles.pickerColumn} showsVerticalScrollIndicator={false}>
+                {hoursList.map((hour) => (
+                  <TouchableOpacity
+                    key={hour}
+                    style={[styles.pickerItem, tempTime.hours === hour && styles.pickerItemSelected]}
+                    onPress={() => setTempTime({ ...tempTime, hours: hour })}
+                  >
+                    <AppText
+                      variant="bodySmall"
+                      color={tempTime.hours === hour ? 'white' : 'primary'}
+                      style={tempTime.hours === hour ? styles.pickerBold : undefined}
+                    >
+                      {String(hour).padStart(2, '0')}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Minutes Column (00, 05, ..., 55) */}
+              <ScrollView style={styles.pickerColumn} showsVerticalScrollIndicator={false}>
+                {minutesList.map((min) => (
+                  <TouchableOpacity
+                    key={min}
+                    style={[styles.pickerItem, tempTime.minutes === min && styles.pickerItemSelected]}
+                    onPress={() => setTempTime({ ...tempTime, minutes: min })}
+                  >
+                    <AppText
+                      variant="bodySmall"
+                      color={tempTime.minutes === min ? 'white' : 'primary'}
+                      style={tempTime.minutes === min ? styles.pickerBold : undefined}
+                    >
+                      {String(min).padStart(2, '0')}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* AM / PM Column */}
+              <View style={styles.pickerColumn}>
+                {(['AM', 'PM'] as const).map((period) => (
+                  <TouchableOpacity
+                    key={period}
+                    style={[styles.pickerItem, tempTime.ampm === period && styles.pickerItemSelected]}
+                    onPress={() => setTempTime({ ...tempTime, ampm: period })}
+                  >
+                    <AppText
+                      variant="bodySmall"
+                      color={tempTime.ampm === period ? 'white' : 'primary'}
+                      style={tempTime.ampm === period ? styles.pickerBold : undefined}
+                    >
+                      {period}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.pickerButtons}>
+              <AppButton
+                title={t('common.cancel')}
+                variant="outline"
+                size="sm"
+                onPress={() => setTimePickerTarget(null)}
+                style={styles.pickerBtn}
+              />
+              <AppButton
+                title={t('common.confirm')}
+                variant="primary"
+                size="sm"
+                onPress={confirmTimePicker}
+                style={styles.pickerBtn}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </AppScreen>
   );
 };
@@ -669,33 +758,15 @@ const styles = StyleSheet.create({
   timeColumn: {
     flex: 1,
   },
-  timeInputWrapper: {
+  timePreviewBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-  },
-  timeInput: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs + 2,
-    height: 38,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    ...typography.bodySmall,
-    color: colors.textPrimary,
-    ...shadows.sm,
-  },
-  ampmButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    height: 38,
-    minWidth: 44,
-    alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.sm,
+    gap: spacing.xs + 2,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
   },
   dropdown: {
     backgroundColor: colors.surface,
@@ -826,11 +897,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     padding: spacing.lg,
     width: '85%',
-    maxHeight: '50%',
+    maxHeight: '55%',
     ...shadows.lg,
   },
   pickerTitle: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   pickerContainer: {
     flexDirection: 'row',
