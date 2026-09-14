@@ -18,7 +18,12 @@
     "done": "Hoàn thành",
     "or": "Hoặc",
     "yes": "Có",
-    "no": "Không"
+    "no": "Không",
+    "noInternetTitle": "Không có kết nối mạng",
+    "noInternetDesc": "Vui lòng kiểm tra lại kết nối Wi-Fi hoặc dữ liệu di động của bạn và thử lại.",
+    "tryAgain": "Thử lại",
+    "stillNoConnection": "Vẫn chưa có kết nối. Vui lòng kiểm tra mạng của bạn.",
+    "goBack": "Quay lại"
   },
   "auth": {
     "login": "Đăng nhập",

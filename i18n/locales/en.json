@@ -18,7 +18,12 @@
     "done": "Done",
     "or": "Or",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "noInternetTitle": "No Internet Connection",
+    "noInternetDesc": "Please check your Wi-Fi or mobile data connection and try again.",
+    "tryAgain": "Try Again",
+    "stillNoConnection": "Still disconnected. Please check your network.",
+    "goBack": "Go Back"
   },
   "auth": {
     "login": "Log In",
