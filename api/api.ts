@@ -123,29 +123,29 @@ apiClient.interceptors.response.use(
         }
 
         const { response } = error;
-
         const isLogoutRequest = originalRequest?.url?.includes("/auth/logout");
-        if (response) {
-            if (response.status >= 500) {
-                Alert.alert("Server Error", "The system is under maintenance. Please try again later.");
-            }
 
+        if (response) {
             const responseData = response.data as any;
             const errorData: ErrorResponse = {
-                message: responseData?.message || "An error occurred",
+                message: responseData?.message || "An unexpected error occurred",
                 path: responseData?.path || "",
                 details: responseData?.details || null,
             };
+
+            if (response.status >= 500 && !isLogoutRequest) {
+                Alert.alert("Server Notice", "Our service is experiencing a temporary issue. Please try again in a few moments.");
+            }
 
             return Promise.reject(errorData);
         }
 
         if (!isLogoutRequest) {
-            Alert.alert("Network Error", "No internet connection or server is not responding.");
+            Alert.alert("Connection Problem", "Unable to connect to the server. Please check your internet connection and try again.");
         }
-        return Promise.reject({
-            message: "Network connection failed",
-            details: null
+        return Promise.reject({ 
+            message: "Unable to connect to server. Please check your internet connection.", 
+            details: null 
         } as ErrorResponse);
     }
 );
